@@ -29,10 +29,11 @@ export const Header = () => {
 
   const navigation = [
     { name: "Accueil", href: "/" },
-    { name: "Solutions IA", href: "#solutions" },
-    { name: "Audit", href: "#audit" },
-    { name: "FAQ", href: "#faq" },
-    { name: "Contact", href: "#contact" },
+    { name: "Solutions IA", href: "/#solutions" },
+    { name: "Blog", href: "/blog" },
+    { name: "Audit", href: "/#audit" },
+    { name: "FAQ", href: "/#faq" },
+    { name: "Contact", href: "/#contact" },
   ];
 
   return (
@@ -40,9 +41,9 @@ export const Header = () => {
       <div className="container mx-auto px-6">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate("/")}>
             <img 
-              src="/src/assets/logo-imotion.png" 
+              src="/assets/logo/imotion-logo-2025.svg" 
               alt="IMOTION Logo" 
               className="h-12 w-auto"
             />

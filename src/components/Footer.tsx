@@ -22,10 +22,10 @@ export const Footer = () => {
           <div>
             <h4 className="font-semibold mb-4 text-foreground text-sm">Blog</h4>
             <ul className="space-y-3">
-              <li><a href="#blog" className="text-muted-foreground hover:text-primary transition-colors text-sm">Articles & Cas clients</a></li>
-              <li><a href="#blog" className="text-muted-foreground hover:text-primary transition-colors text-sm">Études de cas</a></li>
-              <li><a href="#blog" className="text-muted-foreground hover:text-primary transition-colors text-sm">Infographies</a></li>
-              <li><a href="#blog" className="text-muted-foreground hover:text-primary transition-colors text-sm">Chiffres clés secteur</a></li>
+              <li><a href="/blog" className="text-muted-foreground hover:text-primary transition-colors text-sm">Articles & Cas clients</a></li>
+              <li><a href="/blog" className="text-muted-foreground hover:text-primary transition-colors text-sm">Études de cas</a></li>
+              <li><a href="/blog" className="text-muted-foreground hover:text-primary transition-colors text-sm">Infographies</a></li>
+              <li><a href="/blog" className="text-muted-foreground hover:text-primary transition-colors text-sm">Chiffres clés secteur</a></li>
             </ul>
           </div>
 
