@@ -22,28 +22,16 @@ export const PreAuditForm = () => {
       return;
     }
 
-    // Bloquer l'envoi d'email pour certaines sociétés
-    const blockedDomains = ["travaux-renovation-compiegne.fr"];
-    const isBlocked = blockedDomains.some(domain => website.includes(domain));
-
     setIsLoading(true);
     
-    // Simulate API call
+    // MODE TEST - Aucun email n'est envoyé pour le moment
+    // TODO: Intégrer l'envoi d'email réel via edge function + Resend quand prêt
     setTimeout(() => {
       setIsLoading(false);
-      
-      if (isBlocked) {
-        toast({
-          title: "Pré-audit lancé !",
-          description: "Nous analysons votre site. Les résultats seront disponibles prochainement.",
-        });
-      } else {
-        toast({
-          title: "Pré-audit lancé !",
-          description: "Nous analysons votre site. Vous recevrez un email avec les résultats dans quelques minutes.",
-        });
-      }
-      
+      toast({
+        title: "✅ Mode test - Pré-audit enregistré",
+        description: "Demande d'audit enregistrée pour " + website + ". Aucun email n'a été envoyé (mode test).",
+      });
       setWebsite("");
     }, 2000);
   };
@@ -88,7 +76,7 @@ export const PreAuditForm = () => {
               </Button>
 
               <p className="text-sm text-muted-foreground text-center">
-                Aucun engagement • Résultats en 3-5 minutes
+                🧪 Mode test actif • Aucun email envoyé • Aucun engagement
               </p>
             </form>
 
