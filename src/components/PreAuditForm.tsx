@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Link as LinkIcon } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export const PreAuditForm = () => {
@@ -36,7 +36,7 @@ export const PreAuditForm = () => {
   };
 
   return (
-    <section id="pre-audit" className="py-24 px-6 bg-background">
+    <section id="audit" className="py-24 px-6 bg-background">
       <div className="container mx-auto max-w-2xl">
         <Card className="bg-card border border-border shadow-lg">
           <CardHeader className="text-center pb-8">
