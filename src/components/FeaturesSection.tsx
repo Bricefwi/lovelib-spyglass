@@ -42,16 +42,15 @@ const features = [
 
 export const FeaturesSection = () => {
   return (
-    <section className="py-32 px-6 relative overflow-hidden">
-      <div className="absolute inset-0 gradient-subtle opacity-50" />
-      <div className="container mx-auto relative z-10">
-        <div className="text-center mb-20">
-          <h2 className="text-5xl md:text-6xl font-bold mb-6 tracking-tight">
-            <span className="text-foreground">Audit complet en</span>{" "}
-            <span className="text-primary">quelques minutes</span>
+    <section className="py-24 px-6 bg-background" id="solutions">
+      <div className="container mx-auto">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl md:text-5xl font-bold mb-4">
+            <span className="text-foreground">Services </span>
+            <span className="text-primary">Premium</span>
           </h2>
-          <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto font-light">
-            De la collecte automatique aux rapports détaillés, notre plateforme IA gère tout le processus d'audit.
+          <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+            De la réparation hardware à la transformation digitale complète
           </p>
         </div>
 
@@ -61,16 +60,16 @@ export const FeaturesSection = () => {
             return (
               <Card 
                 key={index}
-                className="glass-dark border-primary/20 hover:border-primary/50 hover:shadow-glow transition-all duration-500 group"
+                className="bg-card border border-border hover:shadow-lg transition-all duration-300 group"
               >
                 <CardHeader>
-                  <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/10 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:shadow-glow transition-all duration-300`}>
-                    <Icon className={`w-8 h-8 ${feature.color} group-hover:text-primary transition-colors`} />
+                  <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+                    <Icon className="w-7 h-7 text-primary" />
                   </div>
-                  <CardTitle className="text-2xl group-hover:text-primary transition-colors">{feature.title}</CardTitle>
+                  <CardTitle className="text-xl font-bold">{feature.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <CardDescription className="text-base leading-relaxed text-foreground/70">
+                  <CardDescription className="text-base leading-relaxed text-muted-foreground">
                     {feature.description}
                   </CardDescription>
                 </CardContent>
