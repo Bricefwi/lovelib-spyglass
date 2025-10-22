@@ -112,6 +112,99 @@ export type Database = {
           },
         ]
       }
+      blog_article_tags: {
+        Row: {
+          article_id: string
+          tag_id: number
+        }
+        Insert: {
+          article_id: string
+          tag_id: number
+        }
+        Update: {
+          article_id?: string
+          tag_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_article_tags_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "blog_articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blog_article_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "blog_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      blog_articles: {
+        Row: {
+          author_name: string | null
+          author_role: string | null
+          category: string | null
+          content_md: string
+          cover_credit: string | null
+          cover_url: string | null
+          excerpt: string | null
+          id: string
+          published_at: string | null
+          slug: string
+          sources: Json | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          author_name?: string | null
+          author_role?: string | null
+          category?: string | null
+          content_md: string
+          cover_credit?: string | null
+          cover_url?: string | null
+          excerpt?: string | null
+          id?: string
+          published_at?: string | null
+          slug: string
+          sources?: Json | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          author_name?: string | null
+          author_role?: string | null
+          category?: string | null
+          content_md?: string
+          cover_credit?: string | null
+          cover_url?: string | null
+          excerpt?: string | null
+          id?: string
+          published_at?: string | null
+          slug?: string
+          sources?: Json | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      blog_tags: {
+        Row: {
+          id: number
+          tag: string
+        }
+        Insert: {
+          id?: number
+          tag: string
+        }
+        Update: {
+          id?: number
+          tag?: string
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
           allow_index: boolean | null
@@ -509,26 +602,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      gtrgm_compress: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      gtrgm_decompress: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      gtrgm_in: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      gtrgm_options: {
-        Args: { "": unknown }
-        Returns: undefined
-      }
-      gtrgm_out: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -536,18 +609,8 @@ export type Database = {
         }
         Returns: boolean
       }
-      set_limit: {
-        Args: { "": number }
-        Returns: number
-      }
-      show_limit: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
-      show_trgm: {
-        Args: { "": string }
-        Returns: string[]
-      }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
     }
     Enums: {
       app_role: "admin" | "consultant" | "client"
