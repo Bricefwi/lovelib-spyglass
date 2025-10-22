@@ -39,7 +39,7 @@ const articles = [
 
 export const BlogSection = () => {
   return (
-    <section className="py-24 px-6 bg-secondary/30" id="blog">
+    <section className="py-24 px-6 bg-background" id="blog">
       <div className="container mx-auto">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
@@ -52,14 +52,14 @@ export const BlogSection = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {articles.map((article, index) => (
-            <Card key={index} className="bg-card border border-border hover:shadow-lg transition-all duration-300 group overflow-hidden">
+            <Card key={index} className="bg-card border-2 border-border hover:border-primary/50 hover:shadow-2xl transition-all duration-300 group overflow-hidden">
               <div className="relative h-48 overflow-hidden">
                 <img 
                   src={article.image} 
                   alt={article.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
-                <div className="absolute top-3 right-3 bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-semibold">
+                <div className="absolute top-3 right-3 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-bold shadow-lg">
                   {article.stats}
                 </div>
               </div>
@@ -76,7 +76,7 @@ export const BlogSection = () => {
                 <CardDescription className="text-sm leading-relaxed mb-4">
                   {article.description}
                 </CardDescription>
-                <Button variant="ghost" size="sm" className="p-0 h-auto font-semibold text-primary hover:text-primary/80">
+                <Button variant="ghost" size="sm" className="p-0 h-auto font-bold text-primary hover:text-primary/80 hover:translate-x-1 transition-all">
                   Lire l'article
                   <ArrowRight className="ml-2 w-4 h-4" />
                 </Button>
@@ -86,7 +86,7 @@ export const BlogSection = () => {
         </div>
 
         <div className="text-center">
-          <Button variant="outline" size="lg" className="border-2">
+          <Button variant="outline" size="lg" className="border-2 hover:border-primary hover:bg-primary hover:text-primary-foreground transition-all font-semibold">
             Voir tous les articles
           </Button>
         </div>

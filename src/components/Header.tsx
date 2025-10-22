@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
+import logoImotion from "@/assets/logo-imotion.png";
 
 export const Header = () => {
   const [session, setSession] = useState<Session | null>(null);
@@ -43,9 +44,9 @@ export const Header = () => {
           {/* Logo */}
           <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate("/")}>
             <img 
-              src="/assets/logo/imotion-logo-2025.svg" 
+              src={logoImotion} 
               alt="IMOTION Logo" 
-              className="h-12 w-auto"
+              className="h-14 w-auto"
             />
           </div>
 
