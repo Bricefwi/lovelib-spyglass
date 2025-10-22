@@ -1,21 +1,24 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar, ArrowRight } from "lucide-react";
-import businessAnalytics from "@/assets/business-analytics.jpg";
+import businessMeeting from "@/assets/blog-meeting.jpg";
+import businessAnalytics from "@/assets/blog-analytics.jpg";
+import businessAutomation from "@/assets/blog-automation.jpg";
+import businessGrowth from "@/assets/blog-growth.jpg";
 
 const articles = [
   {
     title: "5 stratégies pour optimiser votre tunnel de conversion",
     description: "Découvrez comment améliorer votre taux de conversion de 35% en moyenne grâce à ces techniques éprouvées.",
     date: "15 Mars 2025",
-    image: businessAnalytics,
+    image: businessGrowth,
     stats: "+35% conversion"
   },
   {
     title: "L'IA au service de la prospection commerciale",
     description: "Comment les PME utilisent l'intelligence artificielle pour automatiser leur prospection et gagner 8h par semaine.",
     date: "12 Mars 2025",
-    image: businessAnalytics,
+    image: businessAutomation,
     stats: "8h/semaine gagnées"
   },
   {
@@ -29,7 +32,7 @@ const articles = [
     title: "Automatisation No-Code : cas d'usage réels en PME",
     description: "3 entreprises partagent comment elles ont automatisé leurs processus sans développeurs, avec résultats chiffrés.",
     date: "5 Mars 2025",
-    image: businessAnalytics,
+    image: businessMeeting,
     stats: "Gain 18%"
   }
 ];

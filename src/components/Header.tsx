@@ -1,9 +1,31 @@
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Session } from "@supabase/supabase-js";
 
 export const Header = () => {
+  const [session, setSession] = useState<Session | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    navigate("/");
+  };
 
   const navigation = [
     { name: "Accueil", href: "/" },
@@ -42,12 +64,25 @@ export const Header = () => {
 
           {/* CTA Buttons */}
           <div className="hidden md:flex items-center gap-4">
-            <Button variant="ghost" size="sm">
-              Se connecter
-            </Button>
-            <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90">
-              Démarrer un projet
-            </Button>
+            {session ? (
+              <>
+                <span className="text-sm text-muted-foreground">
+                  {session.user.email}
+                </span>
+                <Button variant="ghost" size="sm" onClick={handleSignOut}>
+                  Déconnexion
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="ghost" size="sm" onClick={() => navigate("/auth")}>
+                  Se connecter
+                </Button>
+                <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => navigate("/auth")}>
+                  Démarrer un projet
+                </Button>
+              </>
+            )}
           </div>
 
           {/* Mobile menu button */}
