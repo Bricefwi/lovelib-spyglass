@@ -41,12 +41,11 @@ export const Header = () => {
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-secondary rounded-lg flex items-center justify-center">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z" fill="currentColor" className="text-primary"/>
-              </svg>
-            </div>
-            <span className="text-xl font-bold text-foreground">IMOTION</span>
+            <img 
+              src="/src/assets/logo-imotion.png" 
+              alt="IMOTION Logo" 
+              className="h-12 w-auto"
+            />
           </div>
 
           {/* Desktop Navigation */}

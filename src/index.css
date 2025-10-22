@@ -8,20 +8,20 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* IMOTION Design System - Fond clair, CTA rouge */
-    --background: 0 0% 98%;
-    --foreground: 0 0% 10%;
+    /* IMOTION Design System - Fond blanc, CTA orange */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 0%;
     
-    /* Primary - Rouge IMOTION #E63946 */
-    --primary: 354 70% 54%;
+    /* Primary - Orange IMOTION #FF6B35 */
+    --primary: 16 100% 60%;
     --primary-foreground: 0 0% 100%;
     
     /* Secondary - Gris clair */
     --secondary: 0 0% 96%;
     --secondary-foreground: 0 0% 10%;
     
-    /* Accent - Rouge */
-    --accent: 354 70% 54%;
+    /* Accent - Orange */
+    --accent: 16 100% 60%;
     --accent-foreground: 0 0% 100%;
     
     --card: 0 0% 100%;
