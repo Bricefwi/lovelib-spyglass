@@ -1,0 +1,688 @@
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
+
+export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "13.0.5"
+  }
+  public: {
+    Tables: {
+      admins: {
+        Row: {
+          created_at: string
+          id: string
+          permissions: Json | null
+          super_admin: boolean | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          permissions?: Json | null
+          super_admin?: boolean | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          permissions?: Json | null
+          super_admin?: boolean | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      audit_logs: {
+        Row: {
+          action: string
+          agent_id: string | null
+          agent_version: string | null
+          confidence: number | null
+          id: string
+          input_hash: string | null
+          output_hash: string | null
+          sources: Json | null
+          timestamp: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          agent_id?: string | null
+          agent_version?: string | null
+          confidence?: number | null
+          id?: string
+          input_hash?: string | null
+          output_hash?: string | null
+          sources?: Json | null
+          timestamp?: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          agent_id?: string | null
+          agent_version?: string | null
+          confidence?: number | null
+          id?: string
+          input_hash?: string | null
+          output_hash?: string | null
+          sources?: Json | null
+          timestamp?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      audits: {
+        Row: {
+          commercial: Json | null
+          completeness_score: number | null
+          created_at: string
+          id: string
+          marketing: Json | null
+          mission_id: string
+        }
+        Insert: {
+          commercial?: Json | null
+          completeness_score?: number | null
+          created_at?: string
+          id?: string
+          marketing?: Json | null
+          mission_id: string
+        }
+        Update: {
+          commercial?: Json | null
+          completeness_score?: number | null
+          created_at?: string
+          id?: string
+          marketing?: Json | null
+          mission_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audits_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: false
+            referencedRelation: "missions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clients: {
+        Row: {
+          allow_index: boolean | null
+          company_id: string
+          created_at: string
+          crm_connected: boolean | null
+          crm_type: Database["public"]["Enums"]["crm_type"] | null
+          department: string | null
+          id: string
+          objectives: Json | null
+          position: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          allow_index?: boolean | null
+          company_id: string
+          created_at?: string
+          crm_connected?: boolean | null
+          crm_type?: Database["public"]["Enums"]["crm_type"] | null
+          department?: string | null
+          id?: string
+          objectives?: Json | null
+          position?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          allow_index?: boolean | null
+          company_id?: string
+          created_at?: string
+          crm_connected?: boolean | null
+          crm_type?: Database["public"]["Enums"]["crm_type"] | null
+          department?: string | null
+          id?: string
+          objectives?: Json | null
+          position?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clients_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      companies: {
+        Row: {
+          address: string | null
+          city: string
+          contact_main: string | null
+          country: string
+          created_at: string
+          description: string | null
+          email_contact: string | null
+          employees: number | null
+          id: string
+          industry: string | null
+          last_news: Json | null
+          name: string
+          phone_contact: string | null
+          postal_code: string | null
+          siren: string | null
+          siret: string | null
+          socials: Json | null
+          tech_stack: string[] | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          city: string
+          contact_main?: string | null
+          country?: string
+          created_at?: string
+          description?: string | null
+          email_contact?: string | null
+          employees?: number | null
+          id?: string
+          industry?: string | null
+          last_news?: Json | null
+          name: string
+          phone_contact?: string | null
+          postal_code?: string | null
+          siren?: string | null
+          siret?: string | null
+          socials?: Json | null
+          tech_stack?: string[] | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          city?: string
+          contact_main?: string | null
+          country?: string
+          created_at?: string
+          description?: string | null
+          email_contact?: string | null
+          employees?: number | null
+          id?: string
+          industry?: string | null
+          last_news?: Json | null
+          name?: string
+          phone_contact?: string | null
+          postal_code?: string | null
+          siren?: string | null
+          siret?: string | null
+          socials?: Json | null
+          tech_stack?: string[] | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
+      deltas: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          delta_score: number | null
+          id: string
+          payload: Json
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          delta_score?: number | null
+          id?: string
+          payload: Json
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          delta_score?: number | null
+          id?: string
+          payload?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deltas_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dept_synthesis: {
+        Row: {
+          created_at: string
+          department: string
+          id: string
+          mission_id: string
+          synthesis: Json | null
+        }
+        Insert: {
+          created_at?: string
+          department: string
+          id?: string
+          mission_id: string
+          synthesis?: Json | null
+        }
+        Update: {
+          created_at?: string
+          department?: string
+          id?: string
+          mission_id?: string
+          synthesis?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dept_synthesis_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: false
+            referencedRelation: "missions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      missions: {
+        Row: {
+          blueprint: Json
+          client_id: string
+          created_at: string
+          id: string
+          status: Database["public"]["Enums"]["mission_status"]
+          updated_at: string
+        }
+        Insert: {
+          blueprint?: Json
+          client_id: string
+          created_at?: string
+          id?: string
+          status?: Database["public"]["Enums"]["mission_status"]
+          updated_at?: string
+        }
+        Update: {
+          blueprint?: Json
+          client_id?: string
+          created_at?: string
+          id?: string
+          status?: Database["public"]["Enums"]["mission_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "missions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          email: string
+          firstname: string
+          gdpr_consent: boolean | null
+          id: string
+          last_login: string | null
+          lastname: string
+          oauth_provider: string | null
+          oauth_uid: string | null
+          phone: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          email: string
+          firstname: string
+          gdpr_consent?: boolean | null
+          id?: string
+          last_login?: string | null
+          lastname: string
+          oauth_provider?: string | null
+          oauth_uid?: string | null
+          phone?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          email?: string
+          firstname?: string
+          gdpr_consent?: boolean | null
+          id?: string
+          last_login?: string | null
+          lastname?: string
+          oauth_provider?: string | null
+          oauth_uid?: string | null
+          phone?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      reports: {
+        Row: {
+          client_id: string
+          created_at: string
+          global_plan: Json | null
+          html_url: string | null
+          id: string
+          intake: Json | null
+          marketing: Json | null
+          mission_id: string | null
+          pdf_url: string | null
+          phase: Database["public"]["Enums"]["report_phase"]
+          project: Json | null
+          sales: Json | null
+          scenarios: Json | null
+          scope: Json | null
+          status: Database["public"]["Enums"]["report_status"]
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          global_plan?: Json | null
+          html_url?: string | null
+          id?: string
+          intake?: Json | null
+          marketing?: Json | null
+          mission_id?: string | null
+          pdf_url?: string | null
+          phase: Database["public"]["Enums"]["report_phase"]
+          project?: Json | null
+          sales?: Json | null
+          scenarios?: Json | null
+          scope?: Json | null
+          status?: Database["public"]["Enums"]["report_status"]
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          global_plan?: Json | null
+          html_url?: string | null
+          id?: string
+          intake?: Json | null
+          marketing?: Json | null
+          mission_id?: string | null
+          pdf_url?: string | null
+          phase?: Database["public"]["Enums"]["report_phase"]
+          project?: Json | null
+          sales?: Json | null
+          scenarios?: Json | null
+          scope?: Json | null
+          status?: Database["public"]["Enums"]["report_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: false
+            referencedRelation: "missions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seo_index: {
+        Row: {
+          id: string
+          keywords: string[] | null
+          language: string | null
+          summary: string | null
+          title: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          id?: string
+          keywords?: string[] | null
+          language?: string | null
+          summary?: string | null
+          title: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          id?: string
+          keywords?: string[] | null
+          language?: string | null
+          summary?: string | null
+          title?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: []
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      gtrgm_compress: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      gtrgm_decompress: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      gtrgm_in: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      gtrgm_options: {
+        Args: { "": unknown }
+        Returns: undefined
+      }
+      gtrgm_out: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      set_limit: {
+        Args: { "": number }
+        Returns: number
+      }
+      show_limit: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      show_trgm: {
+        Args: { "": string }
+        Returns: string[]
+      }
+    }
+    Enums: {
+      app_role: "admin" | "consultant" | "client"
+      crm_type: "hubspot" | "pipedrive" | "salesforce" | "other"
+      mission_status:
+        | "initiated"
+        | "in_audit"
+        | "planning"
+        | "execution"
+        | "closed"
+      report_phase:
+        | "pre_audit"
+        | "strategy"
+        | "marketing"
+        | "sales"
+        | "synthesis"
+        | "project"
+      report_status: "draft" | "in_progress" | "completed" | "archived"
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+}
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {
+      app_role: ["admin", "consultant", "client"],
+      crm_type: ["hubspot", "pipedrive", "salesforce", "other"],
+      mission_status: [
+        "initiated",
+        "in_audit",
+        "planning",
+        "execution",
+        "closed",
+      ],
+      report_phase: [
+        "pre_audit",
+        "strategy",
+        "marketing",
+        "sales",
+        "synthesis",
+        "project",
+      ],
+      report_status: ["draft", "in_progress", "completed", "archived"],
+    },
+  },
+} as const
