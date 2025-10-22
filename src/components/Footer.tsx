@@ -7,11 +7,11 @@ export const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
           {/* Company Info */}
           <div>
-            <div className="flex items-center gap-3 mb-4">
+            <div className="flex items-center gap-3 mb-6">
               <img 
                 src={logoImotion} 
                 alt="IMOTION Logo" 
-                className="h-12 w-auto"
+                className="h-16 w-auto"
               />
             </div>
             <p className="text-muted-foreground text-sm leading-relaxed">
@@ -26,7 +26,6 @@ export const Footer = () => {
               <li><a href="/blog" className="text-muted-foreground hover:text-primary transition-colors text-sm">Tous les articles</a></li>
               <li><a href="/blog" className="text-muted-foreground hover:text-primary transition-colors text-sm">Études de cas</a></li>
               <li><a href="/blog" className="text-muted-foreground hover:text-primary transition-colors text-sm">Chiffres clés</a></li>
-              <li><a href="/faq" className="text-muted-foreground hover:text-primary transition-colors text-sm">FAQ Technique</a></li>
             </ul>
           </div>
 
