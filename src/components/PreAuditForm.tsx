@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 export const PreAuditForm = () => {
   const [website, setWebsite] = useState("");
@@ -24,16 +25,31 @@ export const PreAuditForm = () => {
 
     setIsLoading(true);
     
-    // MODE TEST - Aucun email n'est envoyé pour le moment
-    // TODO: Intégrer l'envoi d'email réel via edge function + Resend quand prêt
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-audit-results', {
+        body: { 
+          website, 
+          auditType: 'free' 
+        }
+      });
+
+      if (error) throw error;
+
       toast({
-        title: "✅ Mode test - Pré-audit enregistré",
-        description: "Demande d'audit enregistrée pour " + website + ". Aucun email n'a été envoyé (mode test).",
+        title: "✅ Pré-audit envoyé !",
+        description: `Analyse de ${website} envoyée à patrice.simion@gmail.com`,
       });
       setWebsite("");
-    }, 2000);
+    } catch (error: any) {
+      console.error('Error sending audit:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible d'envoyer l'audit. Veuillez réessayer.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -76,7 +92,7 @@ export const PreAuditForm = () => {
               </Button>
 
               <p className="text-sm text-muted-foreground text-center">
-                🧪 Mode test actif • Aucun email envoyé • Aucun engagement
+                Résultats envoyés par email • Aucun engagement
               </p>
             </form>
 
