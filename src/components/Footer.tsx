@@ -23,10 +23,10 @@ export const Footer = () => {
           <div>
             <h4 className="font-semibold mb-4 text-foreground text-sm">Blog</h4>
             <ul className="space-y-3">
-              <li><a href="/blog?cat=cas-clients" className="text-muted-foreground hover:text-primary transition-colors text-sm">Articles & Cas clients</a></li>
-              <li><a href="/blog?cat=etudes-de-cas" className="text-muted-foreground hover:text-primary transition-colors text-sm">Études de cas</a></li>
-              <li><a href="/blog?cat=infographies" className="text-muted-foreground hover:text-primary transition-colors text-sm">Infographies</a></li>
-              <li><a href="/blog?cat=chiffres-cles" className="text-muted-foreground hover:text-primary transition-colors text-sm">Chiffres clés secteur</a></li>
+              <li><a href="/blog" className="text-muted-foreground hover:text-primary transition-colors text-sm">Tous les articles</a></li>
+              <li><a href="/blog" className="text-muted-foreground hover:text-primary transition-colors text-sm">Études de cas</a></li>
+              <li><a href="/blog" className="text-muted-foreground hover:text-primary transition-colors text-sm">Chiffres clés</a></li>
+              <li><a href="/faq" className="text-muted-foreground hover:text-primary transition-colors text-sm">FAQ Technique</a></li>
             </ul>
           </div>
 
@@ -41,14 +41,13 @@ export const Footer = () => {
             </ul>
           </div>
 
-          {/* Legal */}
+          {/* Contact */}
           <div>
-            <h4 className="font-semibold mb-4 text-foreground text-sm">Légal</h4>
+            <h4 className="font-semibold mb-4 text-foreground text-sm">Contact</h4>
             <ul className="space-y-3">
-              <li><a href="#" className="text-muted-foreground hover:text-primary transition-colors text-sm">Mentions légales</a></li>
-              <li><a href="#" className="text-muted-foreground hover:text-primary transition-colors text-sm">Politique RGPD</a></li>
-              <li><a href="#" className="text-muted-foreground hover:text-primary transition-colors text-sm">CGU</a></li>
-              <li><a href="#" className="text-muted-foreground hover:text-primary transition-colors text-sm">Contact</a></li>
+              <li><a href="/contact" className="text-muted-foreground hover:text-primary transition-colors text-sm">Nous contacter</a></li>
+              <li><a href="/solutions" className="text-muted-foreground hover:text-primary transition-colors text-sm">Nos solutions</a></li>
+              <li><a href="/" className="text-muted-foreground hover:text-primary transition-colors text-sm">Accueil</a></li>
             </ul>
           </div>
         </div>

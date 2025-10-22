@@ -52,13 +52,13 @@ export const Header = () => {
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-8">
             {navigation.map((item) => (
-              <a
+              <button
                 key={item.name}
-                href={item.href}
+                onClick={() => navigate(item.href)}
                 className="text-sm font-medium text-foreground hover:text-primary transition-colors"
               >
                 {item.name}
-              </a>
+              </button>
             ))}
           </nav>
 
@@ -99,22 +99,37 @@ export const Header = () => {
           <div className="md:hidden py-4 border-t border-border">
             <nav className="flex flex-col gap-4">
               {navigation.map((item) => (
-                <a
+                <button
                   key={item.name}
-                  href={item.href}
-                  className="text-sm font-medium text-foreground hover:text-primary transition-colors"
-                  onClick={() => setMobileMenuOpen(false)}
+                  onClick={() => {
+                    navigate(item.href);
+                    setMobileMenuOpen(false);
+                  }}
+                  className="text-sm font-medium text-foreground hover:text-primary transition-colors text-left"
                 >
                   {item.name}
-                </a>
+                </button>
               ))}
               <div className="flex flex-col gap-2 pt-4">
-                <Button variant="ghost" size="sm">
-                  Se connecter
-                </Button>
-                <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90">
-                  Démarrer un projet
-                </Button>
+                {session ? (
+                  <>
+                    <span className="text-sm text-muted-foreground px-2">
+                      {session.user.email}
+                    </span>
+                    <Button variant="ghost" size="sm" onClick={handleSignOut}>
+                      Déconnexion
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button variant="ghost" size="sm" onClick={() => navigate("/auth")}>
+                      Se connecter
+                    </Button>
+                    <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => navigate("/auth")}>
+                      Démarrer un projet
+                    </Button>
+                  </>
+                )}
               </div>
             </nav>
           </div>
