@@ -83,8 +83,13 @@ export default function Auth() {
     } else {
       toast({
         title: "Inscription réussie !",
-        description: "Vérifiez votre email pour confirmer votre compte.",
+        description: "Vous pouvez maintenant vous connecter.",
       });
+      // Auto-switch to sign in tab
+      setTimeout(() => {
+        const signInTab = document.querySelector('[value="signin"]') as HTMLElement;
+        signInTab?.click();
+      }, 1500);
     }
   };
 
