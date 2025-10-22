@@ -22,15 +22,28 @@ export const PreAuditForm = () => {
       return;
     }
 
+    // Bloquer l'envoi d'email pour certaines sociétés
+    const blockedDomains = ["travaux-renovation-compiegne.fr"];
+    const isBlocked = blockedDomains.some(domain => website.includes(domain));
+
     setIsLoading(true);
     
     // Simulate API call
     setTimeout(() => {
       setIsLoading(false);
-      toast({
-        title: "Pré-audit lancé !",
-        description: "Nous analysons votre site. Vous recevrez un email avec les résultats dans quelques minutes.",
-      });
+      
+      if (isBlocked) {
+        toast({
+          title: "Pré-audit lancé !",
+          description: "Nous analysons votre site. Les résultats seront disponibles prochainement.",
+        });
+      } else {
+        toast({
+          title: "Pré-audit lancé !",
+          description: "Nous analysons votre site. Vous recevrez un email avec les résultats dans quelques minutes.",
+        });
+      }
+      
       setWebsite("");
     }, 2000);
   };
