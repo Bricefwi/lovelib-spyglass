@@ -155,6 +155,7 @@ export type Database = {
           published_at: string | null
           slug: string
           sources: Json | null
+          tags: string[] | null
           title: string
           updated_at: string | null
         }
@@ -170,6 +171,7 @@ export type Database = {
           published_at?: string | null
           slug: string
           sources?: Json | null
+          tags?: string[] | null
           title: string
           updated_at?: string | null
         }
@@ -185,6 +187,7 @@ export type Database = {
           published_at?: string | null
           slug?: string
           sources?: Json | null
+          tags?: string[] | null
           title?: string
           updated_at?: string | null
         }
@@ -387,6 +390,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      faq_entries: {
+        Row: {
+          answer_html: string
+          id: string
+          order_index: number | null
+          question: string
+          tags: string[] | null
+          updated_at: string | null
+        }
+        Insert: {
+          answer_html: string
+          id?: string
+          order_index?: number | null
+          question: string
+          tags?: string[] | null
+          updated_at?: string | null
+        }
+        Update: {
+          answer_html?: string
+          id?: string
+          order_index?: number | null
+          question?: string
+          tags?: string[] | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       missions: {
         Row: {

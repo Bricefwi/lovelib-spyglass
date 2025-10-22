@@ -1,5 +1,10 @@
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
 import {
   Accordion,
   AccordionContent,
@@ -7,49 +12,62 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 
+interface FaqEntry {
+  question: string;
+  answer_html: string;
+  tags: string[];
+}
+
 const FAQ = () => {
-  const faqs = [
-    {
-      question: "Comment fonctionne l'audit stratégique IMOTION ?",
-      answer: "Notre audit se déroule en 4 étapes : (1) Analyse de votre URL et présence digitale, (2) Évaluation de vos processus marketing et commerciaux, (3) Benchmarking concurrentiel, (4) Génération de 4 scénarios d'optimisation avec ROI calculé."
-    },
-    {
-      question: "Combien de temps dure un audit complet ?",
-      answer: "Le pré-audit automatique prend quelques minutes. L'audit approfondi nécessite 5-7 jours ouvrés pour une analyse complète avec recommandations personnalisées et plan d'action détaillé."
-    },
-    {
-      question: "Quels sont les indicateurs analysés dans l'audit ?",
-      answer: "Nous analysons plus de 50 KPIs incluant : trafic web, taux de conversion, coût d'acquisition client (CAC), lifetime value (LTV), performance par canal, cycle de vente, taux de churn, et score de maturité digitale."
-    },
-    {
-      question: "L'accompagnement IA nécessite-t-il des compétences techniques ?",
-      answer: "Non, nos solutions sont conçues pour être utilisables sans expertise technique. Nous formons vos équipes et assurons la prise en main complète des outils mis en place."
-    },
-    {
-      question: "Peut-on intégrer vos solutions à notre CRM existant ?",
-      answer: "Oui, nous nous intégrons avec tous les CRM majeurs (Salesforce, HubSpot, Pipedrive, etc.) ainsi qu'avec vos outils analytics et marketing automation via API ou connecteurs natifs."
-    },
-    {
-      question: "Quels sont les délais de mise en œuvre ?",
-      answer: "Les quick wins identifiés dans l'audit peuvent être déployés sous 2-3 semaines. Les transformations structurelles se déploient sur 2-6 mois selon la complexité et vos ressources internes."
-    },
-    {
-      question: "Quel est le ROI moyen constaté ?",
-      answer: "Nos clients constatent en moyenne : +35% de taux de conversion, -25% de coût d'acquisition, et +18% de productivité commerciale dans les 6 premiers mois. Le ROI varie selon le secteur et la maturité initiale."
-    },
-    {
-      question: "Proposez-vous un accompagnement post-déploiement ?",
-      answer: "Oui, nous assurons un suivi pendant 3 à 12 mois selon la formule choisie : formations continues, optimisations mensuelles, support technique et révisions stratégiques trimestrielles."
-    },
-    {
-      question: "Comment sont sécurisées nos données ?",
-      answer: "Nous sommes conformes RGPD. Toutes les données sont hébergées en Europe, chiffrées en transit et au repos. Aucune donnée n'est partagée avec des tiers sans votre consentement explicite."
-    },
-    {
-      question: "Quels secteurs accompagnez-vous ?",
-      answer: "Nous intervenons principalement en B2B SaaS, e-commerce, services professionnels et industrie. Notre méthodologie est adaptable à tout secteur ayant une dimension digitale significative."
+  const [faqs, setFaqs] = useState<FaqEntry[]>([]);
+  const [question, setQuestion] = useState("");
+  const [aiAnswer, setAiAnswer] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchFaqs = async () => {
+      const { data, error } = await supabase
+        .from('faq_entries')
+        .select('question, answer_html, tags')
+        .order('order_index');
+      
+      if (error) {
+        console.error('Error fetching FAQs:', error);
+      } else {
+        setFaqs(data || []);
+      }
+    };
+
+    fetchFaqs();
+  }, []);
+
+  const handleAskAI = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!question.trim()) return;
+
+    setLoading(true);
+    setAiAnswer("");
+
+    try {
+      const { data, error } = await supabase.functions.invoke('faq-assistant', {
+        body: { question }
+      });
+
+      if (error) throw error;
+
+      setAiAnswer(data.answer || "Désolé, je n'ai pas pu générer une réponse.");
+    } catch (error) {
+      console.error('Error:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de contacter l'assistant IA",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -75,11 +93,38 @@ const FAQ = () => {
                 {faq.question}
               </AccordionTrigger>
               <AccordionContent className="text-muted-foreground text-base leading-relaxed pt-2">
-                {faq.answer}
+                <div dangerouslySetInnerHTML={{ __html: faq.answer_html }} />
               </AccordionContent>
             </AccordionItem>
           ))}
         </Accordion>
+
+        <div className="mt-16 bg-muted/50 rounded-2xl p-8">
+          <h2 className="text-2xl font-bold mb-3 text-foreground">
+            Assistant IA Technique
+          </h2>
+          <p className="text-muted-foreground mb-6">
+            Posez vos questions sur les formules, méthodes de calcul et KPIs marketing/commerciaux
+          </p>
+          <form onSubmit={handleAskAI} className="space-y-4">
+            <div className="flex gap-2">
+              <Input
+                value={question}
+                onChange={(e) => setQuestion(e.target.value)}
+                placeholder="Votre question technique..."
+                className="flex-1"
+              />
+              <Button type="submit" disabled={loading}>
+                {loading ? "Réflexion..." : "Interroger"}
+              </Button>
+            </div>
+            {aiAnswer && (
+              <div className="bg-background border rounded-lg p-6 mt-4">
+                <div dangerouslySetInnerHTML={{ __html: aiAnswer }} />
+              </div>
+            )}
+          </form>
+        </div>
 
         <div className="mt-16 bg-muted/50 rounded-2xl p-8 text-center">
           <h2 className="text-2xl font-bold mb-3 text-foreground">

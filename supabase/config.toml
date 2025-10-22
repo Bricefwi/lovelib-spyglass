@@ -1,1 +1,4 @@
 project_id = "gzfrcshvrktpejctlgta"
+
+[functions.faq-assistant]
+verify_jwt = false
