@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 export const PreAuditForm = () => {
   const [website, setWebsite] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [step, setStep] = useState<"idle" | "collecting" | "generating" | "done" | "error">("idle");
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -24,31 +25,58 @@ export const PreAuditForm = () => {
     }
 
     setIsLoading(true);
+    setStep("collecting");
     
     try {
-      const { data, error } = await supabase.functions.invoke('send-audit-results', {
-        body: { 
-          website, 
-          auditType: 'free' 
-        }
+      // Étape 1: Collecte multi-sources
+      toast({
+        title: "🔍 Collecte des données...",
+        description: "Analyse de votre site et recherche d'informations publiques",
       });
 
-      if (error) throw error;
+      const { data: preAuditData, error: preAuditError } = await supabase.functions.invoke('preaudit', {
+        body: { url: website }
+      });
 
+      if (preAuditError) throw preAuditError;
+
+      const preAuditId = preAuditData?.pre_audit_id;
+      if (!preAuditId) {
+        throw new Error("Pre-audit ID not returned");
+      }
+
+      // Étape 2: Génération du rapport
+      setStep("generating");
       toast({
-        title: "✅ Pré-audit envoyé !",
-        description: `Analyse de ${website} envoyée à patrice.simion@gmail.com`,
+        title: "🤖 Génération du rapport...",
+        description: "L'IA analyse les données et rédige votre pré-audit personnalisé",
+      });
+
+      const { data: auditData, error: auditError } = await supabase.functions.invoke('audit-generate', {
+        body: { pre_audit_id: preAuditId }
+      });
+
+      if (auditError) throw auditError;
+
+      // Succès
+      setStep("done");
+      toast({
+        title: "✅ Pré-audit terminé !",
+        description: `Votre rapport complet pour ${website} est prêt. Consultez votre email.`,
       });
       setWebsite("");
+      
     } catch (error: any) {
-      console.error('Error sending audit:', error);
+      console.error('Error during audit:', error);
+      setStep("error");
       toast({
         title: "Erreur",
-        description: "Impossible d'envoyer l'audit. Veuillez réessayer.",
+        description: error.message || "Impossible de générer l'audit. Veuillez réessayer.",
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
+      setTimeout(() => setStep("idle"), 3000);
     }
   };
 
@@ -84,10 +112,14 @@ export const PreAuditForm = () => {
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    Analyse en cours...
+                    {step === "collecting" && "Collecte des données..."}
+                    {step === "generating" && "Génération du rapport IA..."}
+                    {step === "done" && "Terminé !"}
+                    {step === "error" && "Erreur"}
+                    {step === "idle" && "Analyse en cours..."}
                   </>
                 ) : (
-                  "Lancer l'analyse gratuite"
+                  "Lancer l'analyse IA complète"
                 )}
               </Button>
 

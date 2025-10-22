@@ -77,6 +77,97 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_results: {
+        Row: {
+          confidence: number | null
+          created_at: string | null
+          id: string
+          kpis: Json | null
+          pre_audit_id: string | null
+          report_md: string | null
+          report_pdf_url: string | null
+          scenarios: Json | null
+          scores: Json | null
+          sources: Json | null
+          summary: string | null
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string | null
+          id?: string
+          kpis?: Json | null
+          pre_audit_id?: string | null
+          report_md?: string | null
+          report_pdf_url?: string | null
+          scenarios?: Json | null
+          scores?: Json | null
+          sources?: Json | null
+          summary?: string | null
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string | null
+          id?: string
+          kpis?: Json | null
+          pre_audit_id?: string | null
+          report_md?: string | null
+          report_pdf_url?: string | null
+          scenarios?: Json | null
+          scores?: Json | null
+          sources?: Json | null
+          summary?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_results_pre_audit_id_fkey"
+            columns: ["pre_audit_id"]
+            isOneToOne: false
+            referencedRelation: "pre_audits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      audit_sources: {
+        Row: {
+          created_at: string | null
+          id: string
+          pre_audit_id: string | null
+          provider: string
+          query: string | null
+          reliability: number | null
+          snippet: string | null
+          url: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          pre_audit_id?: string | null
+          provider: string
+          query?: string | null
+          reliability?: number | null
+          snippet?: string | null
+          url?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          pre_audit_id?: string | null
+          provider?: string
+          query?: string | null
+          reliability?: number | null
+          snippet?: string | null
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_sources_pre_audit_id_fkey"
+            columns: ["pre_audit_id"]
+            isOneToOne: false
+            referencedRelation: "pre_audits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audits: {
         Row: {
           commercial: Json | null
@@ -458,6 +549,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      pre_audits: {
+        Row: {
+          company_guess: string | null
+          confidence: number | null
+          consolidated: Json | null
+          created_at: string | null
+          domain: string | null
+          id: string
+          raw_sources: Json | null
+          status: string
+          updated_at: string | null
+          url: string
+        }
+        Insert: {
+          company_guess?: string | null
+          confidence?: number | null
+          consolidated?: Json | null
+          created_at?: string | null
+          domain?: string | null
+          id?: string
+          raw_sources?: Json | null
+          status?: string
+          updated_at?: string | null
+          url: string
+        }
+        Update: {
+          company_guess?: string | null
+          confidence?: number | null
+          consolidated?: Json | null
+          created_at?: string | null
+          domain?: string | null
+          id?: string
+          raw_sources?: Json | null
+          status?: string
+          updated_at?: string | null
+          url?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
