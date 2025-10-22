@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,18 +17,26 @@ interface BlogArticle {
 }
 
 const Blog = () => {
+  const [searchParams] = useSearchParams();
   const [articles, setArticles] = useState<BlogArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const category = searchParams.get('cat');
 
   useEffect(() => {
     const fetchArticles = async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('blog_articles')
         .select('id, slug, title, excerpt, cover_url, category, published_at')
         .not('published_at', 'is', null)
         .order('published_at', { ascending: false })
         .limit(24);
+
+      if (category) {
+        query = query.eq('category', category);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         console.error('Error fetching articles:', error);
@@ -38,7 +47,7 @@ const Blog = () => {
     };
 
     fetchArticles();
-  }, []);
+  }, [category]);
 
   const getCategoryLabel = (category: string) => {
     const labels: Record<string, string> = {
