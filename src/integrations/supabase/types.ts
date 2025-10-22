@@ -147,12 +147,14 @@ export type Database = {
           author_name: string | null
           author_role: string | null
           category: string | null
+          chart_spec: Json | null
           content_md: string
           cover_credit: string | null
           cover_url: string | null
           excerpt: string | null
           id: string
           published_at: string | null
+          reliability_score: number | null
           slug: string
           sources: Json | null
           tags: string[] | null
@@ -163,12 +165,14 @@ export type Database = {
           author_name?: string | null
           author_role?: string | null
           category?: string | null
+          chart_spec?: Json | null
           content_md: string
           cover_credit?: string | null
           cover_url?: string | null
           excerpt?: string | null
           id?: string
           published_at?: string | null
+          reliability_score?: number | null
           slug: string
           sources?: Json | null
           tags?: string[] | null
@@ -179,12 +183,14 @@ export type Database = {
           author_name?: string | null
           author_role?: string | null
           category?: string | null
+          chart_spec?: Json | null
           content_md?: string
           cover_credit?: string | null
           cover_url?: string | null
           excerpt?: string | null
           id?: string
           published_at?: string | null
+          reliability_score?: number | null
           slug?: string
           sources?: Json | null
           tags?: string[] | null

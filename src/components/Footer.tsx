@@ -19,34 +19,35 @@ export const Footer = () => {
             </p>
           </div>
 
-          {/* Blog */}
+          {/* Blog & Guide */}
           <div>
-            <h4 className="font-semibold mb-4 text-foreground text-sm">Blog</h4>
+            <h4 className="font-semibold mb-4 text-foreground text-sm">Blog & Guide</h4>
             <ul className="space-y-3">
-              <li><a href="/blog" className="text-muted-foreground hover:text-primary transition-colors text-sm">Tous les articles</a></li>
-              <li><a href="/blog" className="text-muted-foreground hover:text-primary transition-colors text-sm">Études de cas</a></li>
-              <li><a href="/blog" className="text-muted-foreground hover:text-primary transition-colors text-sm">Chiffres clés</a></li>
+              <li><a href="/blog" className="text-muted-foreground hover:text-primary transition-colors text-sm">Blog</a></li>
+              <li><a href="/audit-methodologie" className="text-muted-foreground hover:text-primary transition-colors text-sm">Méthodologie d'audit</a></li>
+              <li><a href="/calculs-kpis" className="text-muted-foreground hover:text-primary transition-colors text-sm">Calculs & KPIs</a></li>
+              <li><a href="/methodologie-roi" className="text-muted-foreground hover:text-primary transition-colors text-sm">Méthodologie ROI</a></li>
+              <li><a href="/guide/support" className="text-muted-foreground hover:text-primary transition-colors text-sm">Support technique</a></li>
+              <li><a href="/faq" className="text-muted-foreground hover:text-primary transition-colors text-sm">FAQ technique</a></li>
             </ul>
           </div>
 
-          {/* Guide (FAQ) */}
+          {/* Solutions */}
           <div>
-            <h4 className="font-semibold mb-4 text-foreground text-sm">Guide</h4>
+            <h4 className="font-semibold mb-4 text-foreground text-sm">Solutions</h4>
             <ul className="space-y-3">
-              <li><a href="/faq?section=technique" className="text-muted-foreground hover:text-primary transition-colors text-sm">FAQ Technique</a></li>
-              <li><a href="/faq?section=methodologie" className="text-muted-foreground hover:text-primary transition-colors text-sm">Méthodologie d'audit</a></li>
-              <li><a href="/faq?section=kpis" className="text-muted-foreground hover:text-primary transition-colors text-sm">Calculs et KPIs</a></li>
-              <li><a href="/faq?section=support" className="text-muted-foreground hover:text-primary transition-colors text-sm">Support technique</a></li>
-            </ul>
-          </div>
-
-          {/* Contact */}
-          <div>
-            <h4 className="font-semibold mb-4 text-foreground text-sm">Contact</h4>
-            <ul className="space-y-3">
-              <li><a href="/contact" className="text-muted-foreground hover:text-primary transition-colors text-sm">Nous contacter</a></li>
               <li><a href="/solutions" className="text-muted-foreground hover:text-primary transition-colors text-sm">Nos solutions</a></li>
-              <li><a href="/" className="text-muted-foreground hover:text-primary transition-colors text-sm">Accueil</a></li>
+              <li><a href="/contact" className="text-muted-foreground hover:text-primary transition-colors text-sm">Nous contacter</a></li>
+            </ul>
+          </div>
+
+          {/* Légal */}
+          <div>
+            <h4 className="font-semibold mb-4 text-foreground text-sm">Légal</h4>
+            <ul className="space-y-3">
+              <li><a href="/legal/mentions" className="text-muted-foreground hover:text-primary transition-colors text-sm">Mentions légales</a></li>
+              <li><a href="/legal/rgpd" className="text-muted-foreground hover:text-primary transition-colors text-sm">Politique RGPD</a></li>
+              <li><a href="/legal/cgu" className="text-muted-foreground hover:text-primary transition-colors text-sm">CGU</a></li>
             </ul>
           </div>
         </div>

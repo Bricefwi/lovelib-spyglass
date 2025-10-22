@@ -233,11 +233,11 @@ const BlogPost = () => {
             </ReactMarkdown>
           </div>
 
-          {post.sources && post.sources.length > 0 && (
-            <section className="border-t border-border pt-8">
+          {post.sources && Array.isArray(post.sources) && post.sources.length > 0 && (
+            <section className="border-t border-border pt-8 mt-8">
               <h2 className="text-2xl font-bold mb-4 text-foreground">Sources</h2>
-              <ul className="space-y-2">
-                {post.sources.map((source, index) => (
+              <ul className="space-y-2 text-sm">
+                {post.sources.map((source: any, index: number) => (
                   <li key={index}>
                     <a
                       href={source.url}

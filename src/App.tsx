@@ -12,6 +12,13 @@ import BlogPost from "./pages/BlogPost";
 import Solutions from "./pages/Solutions";
 import FAQ from "./pages/FAQ";
 import Contact from "./pages/Contact";
+import AuditMethodologie from "./pages/AuditMethodologie";
+import CalculsKPIs from "./pages/CalculsKPIs";
+import MethodologieROI from "./pages/MethodologieROI";
+import Support from "./pages/Support";
+import MentionsLegales from "./pages/MentionsLegales";
+import RGPD from "./pages/RGPD";
+import CGU from "./pages/CGU";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +44,13 @@ const App = () => {
             <Route path="/blog/:slug" element={<BlogPost />} />
             <Route path="/faq" element={<FAQ />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/audit-methodologie" element={<AuditMethodologie />} />
+            <Route path="/calculs-kpis" element={<CalculsKPIs />} />
+            <Route path="/methodologie-roi" element={<MethodologieROI />} />
+            <Route path="/guide/support" element={<Support />} />
+            <Route path="/legal/mentions" element={<MentionsLegales />} />
+            <Route path="/legal/rgpd" element={<RGPD />} />
+            <Route path="/legal/cgu" element={<CGU />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
