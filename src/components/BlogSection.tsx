@@ -20,6 +20,8 @@ export const BlogSection = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    let isMounted = true;
+    
     const fetchArticles = async () => {
       const { data } = await supabase
         .from('blog_articles')
@@ -28,12 +30,16 @@ export const BlogSection = () => {
         .order('published_at', { ascending: false })
         .limit(4);
 
-      if (data) {
+      if (data && isMounted) {
         setArticles(data);
       }
     };
 
     fetchArticles();
+    
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   return (

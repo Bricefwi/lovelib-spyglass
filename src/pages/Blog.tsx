@@ -24,6 +24,8 @@ const Blog = () => {
   const category = searchParams.get('cat');
 
   useEffect(() => {
+    let isMounted = true;
+    
     const fetchArticles = async () => {
       let query = supabase
         .from('blog_articles')
@@ -40,13 +42,20 @@ const Blog = () => {
 
       if (error) {
         console.error('Error fetching articles:', error);
-      } else {
+      } else if (isMounted) {
         setArticles(data || []);
       }
-      setLoading(false);
+      
+      if (isMounted) {
+        setLoading(false);
+      }
     };
 
     fetchArticles();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [category]);
 
   const getCategoryLabel = (category: string) => {

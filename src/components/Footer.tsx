@@ -34,10 +34,10 @@ export const Footer = () => {
           <div>
             <h4 className="font-semibold mb-4 text-foreground text-sm">Guide</h4>
             <ul className="space-y-3">
-              <li><a href="/faq" className="text-muted-foreground hover:text-primary transition-colors text-sm">FAQ Technique</a></li>
-              <li><a href="/faq" className="text-muted-foreground hover:text-primary transition-colors text-sm">Méthodologie d'audit</a></li>
-              <li><a href="/faq" className="text-muted-foreground hover:text-primary transition-colors text-sm">Calculs et KPIs</a></li>
-              <li><a href="/contact" className="text-muted-foreground hover:text-primary transition-colors text-sm">Support technique</a></li>
+              <li><a href="/faq?section=technique" className="text-muted-foreground hover:text-primary transition-colors text-sm">FAQ Technique</a></li>
+              <li><a href="/faq?section=methodologie" className="text-muted-foreground hover:text-primary transition-colors text-sm">Méthodologie d'audit</a></li>
+              <li><a href="/faq?section=kpis" className="text-muted-foreground hover:text-primary transition-colors text-sm">Calculs et KPIs</a></li>
+              <li><a href="/faq?section=support" className="text-muted-foreground hover:text-primary transition-colors text-sm">Support technique</a></li>
             </ul>
           </div>
 
