@@ -4,7 +4,7 @@ export const Footer = () => {
   return (
     <footer className="bg-card border-t border-border py-16" id="contact">
       <div className="container mx-auto px-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-8 mb-12">
           {/* Company Info */}
           <div>
             <div className="flex items-center gap-3 mb-6">
@@ -19,14 +19,21 @@ export const Footer = () => {
             </p>
           </div>
 
-          {/* Blog & Guide */}
+          {/* Blog */}
           <div>
-            <h4 className="font-semibold mb-4 text-foreground text-sm">Blog & Guide</h4>
+            <h4 className="font-semibold mb-4 text-foreground text-sm">Blog</h4>
             <ul className="space-y-3">
-              <li><a href="/blog" className="text-muted-foreground hover:text-primary transition-colors text-sm">Blog</a></li>
+              <li><a href="/blog" className="text-muted-foreground hover:text-primary transition-colors text-sm">Articles</a></li>
               <li><a href="/audit-methodologie" className="text-muted-foreground hover:text-primary transition-colors text-sm">Méthodologie d'audit</a></li>
               <li><a href="/calculs-kpis" className="text-muted-foreground hover:text-primary transition-colors text-sm">Calculs & KPIs</a></li>
               <li><a href="/methodologie-roi" className="text-muted-foreground hover:text-primary transition-colors text-sm">Méthodologie ROI</a></li>
+            </ul>
+          </div>
+
+          {/* Guide */}
+          <div>
+            <h4 className="font-semibold mb-4 text-foreground text-sm">Guide</h4>
+            <ul className="space-y-3">
               <li><a href="/guide/support" className="text-muted-foreground hover:text-primary transition-colors text-sm">Support technique</a></li>
               <li><a href="/faq" className="text-muted-foreground hover:text-primary transition-colors text-sm">FAQ technique</a></li>
             </ul>
