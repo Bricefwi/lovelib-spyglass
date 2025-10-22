@@ -4,71 +4,78 @@ import heroBg from "@/assets/hero-bg.jpg";
 
 export const HeroSection = () => {
   return (
-    <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
-      {/* Background */}
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden gradient-animated">
+      {/* Background avec effet glassmorphism */}
       <div className="absolute inset-0 z-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-accent/5" />
+        <div className="absolute inset-0 gradient-hero opacity-80" />
         <img 
           src={heroBg} 
           alt="" 
-          className="w-full h-full object-cover opacity-30 mix-blend-overlay"
+          className="w-full h-full object-cover opacity-20 mix-blend-overlay"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
       </div>
 
-      {/* Floating orbs */}
-      <div className="absolute top-20 left-10 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-float" />
-      <div className="absolute bottom-20 right-10 w-80 h-80 bg-accent/20 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }} />
+      {/* Floating orbs avec glow */}
+      <div className="absolute top-20 left-10 w-[500px] h-[500px] bg-primary/30 rounded-full blur-3xl animate-float opacity-60" />
+      <div className="absolute bottom-20 right-10 w-[400px] h-[400px] bg-accent/25 rounded-full blur-3xl animate-float opacity-50" style={{ animationDelay: '3s' }} />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/20 rounded-full blur-3xl animate-pulse-glow" />
 
       {/* Content */}
       <div className="relative z-10 container mx-auto px-6 text-center">
-        <div className="inline-flex items-center gap-2 px-4 py-2 mb-8 rounded-full bg-primary/10 border border-primary/20 backdrop-blur-sm">
-          <Sparkles className="w-4 h-4 text-primary" />
-          <span className="text-sm font-medium text-primary">IA + Conseil Expert</span>
+        <div className="inline-flex items-center gap-2 px-5 py-2 mb-8 rounded-full glass-dark shadow-glow">
+          <Sparkles className="w-4 h-4 text-primary animate-pulse" />
+          <span className="text-sm font-medium text-primary uppercase tracking-wide">IA + Conseil Expert</span>
         </div>
 
-        <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-primary via-accent to-primary animate-gradient">
-          IMOTION Conseil
+        <h1 className="text-6xl md:text-8xl font-bold mb-6 tracking-tight">
+          <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary via-accent to-primary" style={{ 
+            backgroundSize: '200% auto',
+            animation: 'gradient-shift 8s linear infinite'
+          }}>
+            IMOTION
+          </span>
+          <br />
+          <span className="text-foreground/90">Conseil & Performance</span>
         </h1>
 
-        <p className="text-xl md:text-2xl text-muted-foreground mb-4 max-w-3xl mx-auto">
+        <p className="text-xl md:text-3xl text-muted-foreground mb-4 max-w-3xl mx-auto font-light">
           Marketing & Commercial — Conseil augmenté par l'IA
         </p>
 
-        <p className="text-lg md:text-xl text-foreground/80 mb-12 max-w-2xl mx-auto">
-          Pré-audit instantané depuis l'URL de votre site. Rapports multi-scénarios, ROI chiffré, plan d'action opérationnel.
+        <p className="text-base md:text-lg text-foreground/70 mb-12 max-w-2xl mx-auto leading-relaxed">
+          Diagnostic stratégique depuis l'URL de votre site. Rapports par étapes, scénarios chiffrés, plan d'exécution opérationnel.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
           <Button 
             size="lg" 
-            className="text-lg px-8 py-6 shadow-lg hover:shadow-glow transition-all group"
+            className="text-lg px-10 py-7 bg-primary text-primary-foreground hover:bg-primary/90 shadow-glow-strong hover:shadow-glow transition-all group font-semibold uppercase tracking-wide"
           >
-            Lancer le Pré-Audit
-            <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            Lancer mon pré-audit
+            <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-2 transition-transform" />
           </Button>
           <Button 
             size="lg" 
             variant="outline"
-            className="text-lg px-8 py-6"
+            className="text-lg px-10 py-7 glass-dark border-primary/30 hover:border-primary/50 hover:bg-primary/5 transition-all"
           >
             Voir un exemple de plan
           </Button>
         </div>
 
         {/* Stats */}
-        <div className="mt-20 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+        <div className="mt-24 grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
           {[
             { value: "< 5 min", label: "Pré-audit automatique" },
-            { value: "3-5", label: "Scénarios détaillés" },
+            { value: "4", label: "Scénarios détaillés" },
             { value: "100%", label: "ROI chiffré" }
           ].map((stat, i) => (
             <div 
               key={i}
-              className="p-6 rounded-2xl bg-card/50 backdrop-blur-sm border border-border/50 hover:border-primary/50 transition-all"
+              className="p-8 rounded-2xl glass-dark hover:shadow-glow transition-all duration-500 hover:scale-105 group"
             >
-              <div className="text-3xl font-bold text-primary mb-2">{stat.value}</div>
-              <div className="text-muted-foreground">{stat.label}</div>
+              <div className="text-4xl md:text-5xl font-bold text-primary mb-3 group-hover:text-accent transition-colors">{stat.value}</div>
+              <div className="text-muted-foreground text-sm uppercase tracking-wider">{stat.label}</div>
             </div>
           ))}
         </div>
