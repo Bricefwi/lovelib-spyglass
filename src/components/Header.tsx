@@ -30,11 +30,10 @@ export const Header = () => {
 
   const navigation = [
     { name: "Accueil", href: "/" },
-    { name: "Solutions IA", href: "/#solutions" },
+    { name: "Solutions", href: "/solutions" },
     { name: "Blog", href: "/blog" },
-    { name: "Audit", href: "/#audit" },
-    { name: "FAQ", href: "/#faq" },
-    { name: "Contact", href: "/#contact" },
+    { name: "FAQ", href: "/faq" },
+    { name: "Contact", href: "/contact" },
   ];
 
   return (
