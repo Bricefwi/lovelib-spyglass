@@ -4,8 +4,12 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Download, Share2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import { ChartBlock } from "@/components/ChartBlock";
+import { exportToPDF } from "@/lib/pdfExport";
+import { useToast } from "@/hooks/use-toast";
+import logoImotion from "@/assets/logo-imotion.png";
 
 interface BlogPost {
   id: string;
@@ -27,6 +31,39 @@ const BlogPost = () => {
   const navigate = useNavigate();
   const [post, setPost] = useState<BlogPost | null>(null);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
+  const { toast } = useToast();
+
+  const handlePDFExport = async () => {
+    if (!post) return;
+    setExporting(true);
+    try {
+      await exportToPDF(post.title, 'article-content');
+      toast({
+        title: "PDF téléchargé",
+        description: "L'article a été exporté en PDF avec succès.",
+      });
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de générer le PDF.",
+        variant: "destructive",
+      });
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleLinkedInShare = () => {
+    if (!post) return;
+    const url = encodeURIComponent(window.location.href);
+    const text = encodeURIComponent(post.title);
+    window.open(
+      `https://www.linkedin.com/sharing/share-offsite/?url=${url}&title=${text}`,
+      '_blank',
+      'width=600,height=600'
+    );
+  };
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -73,16 +110,35 @@ const BlogPost = () => {
     <div className="min-h-screen bg-background">
       <Header />
       <main className="container mx-auto px-6 py-32 max-w-4xl">
-        <Button
-          variant="ghost"
-          onClick={() => navigate('/blog')}
-          className="mb-8"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Retour au blog
-        </Button>
+        <div className="flex justify-between items-center mb-8">
+          <Button
+            variant="ghost"
+            onClick={() => navigate('/blog')}
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Retour au blog
+          </Button>
 
-        <article>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={handlePDFExport}
+              disabled={exporting}
+            >
+              <Download className="w-4 h-4 mr-2" />
+              {exporting ? 'Export...' : 'Télécharger PDF'}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleLinkedInShare}
+            >
+              <Share2 className="w-4 h-4 mr-2" />
+              Partager
+            </Button>
+          </div>
+        </div>
+
+        <article id="article-content">
           <h1 className="text-4xl md:text-5xl font-bold mb-6 text-foreground">
             {post.title}
           </h1>
@@ -101,20 +157,21 @@ const BlogPost = () => {
             <span>{post.author_role}</span>
           </div>
 
-          {post.cover_url && (
-            <div className="relative w-full h-96 mb-8 rounded-2xl overflow-hidden border border-border">
-              <img
-                src={post.cover_url}
-                alt={post.title}
-                className="w-full h-full object-cover"
-              />
-              {post.cover_credit && (
-                <p className="text-xs text-muted-foreground mt-2 text-right">
-                  {post.cover_credit}
-                </p>
-              )}
-            </div>
-          )}
+          <div className="relative w-full h-96 mb-8 rounded-2xl overflow-hidden border border-border bg-muted">
+            <img
+              src={post.cover_url || logoImotion}
+              alt={post.title}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                e.currentTarget.src = logoImotion;
+              }}
+            />
+            {post.cover_credit && (
+              <p className="text-xs text-muted-foreground mt-2 text-right">
+                {post.cover_credit}
+              </p>
+            )}
+          </div>
 
           <div className="prose prose-lg max-w-none mb-12">
             <ReactMarkdown
@@ -137,11 +194,34 @@ const BlogPost = () => {
                 li: ({ children }) => (
                   <li className="mb-2">{children}</li>
                 ),
-                code: ({ children }) => (
-                  <code className="bg-muted px-2 py-1 rounded text-sm font-mono border border-border">
-                    {children}
-                  </code>
-                ),
+                code: ({ className, children }) => {
+                  const match = /language-chart/.exec(className || '');
+                  if (match) {
+                    try {
+                      const chartData = JSON.parse(String(children).replace(/\n$/, ''));
+                      return (
+                        <ChartBlock
+                          title={chartData.title}
+                          type={chartData.type}
+                          data={chartData.data}
+                          xKey={chartData.xKey}
+                          yKeys={chartData.yKeys}
+                        />
+                      );
+                    } catch (e) {
+                      return (
+                        <code className="bg-muted px-2 py-1 rounded text-sm font-mono border border-border">
+                          {children}
+                        </code>
+                      );
+                    }
+                  }
+                  return (
+                    <code className="bg-muted px-2 py-1 rounded text-sm font-mono border border-border">
+                      {children}
+                    </code>
+                  );
+                },
                 pre: ({ children }) => (
                   <pre className="bg-muted p-4 rounded-lg overflow-x-auto mb-4 border border-border">
                     {children}
