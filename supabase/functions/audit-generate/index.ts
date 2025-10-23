@@ -193,6 +193,32 @@ ${(data.sources||[]).map((s:any)=>`- [${s.label||s.url}](${s.url}) • fiabilit�
 
     console.log("Audit result saved with id:", saved.id);
 
+    // 5) Envoi email avec le rapport
+    try {
+      const emailResponse = await fetch(`${SUPABASE_URL}/functions/v1/send-audit-results`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+        },
+        body: JSON.stringify({
+          auditResultId: saved.id,
+          website: targetUrl,
+          reportMarkdown: md,
+          scores: data.scores
+        })
+      });
+
+      if (!emailResponse.ok) {
+        console.error("Failed to send email:", await emailResponse.text());
+      } else {
+        console.log("Email sent successfully");
+      }
+    } catch (emailError) {
+      console.error("Email sending error:", emailError);
+      // Continue même si l'email échoue
+    }
+
     return new Response(
       JSON.stringify({ audit_result_id: saved.id }), 
       { 
