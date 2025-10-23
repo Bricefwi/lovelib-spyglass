@@ -125,6 +125,13 @@ export type Database = {
             referencedRelation: "pre_audits"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "audit_results_pre_audit_id_fkey"
+            columns: ["pre_audit_id"]
+            isOneToOne: false
+            referencedRelation: "v_admin_audits"
+            referencedColumns: ["id"]
+          },
         ]
       }
       audit_sources: {
@@ -164,6 +171,61 @@ export type Database = {
             columns: ["pre_audit_id"]
             isOneToOne: false
             referencedRelation: "pre_audits"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "audit_sources_pre_audit_id_fkey"
+            columns: ["pre_audit_id"]
+            isOneToOne: false
+            referencedRelation: "v_admin_audits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      audit_steps: {
+        Row: {
+          created_at: string | null
+          ended_at: string | null
+          id: string
+          message: string | null
+          pre_audit_id: string
+          started_at: string | null
+          status: string
+          step: string
+        }
+        Insert: {
+          created_at?: string | null
+          ended_at?: string | null
+          id?: string
+          message?: string | null
+          pre_audit_id: string
+          started_at?: string | null
+          status: string
+          step: string
+        }
+        Update: {
+          created_at?: string | null
+          ended_at?: string | null
+          id?: string
+          message?: string | null
+          pre_audit_id?: string
+          started_at?: string | null
+          status?: string
+          step?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_steps_pre_audit_id_fkey"
+            columns: ["pre_audit_id"]
+            isOneToOne: false
+            referencedRelation: "pre_audits"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "audit_steps_pre_audit_id_fkey"
+            columns: ["pre_audit_id"]
+            isOneToOne: false
+            referencedRelation: "v_admin_audits"
             referencedColumns: ["id"]
           },
         ]
@@ -476,6 +538,13 @@ export type Database = {
             referencedRelation: "pre_audits"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "company_audits_pre_audit_id_fkey"
+            columns: ["pre_audit_id"]
+            isOneToOne: true
+            referencedRelation: "v_admin_audits"
+            referencedColumns: ["id"]
+          },
         ]
       }
       deltas: {
@@ -653,7 +722,9 @@ export type Database = {
           created_at: string | null
           domain: string | null
           id: string
+          last_step: string | null
           raw_sources: Json | null
+          report_html_url: string | null
           status: string
           updated_at: string | null
           url: string
@@ -665,7 +736,9 @@ export type Database = {
           created_at?: string | null
           domain?: string | null
           id?: string
+          last_step?: string | null
           raw_sources?: Json | null
+          report_html_url?: string | null
           status?: string
           updated_at?: string | null
           url: string
@@ -677,7 +750,9 @@ export type Database = {
           created_at?: string | null
           domain?: string | null
           id?: string
+          last_step?: string | null
           raw_sources?: Json | null
+          report_html_url?: string | null
           status?: string
           updated_at?: string | null
           url?: string
@@ -860,7 +935,23 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      v_admin_audits: {
+        Row: {
+          company_guess: string | null
+          confidence: number | null
+          created_at: string | null
+          domain: string | null
+          id: string | null
+          last_step: string | null
+          report_html_url: string | null
+          status: string | null
+          steps_done: number | null
+          total_steps: number | null
+          updated_at: string | null
+          url: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {
@@ -877,6 +968,15 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "consultant" | "client"
+      audit_status:
+        | "new"
+        | "collecting"
+        | "ai_running"
+        | "consolidating"
+        | "pre_report_ready"
+        | "sent"
+        | "needs_review"
+        | "error"
       crm_type: "hubspot" | "pipedrive" | "salesforce" | "other"
       mission_status:
         | "initiated"
@@ -1020,6 +1120,16 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "consultant", "client"],
+      audit_status: [
+        "new",
+        "collecting",
+        "ai_running",
+        "consolidating",
+        "pre_report_ready",
+        "sent",
+        "needs_review",
+        "error",
+      ],
       crm_type: ["hubspot", "pipedrive", "salesforce", "other"],
       mission_status: [
         "initiated",
