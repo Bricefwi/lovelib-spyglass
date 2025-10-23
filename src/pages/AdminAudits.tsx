@@ -126,18 +126,33 @@ export default function AdminAudits() {
   const regenerateAudit = async (preAuditId: string) => {
     try {
       setRegenerating(preAuditId);
-      const { error } = await supabase.functions.invoke("audit-generate", {
+      const { error } = await supabase.functions.invoke("preaudit", {
         body: { pre_audit_id: preAuditId },
       });
 
       if (error) throw error;
-      toast.success("Rapport régénéré avec succès");
+      toast.success("Analyse relancée avec succès");
       fetchAudits();
     } catch (error) {
       console.error("Error regenerating audit:", error);
-      toast.error("Erreur lors de la régénération");
+      toast.error("Erreur lors de la relance");
     } finally {
       setRegenerating(null);
+    }
+  };
+
+  const forceConsolidation = async (preAuditId: string) => {
+    try {
+      const { error } = await supabase.functions.invoke("consolidate", {
+        body: { pre_audit_id: preAuditId },
+      });
+
+      if (error) throw error;
+      toast.success("Consolidation forcée avec succès");
+      fetchAudits();
+    } catch (error) {
+      console.error("Error forcing consolidation:", error);
+      toast.error("Erreur lors de la consolidation");
     }
   };
 
@@ -155,7 +170,11 @@ export default function AdminAudits() {
     );
   }
 
-  const readyAudits = audits.filter(a => a.status === "pre_report_ready" || a.status === "sent");
+  const readyAudits = audits.filter(a => 
+    a.status === "pre_report_ready" || 
+    a.status === "sent" || 
+    a.status === "consolidated"
+  );
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -217,6 +236,13 @@ export default function AdminAudits() {
                       Voir
                     </Button>
                   )}
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => forceConsolidation(audit.id)}
+                  >
+                    Consolider
+                  </Button>
                   <Button
                     variant="default"
                     size="sm"

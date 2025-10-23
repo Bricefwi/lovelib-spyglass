@@ -9,6 +9,9 @@ verify_jwt = false
 [functions.preaudit]
 verify_jwt = false
 
+[functions.consolidate]
+verify_jwt = false
+
 [functions.audit-generate]
 verify_jwt = false
 
