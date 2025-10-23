@@ -20,6 +20,7 @@ import MentionsLegales from "./pages/MentionsLegales";
 import RGPD from "./pages/RGPD";
 import CGU from "./pages/CGU";
 import AdminAudits from "./pages/AdminAudits";
+import AuditReport from "./pages/AuditReport";
 import ClientAudits from "./pages/ClientAudits";
 import NotFound from "./pages/NotFound";
 
@@ -54,6 +55,7 @@ const App = () => {
             <Route path="/legal/rgpd" element={<RGPD />} />
             <Route path="/legal/cgu" element={<CGU />} />
             <Route path="/admin/audits" element={<AdminAudits />} />
+            <Route path="/audit-report/:id" element={<AuditReport />} />
             <Route path="/client/audits" element={<ClientAudits />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
