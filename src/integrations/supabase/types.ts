@@ -364,15 +364,20 @@ export type Database = {
           created_at: string
           description: string | null
           email_contact: string | null
+          employee_count: number | null
           employees: number | null
+          ia_usage: Json | null
           id: string
           industry: string | null
           last_news: Json | null
+          marketing_channels: Json | null
           name: string
           phone_contact: string | null
           postal_code: string | null
+          revenue_estimate: string | null
           siren: string | null
           siret: string | null
+          size_estimate: string | null
           socials: Json | null
           tech_stack: string[] | null
           updated_at: string
@@ -386,15 +391,20 @@ export type Database = {
           created_at?: string
           description?: string | null
           email_contact?: string | null
+          employee_count?: number | null
           employees?: number | null
+          ia_usage?: Json | null
           id?: string
           industry?: string | null
           last_news?: Json | null
+          marketing_channels?: Json | null
           name: string
           phone_contact?: string | null
           postal_code?: string | null
+          revenue_estimate?: string | null
           siren?: string | null
           siret?: string | null
+          size_estimate?: string | null
           socials?: Json | null
           tech_stack?: string[] | null
           updated_at?: string
@@ -408,21 +418,65 @@ export type Database = {
           created_at?: string
           description?: string | null
           email_contact?: string | null
+          employee_count?: number | null
           employees?: number | null
+          ia_usage?: Json | null
           id?: string
           industry?: string | null
           last_news?: Json | null
+          marketing_channels?: Json | null
           name?: string
           phone_contact?: string | null
           postal_code?: string | null
+          revenue_estimate?: string | null
           siren?: string | null
           siret?: string | null
+          size_estimate?: string | null
           socials?: Json | null
           tech_stack?: string[] | null
           updated_at?: string
           website?: string | null
         }
         Relationships: []
+      }
+      company_audits: {
+        Row: {
+          audit_result_id: string | null
+          company_id: string | null
+          created_at: string | null
+          id: string
+          pre_audit_id: string | null
+        }
+        Insert: {
+          audit_result_id?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          id?: string
+          pre_audit_id?: string | null
+        }
+        Update: {
+          audit_result_id?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          id?: string
+          pre_audit_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_audits_audit_result_id_fkey"
+            columns: ["audit_result_id"]
+            isOneToOne: false
+            referencedRelation: "audit_results"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_audits_pre_audit_id_fkey"
+            columns: ["pre_audit_id"]
+            isOneToOne: true
+            referencedRelation: "pre_audits"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       deltas: {
         Row: {
@@ -514,6 +568,47 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      messages: {
+        Row: {
+          audit_id: string | null
+          company_id: string | null
+          content: string
+          created_at: string | null
+          id: string
+          sender_email: string
+          status: string | null
+          subject: string | null
+        }
+        Insert: {
+          audit_id?: string | null
+          company_id?: string | null
+          content: string
+          created_at?: string | null
+          id?: string
+          sender_email: string
+          status?: string | null
+          subject?: string | null
+        }
+        Update: {
+          audit_id?: string | null
+          company_id?: string | null
+          content?: string
+          created_at?: string | null
+          id?: string
+          sender_email?: string
+          status?: string | null
+          subject?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_audit_id_fkey"
+            columns: ["audit_id"]
+            isOneToOne: false
+            referencedRelation: "audit_results"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       missions: {
         Row: {
