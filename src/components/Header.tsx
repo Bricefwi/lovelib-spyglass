@@ -5,11 +5,13 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
 import logoImotion from "@/assets/logo-imotion.png";
+import { useUserRole } from "@/hooks/useUserRole";
 
 export const Header = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const { isAdmin, isClient } = useUserRole();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -28,12 +30,18 @@ export const Header = () => {
     navigate("/");
   };
 
-  const navigation = [
+  const baseNavigation = [
     { name: "Accueil", href: "/" },
     { name: "Solutions", href: "/solutions" },
     { name: "Blog", href: "/blog" },
     { name: "FAQ", href: "/faq" },
     { name: "Contact", href: "/contact" },
+  ];
+
+  const navigation = [
+    ...baseNavigation,
+    ...(isAdmin ? [{ name: "Admin", href: "/admin/audits" }] : []),
+    ...(isClient ? [{ name: "Mes Audits", href: "/client/audits" }] : []),
   ];
 
   return (

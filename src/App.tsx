@@ -19,6 +19,8 @@ import Support from "./pages/Support";
 import MentionsLegales from "./pages/MentionsLegales";
 import RGPD from "./pages/RGPD";
 import CGU from "./pages/CGU";
+import AdminAudits from "./pages/AdminAudits";
+import ClientAudits from "./pages/ClientAudits";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -51,6 +53,8 @@ const App = () => {
             <Route path="/legal/mentions" element={<MentionsLegales />} />
             <Route path="/legal/rgpd" element={<RGPD />} />
             <Route path="/legal/cgu" element={<CGU />} />
+            <Route path="/admin/audits" element={<AdminAudits />} />
+            <Route path="/client/audits" element={<ClientAudits />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
