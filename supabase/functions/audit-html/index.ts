@@ -276,7 +276,11 @@ serve(async (req) => {
 </html>`;
 
     return new Response(html, {
-      headers: { ...corsHeaders, "Content-Type": "text/html; charset=utf-8" },
+      status: 200,
+      headers: { 
+        "Content-Type": "text/html; charset=utf-8",
+        "Access-Control-Allow-Origin": "*",
+      },
     });
   } catch (e) {
     console.error("Error in audit-html:", e);
