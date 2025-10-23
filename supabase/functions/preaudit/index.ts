@@ -17,8 +17,24 @@ serve(async (req) => {
     );
 
     const domain = url.replace(/^https?:\/\//,'').replace(/^www\./,'').split('/')[0];
+    const websiteUrl = `https://${domain}`;
     
-    const { data: company } = await supabase.from('companies').upsert({ domain, website: `https://${domain}` }, { onConflict: 'domain' }).select().single();
+    // Chercher d'abord une company existante avec ce website
+    let company: any;
+    const { data: existingCompany } = await supabase.from('companies').select().eq('website', websiteUrl).maybeSingle();
+    
+    if (existingCompany) {
+      company = existingCompany;
+    } else {
+      // Créer une nouvelle company avec un nom temporaire
+      const { data: newCompany } = await supabase.from('companies').insert({ 
+        name: domain, 
+        website: websiteUrl,
+        city: 'Unknown' // required field
+      }).select().single();
+      company = newCompany;
+    }
+    
     const { data: pre } = await supabase.from('pre_audits').insert({ company_id: company.id, url, status: 'collecting', timeline: [{at: new Date().toISOString(), label: 'Création'}] }).select().single();
 
     const prompt = `Analyse Marketing & Commercial de ${domain} en JSON avec summary, company{name,country,industry}, marketing{channels,stack}, sales{motions}, competitors[], kpis{current,suggested}, scenarios[{type,benefits,risks,prob_succes,effort{jours,budget_eur}}]`;
