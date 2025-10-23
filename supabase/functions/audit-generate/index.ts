@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
 
 const corsHeaders = {
@@ -33,7 +33,7 @@ serve(async (req) => {
 
     console.log("Generating audit for pre_audit_id:", pre_audit_id);
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     // 1) Récupération consolidated
     const { data: preAudit, error: fetchError } = await supabase
@@ -195,24 +195,21 @@ ${(data.sources||[]).map((s:any)=>`- [${s.label||s.url}](${s.url}) • fiabilit�
 
     // 5) Envoi email avec le rapport
     try {
-      const emailResponse = await fetch(`${SUPABASE_URL}/functions/v1/send-audit-results`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
-        },
-        body: JSON.stringify({
+      console.log("Calling send-audit-results function...");
+      
+      const { data: emailData, error: emailError } = await supabase.functions.invoke('send-audit-results', {
+        body: {
           auditResultId: saved.id,
           website: targetUrl,
           reportMarkdown: md,
           scores: data.scores
-        })
+        }
       });
 
-      if (!emailResponse.ok) {
-        console.error("Failed to send email:", await emailResponse.text());
+      if (emailError) {
+        console.error("Failed to send email:", emailError);
       } else {
-        console.log("Email sent successfully");
+        console.log("Email sent successfully:", emailData);
       }
     } catch (emailError) {
       console.error("Email sending error:", emailError);
