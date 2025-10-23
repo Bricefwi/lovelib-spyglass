@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { z } from "zod";
+import { useUserRole } from "@/hooks/useUserRole";
 
 const emailSchema = z.string().email("Email invalide");
 const passwordSchema = z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères");
@@ -19,23 +20,33 @@ export default function Auth() {
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { role, loading: roleLoading } = useUserRole();
 
   useEffect(() => {
-    // Check if user is already logged in
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
+    // Check if user is already logged in and redirect based on role
+    if (!roleLoading && role) {
+      if (role === 'admin') {
+        navigate("/admin/audits");
+      } else if (role === 'client') {
+        navigate("/client/audits");
+      } else {
         navigate("/");
       }
-    });
+    }
+  }, [role, roleLoading, navigate]);
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session && event === "SIGNED_IN") {
-        navigate("/onboarding");
+        // Wait a bit for role to be fetched, then redirect will happen via the first useEffect
+        setTimeout(() => {
+          // Trigger role check
+        }, 500);
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, []);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();

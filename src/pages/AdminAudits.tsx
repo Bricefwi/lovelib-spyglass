@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -7,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Loader2, RefreshCw, Eye, Mail } from "lucide-react";
+import { useUserRole } from "@/hooks/useUserRole";
 
 interface PreAudit {
   id: string;
@@ -26,6 +28,16 @@ export default function AdminAudits() {
   const [audits, setAudits] = useState<PreAudit[]>([]);
   const [loading, setLoading] = useState(true);
   const [regenerating, setRegenerating] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const { isAdmin, loading: roleLoading } = useUserRole();
+
+  useEffect(() => {
+    // Protect admin route
+    if (!roleLoading && !isAdmin) {
+      navigate("/");
+      toast.error("Accès non autorisé");
+    }
+  }, [isAdmin, roleLoading, navigate]);
 
   useEffect(() => {
     fetchAudits();

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -7,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Loader2, Eye, Download } from "lucide-react";
+import { useUserRole } from "@/hooks/useUserRole";
 
 interface AuditResult {
   id: string;
@@ -23,6 +25,16 @@ interface AuditResult {
 export default function ClientAudits() {
   const [audits, setAudits] = useState<AuditResult[]>([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const { role, loading: roleLoading } = useUserRole();
+
+  useEffect(() => {
+    // Protect client route - require authentication
+    if (!roleLoading && !role) {
+      navigate("/auth");
+      toast.error("Veuillez vous connecter");
+    }
+  }, [role, roleLoading, navigate]);
 
   useEffect(() => {
     fetchAudits();
