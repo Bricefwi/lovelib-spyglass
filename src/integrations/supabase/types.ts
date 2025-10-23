@@ -759,6 +759,7 @@ export type Database = {
       pre_audits: {
         Row: {
           company_guess: string | null
+          company_id: string | null
           confidence: number | null
           consolidated: Json | null
           created_at: string | null
@@ -776,6 +777,7 @@ export type Database = {
         }
         Insert: {
           company_guess?: string | null
+          company_id?: string | null
           confidence?: number | null
           consolidated?: Json | null
           created_at?: string | null
@@ -793,6 +795,7 @@ export type Database = {
         }
         Update: {
           company_guess?: string | null
+          company_id?: string | null
           confidence?: number | null
           consolidated?: Json | null
           created_at?: string | null
@@ -808,7 +811,15 @@ export type Database = {
           updated_at?: string | null
           url?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "pre_audits_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
