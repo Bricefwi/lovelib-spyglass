@@ -143,9 +143,10 @@ export default function AdminAudits() {
 
   const forceConsolidation = async (preAuditId: string) => {
     try {
-      const { error } = await supabase.functions.invoke("consolidate", {
-        body: { pre_audit_id: preAuditId },
-      });
+      const { error } = await supabase.functions.invoke(
+        `consolidate?pre_audit_id=${preAuditId}`,
+        { method: "GET" }
+      );
 
       if (error) throw error;
       toast.success("Consolidation forcée avec succès");
