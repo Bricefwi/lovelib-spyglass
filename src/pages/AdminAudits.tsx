@@ -38,7 +38,7 @@ interface PreAudit {
   confidence: number | null;
   created_at: string;
   timeline?: Array<{at: string; label: string}>;
-  company?: {domain?: string; name?: string};
+  company?: {website?: string; name?: string};
 }
 
 const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
@@ -84,7 +84,7 @@ export default function AdminAudits() {
         .from("pre_audits")
         .select(`
           *,
-          company:companies(domain, name)
+          company:companies(website, name)
         `)
         .order("created_at", { ascending: false });
 
@@ -209,7 +209,7 @@ export default function AdminAudits() {
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
                     <h3 className="font-semibold text-lg">
-                      {audit.company?.name || audit.company?.domain || audit.domain || "Entreprise"}
+                      {audit.company?.name || audit.company?.website || audit.domain || "Entreprise"}
                     </h3>
                     <Badge variant={getStatusConfig(audit.status).variant}>
                       {getStatusConfig(audit.status).label}
