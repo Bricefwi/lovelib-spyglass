@@ -141,21 +141,6 @@ export default function AdminAudits() {
     }
   };
 
-  const forceConsolidation = async (preAuditId: string) => {
-    try {
-      const { error } = await supabase.functions.invoke(
-        `consolidate?pre_audit_id=${preAuditId}`,
-        { method: "GET" }
-      );
-
-      if (error) throw error;
-      toast.success("Consolidation forcée avec succès");
-      fetchAudits();
-    } catch (error) {
-      console.error("Error forcing consolidation:", error);
-      toast.error("Erreur lors de la consolidation");
-    }
-  };
 
   const viewReport = (preAuditId: string) => {
     window.open(`/audit-report/${preAuditId}`, "_blank");
@@ -235,13 +220,6 @@ export default function AdminAudits() {
                       Voir
                     </Button>
                   )}
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => forceConsolidation(audit.id)}
-                  >
-                    Consolider
-                  </Button>
                   <Button
                     variant="default"
                     size="sm"
