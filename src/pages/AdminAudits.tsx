@@ -207,7 +207,7 @@ export default function AdminAudits() {
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  {(audit.status === "pre_report_ready" || audit.status === "sent") && (
+                  {(audit.status === "pre_report_ready" || audit.status === "sent" || audit.status === "consolidated") && (
                     <Button
                       variant="outline"
                       size="sm"
