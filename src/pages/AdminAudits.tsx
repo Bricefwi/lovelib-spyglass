@@ -63,6 +63,7 @@ export default function AdminAudits() {
   const [regenerating, setRegenerating] = useState<string | null>(null);
   const [expandedAudit, setExpandedAudit] = useState<string | null>(null);
   const [auditSteps, setAuditSteps] = useState<Record<string, AuditStep[]>>({});
+  const [auditsWithReports, setAuditsWithReports] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
   const { isAdmin, loading: roleLoading } = useUserRole();
 
@@ -90,6 +91,18 @@ export default function AdminAudits() {
 
       if (error) throw error;
       setAudits(data as any || []);
+      
+      // Vérifier quels audits ont des rapports
+      if (data && data.length > 0) {
+        const { data: reports } = await supabase
+          .from("audit_reports")
+          .select("pre_audit_id")
+          .in("pre_audit_id", data.map((a: any) => a.id));
+        
+        if (reports) {
+          setAuditsWithReports(new Set(reports.map(r => r.pre_audit_id)));
+        }
+      }
     } catch (error) {
       console.error("Error fetching audits:", error);
       toast.error("Erreur lors du chargement des audits");
@@ -232,7 +245,7 @@ export default function AdminAudits() {
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  {audit.status === "consolidated" && (
+                  {auditsWithReports.has(audit.id) && (
                     <Button
                       variant="outline"
                       size="sm"
