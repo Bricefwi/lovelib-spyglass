@@ -34,7 +34,7 @@ interface PreAudit {
   url: string;
   domain: string | null;
   company_guess: string | null;
-  status: AuditStatus;
+  status: string;
   confidence: number | null;
   created_at: string;
   last_step: string | null;
@@ -42,15 +42,20 @@ interface PreAudit {
   total_steps: number;
 }
 
-const STATUS_CONFIG: Record<AuditStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   new: { label: "Nouveau", variant: "secondary" },
   collecting: { label: "Collecte web", variant: "default" },
   ai_running: { label: "Analyse IA en cours", variant: "default" },
   consolidating: { label: "Consolidation", variant: "default" },
+  consolidated: { label: "Consolidé", variant: "default" },
   pre_report_ready: { label: "Pré-rapport prêt", variant: "outline" },
   sent: { label: "Envoyé", variant: "default" },
   needs_review: { label: "À réviser", variant: "outline" },
   error: { label: "Erreur", variant: "destructive" },
+};
+
+const getStatusConfig = (status: string) => {
+  return STATUS_CONFIG[status] || { label: status, variant: "secondary" as const };
 };
 
 export default function AdminAudits() {
@@ -178,8 +183,8 @@ export default function AdminAudits() {
                     <h3 className="font-semibold text-lg">
                       {audit.company_guess || audit.domain || "Entreprise"}
                     </h3>
-                    <Badge variant={STATUS_CONFIG[audit.status].variant}>
-                      {STATUS_CONFIG[audit.status].label}
+                    <Badge variant={getStatusConfig(audit.status).variant}>
+                      {getStatusConfig(audit.status).label}
                     </Badge>
                     {audit.confidence !== null && (
                       <Badge variant="outline">
