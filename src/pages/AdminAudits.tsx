@@ -89,7 +89,9 @@ export default function AdminAudits() {
   };
 
   const viewReport = (preAuditId: string) => {
-    window.open(`/api/audit-html?pre_audit_id=${preAuditId}`, "_blank");
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const functionUrl = `${supabaseUrl}/functions/v1/audit-html?pre_audit_id=${preAuditId}`;
+    window.open(functionUrl, "_blank");
   };
 
   const getStatusBadge = (status: string) => {
