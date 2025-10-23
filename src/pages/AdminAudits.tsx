@@ -37,9 +37,8 @@ interface PreAudit {
   status: string;
   confidence: number | null;
   created_at: string;
-  last_step: string | null;
-  steps_done: number;
-  total_steps: number;
+  timeline?: Array<{at: string; label: string}>;
+  company?: {domain?: string; name?: string};
 }
 
 const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
@@ -82,12 +81,15 @@ export default function AdminAudits() {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from("v_admin_audits")
-        .select("*")
+        .from("pre_audits")
+        .select(`
+          *,
+          company:companies(domain, name)
+        `)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setAudits(data as PreAudit[] || []);
+      setAudits(data as any || []);
     } catch (error) {
       console.error("Error fetching audits:", error);
       toast.error("Erreur lors du chargement des audits");
@@ -123,15 +125,22 @@ export default function AdminAudits() {
     }
   };
 
-  const regenerateAudit = async (preAuditId: string) => {
+  const regenerateAudit = async (audit: any) => {
     try {
-      setRegenerating(preAuditId);
-      const { error } = await supabase.functions.invoke("preaudit", {
-        body: { pre_audit_id: preAuditId },
+      setRegenerating(audit.id);
+      const { data, error } = await supabase.functions.invoke("preaudit", {
+        body: { url: audit.url },
       });
 
       if (error) throw error;
-      toast.success("Analyse relancée avec succès");
+      
+      if (data?.ok && data?.report_id) {
+        toast.success("Analyse terminée");
+        window.open(`/audit-report/${data.report_id}`, "_blank");
+      } else {
+        toast.success("Analyse relancée");
+      }
+      
       fetchAudits();
     } catch (error) {
       console.error("Error regenerating audit:", error);
@@ -142,8 +151,26 @@ export default function AdminAudits() {
   };
 
 
-  const viewReport = (preAuditId: string) => {
-    window.open(`/audit-report/${preAuditId}`, "_blank");
+  const viewReport = async (preAuditId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("audit_reports")
+        .select("id")
+        .eq("pre_audit_id", preAuditId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error || !data) {
+        toast.error("Aucun rapport disponible");
+        return;
+      }
+
+      window.open(`/audit-report/${data.id}`, "_blank");
+    } catch (error) {
+      console.error("Error viewing report:", error);
+      toast.error("Erreur lors de l'ouverture du rapport");
+    }
   };
 
   if (loading || roleLoading) {
@@ -154,9 +181,7 @@ export default function AdminAudits() {
     );
   }
 
-  const readyAudits = audits.filter(a => 
-    a.status === "pre_report_ready" || 
-    a.status === "sent" || 
+  const readyAudits = audits.filter((a: any) => 
     a.status === "consolidated"
   );
 
@@ -184,12 +209,12 @@ export default function AdminAudits() {
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
                     <h3 className="font-semibold text-lg">
-                      {audit.company_guess || audit.domain || "Entreprise"}
+                      {audit.company?.name || audit.company?.domain || audit.domain || "Entreprise"}
                     </h3>
                     <Badge variant={getStatusConfig(audit.status).variant}>
                       {getStatusConfig(audit.status).label}
                     </Badge>
-                    {audit.confidence !== null && (
+                    {audit.confidence !== null && audit.confidence > 0 && (
                       <Badge variant="outline">
                         Confiance: {Math.round(audit.confidence)}%
                       </Badge>
@@ -201,16 +226,13 @@ export default function AdminAudits() {
                       Créé le {new Date(audit.created_at).toLocaleDateString("fr-FR")} à{" "}
                       {new Date(audit.created_at).toLocaleTimeString("fr-FR")}
                     </span>
-                    {audit.last_step && (
-                      <span>Dernière étape : {audit.last_step}</span>
+                    {audit.timeline && audit.timeline.length > 0 && (
+                      <span>Timeline: {audit.timeline.length} étapes</span>
                     )}
-                    <span>
-                      {audit.steps_done} / {audit.total_steps} étapes terminées
-                    </span>
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  {(audit.status === "pre_report_ready" || audit.status === "sent" || audit.status === "consolidated") && (
+                  {audit.status === "consolidated" && (
                     <Button
                       variant="outline"
                       size="sm"
@@ -223,7 +245,7 @@ export default function AdminAudits() {
                   <Button
                     variant="default"
                     size="sm"
-                    onClick={() => regenerateAudit(audit.id)}
+                    onClick={() => regenerateAudit(audit)}
                     disabled={regenerating === audit.id}
                   >
                     {regenerating === audit.id ? (
@@ -235,55 +257,39 @@ export default function AdminAudits() {
                       </>
                     )}
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => toggleTimeline(audit.id)}
-                  >
-                    {expandedAudit === audit.id ? (
-                      <ChevronUp className="h-4 w-4" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4" />
-                    )}
-                  </Button>
+                  {audit.timeline && audit.timeline.length > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => toggleTimeline(audit.id)}
+                    >
+                      {expandedAudit === audit.id ? (
+                        <ChevronUp className="h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
+                      )}
+                    </Button>
+                  )}
                 </div>
               </div>
 
-              {expandedAudit === audit.id && (
+              {expandedAudit === audit.id && audit.timeline && (
                 <div className="mt-4 pt-4 border-t">
-                  <h4 className="font-semibold mb-3">Timeline des étapes</h4>
-                  {auditSteps[audit.id]?.length > 0 ? (
+                  <h4 className="font-semibold mb-3">Timeline</h4>
+                  {audit.timeline.length > 0 ? (
                     <div className="space-y-2">
-                      {auditSteps[audit.id].map((step) => (
-                        <div key={step.id} className="grid grid-cols-[140px_100px_1fr] gap-4 items-start text-sm">
-                          <div className="text-muted-foreground font-mono text-xs">
-                            {new Date(step.started_at).toLocaleString("fr-FR")}
+                      {audit.timeline.map((entry: any, idx: number) => (
+                        <div key={idx} className="flex gap-4 items-start text-sm">
+                          <div className="text-muted-foreground font-mono text-xs min-w-[140px]">
+                            {new Date(entry.at).toLocaleString("fr-FR")}
                           </div>
-                          <Badge
-                            variant={
-                              step.status === "done"
-                                ? "default"
-                                : step.status === "error"
-                                ? "destructive"
-                                : "secondary"
-                            }
-                          >
-                            {step.status}
-                          </Badge>
-                          <div>
-                            <div className="font-semibold">{step.step}</div>
-                            {step.message && (
-                              <div className="text-muted-foreground text-xs mt-1">
-                                {step.message}
-                              </div>
-                            )}
-                          </div>
+                          <div className="font-medium">{entry.label}</div>
                         </div>
                       ))}
                     </div>
                   ) : (
                     <p className="text-sm text-muted-foreground">
-                      Aucune étape enregistrée pour l'instant
+                      Aucune entrée dans la timeline
                     </p>
                   )}
                 </div>

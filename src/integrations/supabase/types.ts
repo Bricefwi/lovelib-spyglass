@@ -77,6 +77,45 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_reports: {
+        Row: {
+          created_at: string | null
+          html: string | null
+          id: string
+          pre_audit_id: string | null
+          title: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          html?: string | null
+          id?: string
+          pre_audit_id?: string | null
+          title?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          html?: string | null
+          id?: string
+          pre_audit_id?: string | null
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_reports_pre_audit_id_fkey"
+            columns: ["pre_audit_id"]
+            isOneToOne: false
+            referencedRelation: "pre_audits"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "audit_reports_pre_audit_id_fkey"
+            columns: ["pre_audit_id"]
+            isOneToOne: false
+            referencedRelation: "v_admin_audits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_results: {
         Row: {
           confidence: number | null
@@ -428,6 +467,7 @@ export type Database = {
           email_contact: string | null
           employee_count: number | null
           employees: number | null
+          financials: Json | null
           ia_usage: Json | null
           id: string
           industry: string | null
@@ -455,6 +495,7 @@ export type Database = {
           email_contact?: string | null
           employee_count?: number | null
           employees?: number | null
+          financials?: Json | null
           ia_usage?: Json | null
           id?: string
           industry?: string | null
@@ -482,6 +523,7 @@ export type Database = {
           email_contact?: string | null
           employee_count?: number | null
           employees?: number | null
+          financials?: Json | null
           ia_usage?: Json | null
           id?: string
           industry?: string | null
@@ -720,12 +762,15 @@ export type Database = {
           confidence: number | null
           consolidated: Json | null
           created_at: string | null
+          created_by: string | null
           domain: string | null
           id: string
           last_step: string | null
           raw_sources: Json | null
           report_html_url: string | null
+          sources_raw: Json | null
           status: string
+          timeline: Json | null
           updated_at: string | null
           url: string
         }
@@ -734,12 +779,15 @@ export type Database = {
           confidence?: number | null
           consolidated?: Json | null
           created_at?: string | null
+          created_by?: string | null
           domain?: string | null
           id?: string
           last_step?: string | null
           raw_sources?: Json | null
           report_html_url?: string | null
+          sources_raw?: Json | null
           status?: string
+          timeline?: Json | null
           updated_at?: string | null
           url: string
         }
@@ -748,12 +796,15 @@ export type Database = {
           confidence?: number | null
           consolidated?: Json | null
           created_at?: string | null
+          created_by?: string | null
           domain?: string | null
           id?: string
           last_step?: string | null
           raw_sources?: Json | null
           report_html_url?: string | null
+          sources_raw?: Json | null
           status?: string
+          timeline?: Json | null
           updated_at?: string | null
           url?: string
         }
