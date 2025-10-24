@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Loader2, RefreshCw, Eye, ChevronDown, ChevronUp } from "lucide-react";
+import { Loader2, RefreshCw, Eye, ChevronDown, ChevronUp, Mail } from "lucide-react";
 import { useUserRole } from "@/hooks/useUserRole";
 
 type AuditStatus = 
@@ -61,6 +61,7 @@ export default function AdminAudits() {
   const [audits, setAudits] = useState<PreAudit[]>([]);
   const [loading, setLoading] = useState(true);
   const [regenerating, setRegenerating] = useState<string | null>(null);
+  const [sendingEmail, setSendingEmail] = useState<string | null>(null);
   const [expandedAudit, setExpandedAudit] = useState<string | null>(null);
   const [auditSteps, setAuditSteps] = useState<Record<string, AuditStep[]>>({});
   const [auditsWithReports, setAuditsWithReports] = useState<Set<string>>(new Set());
@@ -163,6 +164,44 @@ export default function AdminAudits() {
     }
   };
 
+  const sendEmailReport = async (audit: PreAudit) => {
+    try {
+      setSendingEmail(audit.id);
+      
+      // Récupérer le rapport pour cet audit
+      const { data: report } = await supabase
+        .from('audit_reports')
+        .select('id')
+        .eq('pre_audit_id', audit.id)
+        .single();
+
+      if (!report) {
+        toast.error("Aucun rapport trouvé pour cet audit");
+        return;
+      }
+
+      // Envoyer l'email
+      const { error } = await supabase.functions.invoke('send-audit-results', {
+        body: {
+          auditResultId: audit.id,
+          website: audit.url,
+          reportMarkdown: '',
+          scores: null,
+          reportId: report.id
+        }
+      });
+
+      if (error) throw error;
+      
+      toast.success("Email envoyé avec succès à patrice.simion@gmail.com");
+    } catch (error: any) {
+      console.error('Error sending email:', error);
+      toast.error("Erreur lors de l'envoi de l'email");
+    } finally {
+      setSendingEmail(null);
+    }
+  };
+
 
   const viewReport = async (preAuditId: string) => {
     try {
@@ -246,14 +285,29 @@ export default function AdminAudits() {
                 </div>
                 <div className="flex gap-2">
                   {auditsWithReports.has(audit.id) && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => viewReport(audit.id)}
-                    >
-                      <Eye className="h-4 w-4 mr-2" />
-                      Voir
-                    </Button>
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => viewReport(audit.id)}
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        Voir
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => sendEmailReport(audit)}
+                        disabled={sendingEmail === audit.id}
+                      >
+                        {sendingEmail === audit.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        ) : (
+                          <Mail className="h-4 w-4 mr-2" />
+                        )}
+                        Envoyer
+                      </Button>
+                    </>
                   )}
                   <Button
                     variant="default"
