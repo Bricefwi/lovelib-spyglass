@@ -35,11 +35,18 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // 1) Récupération consolidated
+    // 1) Récupération consolidated et report_id
     const { data: preAudit, error: fetchError } = await supabase
       .from("pre_audits")
       .select("consolidated,confidence,url")
       .eq("id", pre_audit_id)
+      .single();
+
+    // 2) Récupérer le report_id associé
+    const { data: reportData } = await supabase
+      .from("audit_reports")
+      .select("id")
+      .eq("pre_audit_id", pre_audit_id)
       .single();
 
     if (fetchError || !preAudit) {
@@ -202,7 +209,8 @@ ${(data.sources||[]).map((s:any)=>`- [${s.label||s.url}](${s.url}) • fiabilit�
           auditResultId: saved.id,
           website: targetUrl,
           reportMarkdown: md,
-          scores: data.scores
+          scores: data.scores,
+          reportId: reportData?.id
         }
       });
 

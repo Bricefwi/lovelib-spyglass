@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -13,6 +14,7 @@ interface AuditResultRequest {
   website: string;
   reportMarkdown: string;
   scores: any;
+  reportId?: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -21,13 +23,53 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { auditResultId, website, reportMarkdown, scores }: AuditResultRequest = await req.json();
+    const { auditResultId, website, reportMarkdown, scores, reportId }: AuditResultRequest = await req.json();
 
-    console.log(`Sending audit results for ${website} - ID: ${auditResultId}`);
+    console.log(`Sending audit results for ${website} - ID: ${auditResultId}, Report ID: ${reportId}`);
 
     const subject = `🎯 Votre Pré-Audit Digital IMOTION - ${website}`;
     
-    // Convertir les scores en HTML
+    // Récupérer le rapport HTML depuis la base de données si un reportId est fourni
+    let reportHtml = '';
+    if (reportId) {
+      const supabase = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+      );
+
+      const { data: report } = await supabase
+        .from('audit_reports')
+        .select('html')
+        .eq('id', reportId)
+        .single();
+
+      if (report?.html) {
+        reportHtml = report.html;
+        console.log('HTML report fetched successfully');
+      }
+    }
+
+    // Si on a un rapport HTML complet, l'utiliser directement pour l'email
+    if (reportHtml) {
+      const emailResponse = await resend.emails.send({
+        from: "IMOTION Tests <onboarding@resend.dev>",
+        to: ["patrice.simion@gmail.com"],
+        subject: subject,
+        html: reportHtml,
+      });
+
+      console.log("Email sent successfully:", emailResponse);
+
+      return new Response(JSON.stringify({ success: true, emailId: emailResponse.data?.id }), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders,
+        },
+      });
+    }
+
+    // Sinon, utiliser l'ancien format avec Markdown (fallback)
     const scoresHtml = scores ? `
       <div class="score-card">
         <h3>📊 Scores de Maturité Digitale</h3>
