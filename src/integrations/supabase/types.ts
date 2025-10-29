@@ -38,6 +38,175 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_orchestrations: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          current_phase: string | null
+          error: string | null
+          id: string
+          n8n_execution_id: string | null
+          phases: Json | null
+          pre_audit_id: string | null
+          progress: number | null
+          started_at: string | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          current_phase?: string | null
+          error?: string | null
+          id?: string
+          n8n_execution_id?: string | null
+          phases?: Json | null
+          pre_audit_id?: string | null
+          progress?: number | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          current_phase?: string | null
+          error?: string | null
+          id?: string
+          n8n_execution_id?: string | null
+          phases?: Json | null
+          pre_audit_id?: string | null
+          progress?: number | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_orchestrations_pre_audit_id_fkey"
+            columns: ["pre_audit_id"]
+            isOneToOne: false
+            referencedRelation: "pre_audits"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_orchestrations_pre_audit_id_fkey"
+            columns: ["pre_audit_id"]
+            isOneToOne: false
+            referencedRelation: "v_admin_audits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_phases: {
+        Row: {
+          agents: Json | null
+          completed_at: string | null
+          created_at: string | null
+          error: string | null
+          id: string
+          orchestration_id: string | null
+          phase_name: string
+          phase_order: number
+          results: Json | null
+          started_at: string | null
+          status: string
+        }
+        Insert: {
+          agents?: Json | null
+          completed_at?: string | null
+          created_at?: string | null
+          error?: string | null
+          id?: string
+          orchestration_id?: string | null
+          phase_name: string
+          phase_order: number
+          results?: Json | null
+          started_at?: string | null
+          status?: string
+        }
+        Update: {
+          agents?: Json | null
+          completed_at?: string | null
+          created_at?: string | null
+          error?: string | null
+          id?: string
+          orchestration_id?: string | null
+          phase_name?: string
+          phase_order?: number
+          results?: Json | null
+          started_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_phases_orchestration_id_fkey"
+            columns: ["orchestration_id"]
+            isOneToOne: false
+            referencedRelation: "agent_orchestrations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_results: {
+        Row: {
+          agent_name: string
+          agent_type: string
+          completed_at: string | null
+          confidence: number | null
+          created_at: string | null
+          duration_ms: number | null
+          error: string | null
+          id: string
+          input: Json | null
+          output: Json | null
+          phase_id: string | null
+          sources: Json | null
+          started_at: string | null
+          status: string
+        }
+        Insert: {
+          agent_name: string
+          agent_type: string
+          completed_at?: string | null
+          confidence?: number | null
+          created_at?: string | null
+          duration_ms?: number | null
+          error?: string | null
+          id?: string
+          input?: Json | null
+          output?: Json | null
+          phase_id?: string | null
+          sources?: Json | null
+          started_at?: string | null
+          status?: string
+        }
+        Update: {
+          agent_name?: string
+          agent_type?: string
+          completed_at?: string | null
+          confidence?: number | null
+          created_at?: string | null
+          duration_ms?: number | null
+          error?: string | null
+          id?: string
+          input?: Json | null
+          output?: Json | null
+          phase_id?: string | null
+          sources?: Json | null
+          started_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_results_phase_id_fkey"
+            columns: ["phase_id"]
+            isOneToOne: false
+            referencedRelation: "agent_phases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
