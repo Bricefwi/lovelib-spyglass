@@ -109,58 +109,68 @@ serve(async (req) => {
     console.log('Calling n8n webhook:', n8nWebhookUrl);
     console.log('Payload:', JSON.stringify(n8nPayload, null, 2));
 
-    const n8nResponse = await fetch(n8nWebhookUrl, {
+    // Appel asynchrone à n8n - ne pas attendre la réponse
+    fetch(n8nWebhookUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(n8nPayload),
-    });
+    })
+      .then(async (response) => {
+        const responseText = await response.text();
+        console.log('n8n response status:', response.status);
+        console.log('n8n response body:', responseText);
 
-    const responseText = await n8nResponse.text();
-    console.log('n8n response status:', n8nResponse.status);
-    console.log('n8n response body:', responseText);
+        if (!response.ok) {
+          console.error('n8n webhook error:', responseText);
+          
+          // Update orchestration status to error
+          await supabase
+            .from('agent_orchestrations')
+            .update({
+              status: 'error',
+              error: `n8n webhook failed (${response.status}): ${responseText}`,
+              completed_at: new Date().toISOString()
+            })
+            .eq('id', orchestration.id);
+        } else {
+          let n8nResult;
+          try {
+            n8nResult = JSON.parse(responseText);
+          } catch (e) {
+            n8nResult = { raw: responseText };
+          }
+          
+          console.log('n8n webhook response:', n8nResult);
 
-    if (!n8nResponse.ok) {
-      console.error('n8n webhook error:', responseText);
-      
-      // Update orchestration status to error
-      await supabase
-        .from('agent_orchestrations')
-        .update({
-          status: 'error',
-          error: `n8n webhook failed (${n8nResponse.status}): ${responseText}`,
-          completed_at: new Date().toISOString()
-        })
-        .eq('id', orchestration.id);
-
-      throw new Error(`n8n webhook failed: ${responseText}`);
-    }
-
-    let n8nResult;
-    try {
-      n8nResult = JSON.parse(responseText);
-    } catch (e) {
-      n8nResult = { raw: responseText };
-    }
-    
-    console.log('n8n webhook response:', n8nResult);
-
-    // Update orchestration with n8n execution ID
-    await supabase
-      .from('agent_orchestrations')
-      .update({
-        n8n_execution_id: n8nResult.executionId || n8nResult.id || 'pending'
+          // Update orchestration with n8n execution ID
+          await supabase
+            .from('agent_orchestrations')
+            .update({
+              n8n_execution_id: n8nResult.executionId || n8nResult.id || 'pending'
+            })
+            .eq('id', orchestration.id);
+        }
       })
-      .eq('id', orchestration.id);
+      .catch(async (error) => {
+        console.error('n8n webhook fetch error:', error);
+        await supabase
+          .from('agent_orchestrations')
+          .update({
+            status: 'error',
+            error: `n8n webhook unreachable: ${error.message}`,
+            completed_at: new Date().toISOString()
+          })
+          .eq('id', orchestration.id);
+      });
 
+    // Répondre immédiatement au client
     return new Response(
       JSON.stringify({
         success: true,
         orchestrationId: orchestration.id,
-        n8nExecutionId: n8nResult.executionId || n8nResult.id,
-        message: 'Multi-agent orchestration started successfully via n8n',
-        n8nResponse: n8nResult
+        message: 'Multi-agent orchestration started successfully. n8n is processing asynchronously.',
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
