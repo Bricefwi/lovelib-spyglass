@@ -23,8 +23,13 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const n8nWebhookUrl = Deno.env.get('N8N_WEBHOOK_URL');
+    
+    console.log('=== N8N Configuration Check ===');
+    console.log('N8N_WEBHOOK_URL from env:', n8nWebhookUrl);
+    console.log('N8N_WEBHOOK_URL is defined:', !!n8nWebhookUrl);
 
     if (!n8nWebhookUrl) {
+      console.error('CRITICAL: N8N_WEBHOOK_URL not configured in secrets');
       throw new Error('N8N_WEBHOOK_URL not configured');
     }
 
@@ -106,10 +111,14 @@ serve(async (req) => {
       ]
     };
 
-    console.log('Calling n8n webhook:', n8nWebhookUrl);
-    console.log('Payload:', JSON.stringify(n8nPayload, null, 2));
+    console.log('=== Starting N8N Webhook Call ===');
+    console.log('N8N Webhook URL:', n8nWebhookUrl);
+    console.log('Timestamp:', new Date().toISOString());
+    console.log('Payload size:', JSON.stringify(n8nPayload).length, 'bytes');
+    console.log('Full payload:', JSON.stringify(n8nPayload, null, 2));
 
     // Appel asynchrone à n8n - ne pas attendre la réponse
+    console.log('Initiating fetch to N8N...');
     fetch(n8nWebhookUrl, {
       method: 'POST',
       headers: {
@@ -118,9 +127,14 @@ serve(async (req) => {
       body: JSON.stringify(n8nPayload),
     })
       .then(async (response) => {
+        console.log('=== N8N Response Received ===');
+        console.log('Response status:', response.status);
+        console.log('Response ok:', response.ok);
+        console.log('Response headers:', JSON.stringify([...response.headers.entries()]));
+        
         const responseText = await response.text();
-        console.log('n8n response status:', response.status);
-        console.log('n8n response body:', responseText);
+        console.log('Response body length:', responseText.length);
+        console.log('Response body:', responseText);
 
         if (!response.ok) {
           console.error('n8n webhook error:', responseText);
@@ -154,7 +168,12 @@ serve(async (req) => {
         }
       })
       .catch(async (error) => {
-        console.error('n8n webhook fetch error:', error);
+        console.error('=== N8N Fetch Error ===');
+        console.error('Error type:', error.constructor.name);
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+        console.error('Full error:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
+        
         await supabase
           .from('agent_orchestrations')
           .update({
