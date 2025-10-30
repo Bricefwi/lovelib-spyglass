@@ -18,5 +18,8 @@ verify_jwt = false
 [functions.audit-generate]
 verify_jwt = false
 
+[functions.n8n-callback]
+verify_jwt = false
+
 [functions.orchestrate-multi-agent]
 verify_jwt = false
