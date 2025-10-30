@@ -1,4 +1,3 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -13,13 +12,6 @@ interface OrchestrationRequest {
   companyInfo?: any;
 }
 
-interface AgentPhase {
-  name: string;
-  order: number;
-  agents: string[];
-  systemPrompt: string;
-}
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -30,7 +22,11 @@ serve(async (req) => {
     
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY')!;
+    const n8nWebhookUrl = Deno.env.get('N8N_WEBHOOK_URL');
+
+    if (!n8nWebhookUrl) {
+      throw new Error('N8N_WEBHOOK_URL not configured');
+    }
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -62,173 +58,109 @@ serve(async (req) => {
 
     console.log('Orchestration created:', orchestration.id);
 
-    // Define agent phases with specialized prompts
-    const phases: AgentPhase[] = [
-      {
-        name: 'market_research',
-        order: 1,
-        agents: ['market_researcher', 'competitor_analyst', 'trend_analyzer'],
-        systemPrompt: `Tu es un analyste de marché expert. Analyse le site ${url} et fournis:
-1. Position sur le marché
-2. Principaux concurrents
-3. Tendances du secteur
-4. Opportunités de croissance
-Sois concis et factuel.`
-      },
-      {
-        name: 'conversational_audits',
-        order: 2,
-        agents: ['marketing_auditor', 'sales_auditor', 'tech_auditor', 'strategy_auditor'],
-        systemPrompt: `Tu es un auditeur expert en marketing digital, ventes, technologie et stratégie. Analyse ${url} et fournis:
-1. Efficacité marketing actuelle
-2. Performance commerciale
-3. Stack technique
-4. Alignement stratégique
-Identifie les points forts et axes d'amélioration.`
-      },
-      {
-        name: 'specialized_analysis',
-        order: 3,
-        agents: ['seo_specialist', 'content_analyzer', 'ux_auditor', 'conversion_optimizer'],
-        systemPrompt: `Tu es un spécialiste en SEO, contenu, UX et conversion. Analyse ${url} pour:
-1. Optimisation SEO
-2. Qualité du contenu
-3. Expérience utilisateur
-4. Taux de conversion
-Fournis des recommandations concrètes.`
-      }
-    ];
+    // Payload pour n8n avec 12 agents répartis en 4 phases
+    const n8nPayload = {
+      orchestrationId: orchestration.id,
+      preAuditId,
+      url,
+      companyInfo: companyInfo || {},
+      supabaseUrl,
+      supabaseKey,
+      phases: [
+        {
+          name: 'market_research',
+          order: 1,
+          agents: [
+            { name: 'market_researcher', role: 'Analyste de marché principal' },
+            { name: 'competitor_analyst', role: 'Analyste concurrentiel' },
+            { name: 'trend_analyzer', role: 'Analyste des tendances sectorielles' }
+          ]
+        },
+        {
+          name: 'conversational_audits',
+          order: 2,
+          agents: [
+            { name: 'marketing_auditor', role: 'Auditeur marketing digital' },
+            { name: 'sales_auditor', role: 'Auditeur commercial' },
+            { name: 'tech_auditor', role: 'Auditeur technique' },
+            { name: 'strategy_auditor', role: 'Auditeur stratégique' }
+          ]
+        },
+        {
+          name: 'specialized_analysis',
+          order: 3,
+          agents: [
+            { name: 'seo_specialist', role: 'Spécialiste SEO' },
+            { name: 'content_analyzer', role: 'Analyste de contenu' },
+            { name: 'ux_auditor', role: 'Auditeur UX/UI' },
+            { name: 'conversion_optimizer', role: 'Optimiseur de conversion' }
+          ]
+        },
+        {
+          name: 'synthesis',
+          order: 4,
+          agents: [
+            { name: 'synthesizer', role: 'Synthétiseur principal' }
+          ]
+        }
+      ]
+    };
 
-    // Process each phase sequentially
-    for (const phase of phases) {
-      console.log(`Starting phase: ${phase.name}`);
+    console.log('Calling n8n webhook:', n8nWebhookUrl);
+    console.log('Payload:', JSON.stringify(n8nPayload, null, 2));
+
+    const n8nResponse = await fetch(n8nWebhookUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(n8nPayload),
+    });
+
+    const responseText = await n8nResponse.text();
+    console.log('n8n response status:', n8nResponse.status);
+    console.log('n8n response body:', responseText);
+
+    if (!n8nResponse.ok) {
+      console.error('n8n webhook error:', responseText);
       
-      // Update current phase
+      // Update orchestration status to error
       await supabase
         .from('agent_orchestrations')
         .update({
-          current_phase: phase.name,
-          progress: (phase.order / phases.length) * 100
+          status: 'error',
+          error: `n8n webhook failed (${n8nResponse.status}): ${responseText}`,
+          completed_at: new Date().toISOString()
         })
         .eq('id', orchestration.id);
 
-      // Call Lovable AI for this phase
-      const aiResponse = await fetch('https://api.lovable.app/v1/ai/generate', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${lovableApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'google/gemini-2.5-pro',
-          messages: [
-            { role: 'system', content: phase.systemPrompt },
-            { role: 'user', content: `Analyse approfondie pour: ${JSON.stringify(companyInfo || {})}` }
-          ],
-          max_tokens: 2000
-        }),
-      });
-
-      if (!aiResponse.ok) {
-        const error = await aiResponse.text();
-        console.error(`AI error in phase ${phase.name}:`, error);
-        throw new Error(`AI analysis failed: ${error}`);
-      }
-
-      const aiResult = await aiResponse.json();
-      const analysis = aiResult.choices?.[0]?.message?.content || '';
-
-      // Store phase result
-      await supabase
-        .from('agent_results')
-        .insert({
-          orchestration_id: orchestration.id,
-          agent_name: phase.name,
-          phase: phase.name,
-          result_data: {
-            analysis,
-            agents: phase.agents,
-            timestamp: new Date().toISOString()
-          },
-          confidence_score: 85,
-          execution_time_ms: 0
-        });
-
-      console.log(`Phase ${phase.name} completed`);
+      throw new Error(`n8n webhook failed: ${responseText}`);
     }
 
-    // Final synthesis
-    console.log('Starting synthesis phase');
+    let n8nResult;
+    try {
+      n8nResult = JSON.parse(responseText);
+    } catch (e) {
+      n8nResult = { raw: responseText };
+    }
     
-    // Get all phase results
-    const { data: phaseResults } = await supabase
-      .from('agent_results')
-      .select('*')
-      .eq('orchestration_id', orchestration.id);
+    console.log('n8n webhook response:', n8nResult);
 
-    const synthesisPrompt = `En tant que synthétiseur expert, compile ces analyses en un rapport cohérent:
-
-${phaseResults?.map(r => `${r.phase}: ${JSON.stringify(r.result_data.analysis).substring(0, 500)}`).join('\n\n')}
-
-Fournis une synthèse structurée avec:
-1. Résumé exécutif
-2. Points clés par domaine
-3. Recommandations prioritaires
-4. Plan d'action`;
-
-    const synthesisResponse = await fetch('https://api.lovable.app/v1/ai/generate', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${lovableApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-pro',
-        messages: [
-          { role: 'system', content: 'Tu es un synthétiseur expert qui compile des analyses en rapports structurés.' },
-          { role: 'user', content: synthesisPrompt }
-        ],
-        max_tokens: 3000
-      }),
-    });
-
-    const synthesisResult = await synthesisResponse.json();
-    const finalSynthesis = synthesisResult.choices?.[0]?.message?.content || '';
-
-    // Store synthesis
-    await supabase
-      .from('agent_results')
-      .insert({
-        orchestration_id: orchestration.id,
-        agent_name: 'synthesizer',
-        phase: 'synthesis',
-        result_data: {
-          synthesis: finalSynthesis,
-          timestamp: new Date().toISOString()
-        },
-        confidence_score: 90,
-        execution_time_ms: 0
-      });
-
-    // Update orchestration as completed
+    // Update orchestration with n8n execution ID
     await supabase
       .from('agent_orchestrations')
       .update({
-        status: 'completed',
-        progress: 100,
-        current_phase: 'completed',
-        completed_at: new Date().toISOString()
+        n8n_execution_id: n8nResult.executionId || n8nResult.id || 'pending'
       })
       .eq('id', orchestration.id);
-
-    console.log('Multi-agent orchestration completed successfully');
 
     return new Response(
       JSON.stringify({
         success: true,
         orchestrationId: orchestration.id,
-        message: 'Multi-agent orchestration completed successfully',
-        synthesis: finalSynthesis
+        n8nExecutionId: n8nResult.executionId || n8nResult.id,
+        message: 'Multi-agent orchestration started successfully via n8n',
+        n8nResponse: n8nResult
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
