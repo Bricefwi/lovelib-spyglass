@@ -78,8 +78,7 @@ serve(async (req) => {
         pre_audit_id: preAuditId,
         report_type: 'deep_audit',
         content: enrichedReport,
-        status: 'completed',
-        created_at: new Date().toISOString()
+        status: 'completed'
       }, { onConflict: 'pre_audit_id' })
       .select()
       .single();
