@@ -114,7 +114,7 @@ export default function OrchestrationMonitor() {
   };
 
   const viewReport = async (preAuditId: string, reportId: string) => {
-    window.open(`/audit-report?id=${reportId}`, '_blank');
+    window.open(`/audit-report/${reportId}`, '_blank');
   };
 
   if (loading) {
