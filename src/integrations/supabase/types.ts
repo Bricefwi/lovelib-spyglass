@@ -49,6 +49,7 @@ export type Database = {
           phases: Json | null
           pre_audit_id: string | null
           progress: number | null
+          results: Json | null
           started_at: string | null
           status: string
           updated_at: string | null
@@ -63,6 +64,7 @@ export type Database = {
           phases?: Json | null
           pre_audit_id?: string | null
           progress?: number | null
+          results?: Json | null
           started_at?: string | null
           status?: string
           updated_at?: string | null
@@ -77,6 +79,7 @@ export type Database = {
           phases?: Json | null
           pre_audit_id?: string | null
           progress?: number | null
+          results?: Json | null
           started_at?: string | null
           status?: string
           updated_at?: string | null
@@ -248,24 +251,33 @@ export type Database = {
       }
       audit_reports: {
         Row: {
+          content: Json | null
           created_at: string | null
           html: string | null
           id: string
           pre_audit_id: string | null
+          report_type: string | null
+          status: string | null
           title: string | null
         }
         Insert: {
+          content?: Json | null
           created_at?: string | null
           html?: string | null
           id?: string
           pre_audit_id?: string | null
+          report_type?: string | null
+          status?: string | null
           title?: string | null
         }
         Update: {
+          content?: Json | null
           created_at?: string | null
           html?: string | null
           id?: string
           pre_audit_id?: string | null
+          report_type?: string | null
+          status?: string | null
           title?: string | null
         }
         Relationships: [
