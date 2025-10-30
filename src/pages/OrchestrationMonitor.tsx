@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Loader2, CheckCircle2, XCircle, Clock, ExternalLink, FileText } from "lucide-react";
 import { toast } from "sonner";
+import { TestN8nCallback } from "@/components/TestN8nCallback";
 
 interface Orchestration {
   id: string;
@@ -174,6 +175,14 @@ export default function OrchestrationMonitor() {
 
                 <CardContent>
                   <div className="space-y-4">
+                    {/* Test Callback Component */}
+                    {orch.status === 'running' && orch.progress && orch.progress <= 25 && (
+                      <TestN8nCallback 
+                        orchestrationId={orch.id}
+                        preAuditId={orch.pre_audit_id}
+                      />
+                    )}
+
                     {/* Timeline */}
                     <div className="grid grid-cols-3 gap-4 text-sm">
                       <div>
