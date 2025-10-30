@@ -22,6 +22,7 @@ import CGU from "./pages/CGU";
 import AdminAudits from "./pages/AdminAudits";
 import ClientAudits from "./pages/ClientAudits";
 import AuditReport from "./pages/AuditReport";
+import OrchestrationMonitor from "./pages/OrchestrationMonitor";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -55,6 +56,7 @@ const App = () => {
             <Route path="/legal/rgpd" element={<RGPD />} />
             <Route path="/legal/cgu" element={<CGU />} />
             <Route path="/admin/audits" element={<AdminAudits />} />
+            <Route path="/admin/orchestrations" element={<OrchestrationMonitor />} />
             <Route path="/client/audits" element={<ClientAudits />} />
             <Route path="/audit-report/:id" element={<AuditReport />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
