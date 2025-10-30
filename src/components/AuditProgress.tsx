@@ -55,39 +55,13 @@ export const AuditProgress = ({ orchestrationId, onComplete, onError }: AuditPro
     // Initial fetch
     fetchOrchestrationStatus();
 
-    // Subscribe to realtime updates
-    const channel = supabase
-      .channel(`orchestration-${orchestrationId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'agent_orchestrations',
-          filter: `id=eq.${orchestrationId}`
-        },
-        (payload) => {
-          console.log('Orchestration update:', payload);
-          fetchOrchestrationStatus();
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'agent_phases',
-          filter: `orchestration_id=eq.${orchestrationId}`
-        },
-        (payload) => {
-          console.log('Phase update:', payload);
-          fetchOrchestrationStatus();
-        }
-      )
-      .subscribe();
+    // Polling toutes les 5 secondes
+    const pollingInterval = setInterval(() => {
+      fetchOrchestrationStatus();
+    }, 5000);
 
     return () => {
-      supabase.removeChannel(channel);
+      clearInterval(pollingInterval);
     };
   }, [orchestrationId]);
 
@@ -104,7 +78,30 @@ export const AuditProgress = ({ orchestrationId, onComplete, onError }: AuditPro
       if (!orchestration) return;
 
       setCurrentPhase(orchestration.current_phase || '');
-      setProgress(orchestration.progress || 0);
+      
+      // Calcul de la progression basée sur les phases
+      let calculatedProgress = orchestration.progress || 0;
+      const currentPhaseStr = orchestration.current_phase || '';
+      
+      // Mapping des phases vers leur progression
+      const phaseProgressMap: Record<string, number> = {
+        'market_research': 25,
+        'conversational_audits': 50,
+        'specialized_analysis': 75,
+        'synthesis': 100
+      };
+
+      // Si on a une phase en cours, utiliser sa progression
+      if (currentPhaseStr && phaseProgressMap[currentPhaseStr]) {
+        calculatedProgress = phaseProgressMap[currentPhaseStr];
+      }
+
+      // Si le statut est completed, forcer 100%
+      if (orchestration.status === 'completed') {
+        calculatedProgress = 100;
+      }
+
+      setProgress(calculatedProgress);
       setStatus(orchestration.status as 'running' | 'completed' | 'error');
 
       if (orchestration.error) {
