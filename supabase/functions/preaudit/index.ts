@@ -1,16 +1,47 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Input validation schema
+const preAuditSchema = z.object({
+  url: z.string()
+    .url({ message: "Invalid URL format" })
+    .min(10, { message: "URL too short" })
+    .max(500, { message: "URL too long" })
+    .refine(
+      (url) => {
+        const hostname = new URL(url).hostname;
+        return !['localhost', '127.0.0.1', '0.0.0.0'].includes(hostname);
+      },
+      { message: "Local URLs not allowed" }
+    )
+});
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { url } = await req.json();
+    const body = await req.json();
+    
+    // Validate input
+    const validation = preAuditSchema.safeParse(body);
+    if (!validation.success) {
+      console.error('Validation error:', validation.error);
+      return new Response(
+        JSON.stringify({ 
+          ok: false, 
+          error: "Invalid input: " + validation.error.errors[0].message 
+        }), 
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
+    const { url } = validation.data;
     console.log(`Starting pre-audit for: ${url}`);
     
     const supabase = createClient(

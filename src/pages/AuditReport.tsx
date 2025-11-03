@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Loader2 } from "lucide-react";
+import DOMPurify from "dompurify";
 
 export default function AuditReport() {
   const { id } = useParams();
@@ -48,5 +49,5 @@ export default function AuditReport() {
     );
   }
 
-  return <div dangerouslySetInnerHTML={{ __html: html }} />;
+  return <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html) }} />;
 }

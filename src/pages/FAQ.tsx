@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import DOMPurify from "dompurify";
 import {
   Accordion,
   AccordionContent,
@@ -93,7 +94,7 @@ const FAQ = () => {
                 {faq.question}
               </AccordionTrigger>
               <AccordionContent className="text-muted-foreground text-base leading-relaxed pt-2">
-                <div dangerouslySetInnerHTML={{ __html: faq.answer_html }} />
+                <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(faq.answer_html) }} />
               </AccordionContent>
             </AccordionItem>
           ))}
@@ -120,7 +121,7 @@ const FAQ = () => {
             </div>
             {aiAnswer && (
               <div className="bg-background border rounded-lg p-6 mt-4">
-                <div dangerouslySetInnerHTML={{ __html: aiAnswer }} />
+                <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(aiAnswer) }} />
               </div>
             )}
           </form>

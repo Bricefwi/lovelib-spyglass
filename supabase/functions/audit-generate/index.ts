@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -9,6 +10,11 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Input validation schema
+const generateAuditSchema = z.object({
+  pre_audit_id: z.string().uuid({ message: "Invalid pre-audit ID" })
+});
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -20,16 +26,21 @@ serve(async (req) => {
   }
 
   try {
-    const { pre_audit_id } = await req.json();
-    if (!pre_audit_id) {
+    const body = await req.json();
+    
+    // Validate input
+    const validation = generateAuditSchema.safeParse(body);
+    if (!validation.success) {
       return new Response(
-        JSON.stringify({ error: "pre_audit_id required" }), 
+        JSON.stringify({ error: validation.error.errors[0].message }), 
         { 
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         }
       );
     }
+    
+    const { pre_audit_id } = validation.data;
 
     console.log("Generating audit for pre_audit_id:", pre_audit_id);
 

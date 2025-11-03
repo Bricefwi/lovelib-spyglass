@@ -1,23 +1,19 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface CallbackRequest {
-  orchestrationId: string;
-  preAuditId: string;
-  status: string;
-  results: {
-    market_research?: any;
-    conversational_audits?: any;
-    specialized_analysis?: any;
-    synthesis?: any;
-    allAgentsResults?: any;
-  };
-}
+// Input validation schema for n8n callback
+const callbackSchema = z.object({
+  orchestrationId: z.string().uuid({ message: "Invalid orchestration ID" }),
+  preAuditId: z.string().uuid({ message: "Invalid pre-audit ID" }),
+  status: z.enum(['completed', 'failed', 'error']),
+  results: z.record(z.any()).default({})
+});
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -25,7 +21,22 @@ serve(async (req) => {
   }
 
   try {
-    const { orchestrationId, preAuditId, status, results }: CallbackRequest = await req.json();
+    const body = await req.json();
+    
+    // Validate input
+    const validation = callbackSchema.safeParse(body);
+    if (!validation.success) {
+      console.error('Validation error:', validation.error);
+      return new Response(
+        JSON.stringify({ 
+          ok: false, 
+          error: "Invalid input: " + validation.error.errors[0].message 
+        }), 
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
+    const { orchestrationId, preAuditId, status, results } = validation.data;
     
     console.log(`Received callback for orchestration: ${orchestrationId}`);
     console.log('Results:', JSON.stringify(results, null, 2));

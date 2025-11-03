@@ -253,6 +253,7 @@ export type Database = {
         Row: {
           content: Json | null
           created_at: string | null
+          created_by: string | null
           html: string | null
           id: string
           pre_audit_id: string | null
@@ -263,6 +264,7 @@ export type Database = {
         Insert: {
           content?: Json | null
           created_at?: string | null
+          created_by?: string | null
           html?: string | null
           id?: string
           pre_audit_id?: string | null
@@ -273,6 +275,7 @@ export type Database = {
         Update: {
           content?: Json | null
           created_at?: string | null
+          created_by?: string | null
           html?: string | null
           id?: string
           pre_audit_id?: string | null
