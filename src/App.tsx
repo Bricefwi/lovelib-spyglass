@@ -24,6 +24,7 @@ import ClientAudits from "./pages/ClientAudits";
 import AuditReport from "./pages/AuditReport";
 import OrchestrationMonitor from "./pages/OrchestrationMonitor";
 import NotFound from "./pages/NotFound";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -55,9 +56,21 @@ const App = () => {
             <Route path="/legal/mentions" element={<MentionsLegales />} />
             <Route path="/legal/rgpd" element={<RGPD />} />
             <Route path="/legal/cgu" element={<CGU />} />
-            <Route path="/admin/audits" element={<AdminAudits />} />
-            <Route path="/admin/orchestrations" element={<OrchestrationMonitor />} />
-            <Route path="/client/audits" element={<ClientAudits />} />
+            <Route path="/admin/audits" element={
+              <ProtectedRoute requireAuth requireAdmin>
+                <AdminAudits />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/orchestrations" element={
+              <ProtectedRoute requireAuth requireAdmin>
+                <OrchestrationMonitor />
+              </ProtectedRoute>
+            } />
+            <Route path="/client/audits" element={
+              <ProtectedRoute requireAuth requireClient>
+                <ClientAudits />
+              </ProtectedRoute>
+            } />
             <Route path="/audit-report/:id" element={<AuditReport />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
