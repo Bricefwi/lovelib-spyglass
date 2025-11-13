@@ -17,6 +17,7 @@ import CalculsKPIs from "./pages/CalculsKPIs";
 import MethodologieROI from "./pages/MethodologieROI";
 import Support from "./pages/Support";
 import MentionsLegales from "./pages/MentionsLegales";
+import AuditGratuit from "./pages/AuditGratuit";
 import RGPD from "./pages/RGPD";
 import CGU from "./pages/CGU";
 import AdminAudits from "./pages/AdminAudits";
@@ -50,6 +51,7 @@ const App = () => {
             <Route path="/faq" element={<FAQ />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/audit-methodologie" element={<AuditMethodologie />} />
+            <Route path="/audit-gratuit" element={<AuditGratuit />} />
             <Route path="/calculs-kpis" element={<CalculsKPIs />} />
             <Route path="/methodologie-roi" element={<MethodologieROI />} />
             <Route path="/guide/support" element={<Support />} />

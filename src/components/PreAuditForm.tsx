@@ -75,7 +75,7 @@ export const PreAuditForm = () => {
 
         toast({
           title: "✅ Analyse lancée !",
-          description: "Suivez la progression ci-dessous. L'analyse prendra 15-20 minutes.",
+          description: "Suivez la progression ci-dessous. L'analyse prendra environ 2 semaines.",
         });
 
       } else {
@@ -187,7 +187,7 @@ export const PreAuditForm = () => {
                           <span className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded">Premium</span>
                         </div>
                         <p className="text-sm text-muted-foreground mt-1">
-                          Analyse complète (15-20 min) • 12+ agents IA • Rapport ultra-détaillé
+                          Analyse complète (2 semaines) • 17 agents IA orchestrés • Rapport ultra-détaillé
                         </p>
                       </Label>
                     </div>
