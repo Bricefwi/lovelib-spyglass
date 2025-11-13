@@ -156,7 +156,7 @@ serve(async (req) => {
         source: "lovable-spyglass",
       },
       orchestrationId: orchestration.id,
-      callbackUrl: `${supabaseUrl}/functions/v1/n8n-callback`,
+      callbackUrl: `${supabaseUrl}/functions/v1/manus-callback`,
     };
 
     console.log("=== Starting MANUS IA Backend Call ===");
@@ -202,7 +202,7 @@ serve(async (req) => {
           await supabase
             .from("agent_orchestrations")
             .update({
-              n8n_execution_id: manusResult.audit_id || manusResult.id || "manus-" + orchestration.id,
+              manus_execution_id: manusResult.audit_id || manusResult.id || "manus-" + orchestration.id,
             })
             .eq("id", orchestration.id);
         }

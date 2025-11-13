@@ -45,7 +45,7 @@ export type Database = {
           current_phase: string | null
           error: string | null
           id: string
-          n8n_execution_id: string | null
+          manus_execution_id: string | null
           phases: Json | null
           pre_audit_id: string | null
           progress: number | null
@@ -60,7 +60,7 @@ export type Database = {
           current_phase?: string | null
           error?: string | null
           id?: string
-          n8n_execution_id?: string | null
+          manus_execution_id?: string | null
           phases?: Json | null
           pre_audit_id?: string | null
           progress?: number | null
@@ -75,7 +75,7 @@ export type Database = {
           current_phase?: string | null
           error?: string | null
           id?: string
-          n8n_execution_id?: string | null
+          manus_execution_id?: string | null
           phases?: Json | null
           pre_audit_id?: string | null
           progress?: number | null

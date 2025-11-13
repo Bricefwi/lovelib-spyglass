@@ -1,11 +1,22 @@
+/**
+ * OrchestrationMonitor.tsx - Version Corrigée MANUS IA 2.0
+ * 
+ * Changements:
+ * - ✅ Suppression de TestN8nCallback
+ * - ✅ Renommage n8n_execution_id → manus_execution_id
+ * - ✅ Amélioration affichage des erreurs (masquage détails techniques)
+ * - ✅ Ajout du footer avec navigation
+ * - ✅ Meilleure UX globale
+ */
+
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, CheckCircle2, XCircle, Clock, ExternalLink, FileText } from "lucide-react";
+import { Loader2, CheckCircle2, XCircle, Clock, ExternalLink, FileText, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
-import { TestN8nCallback } from "@/components/TestN8nCallback";
+import { AdminFooter } from "@/components/Navigation/AdminFooter";
 
 interface Orchestration {
   id: string;
@@ -17,7 +28,7 @@ interface Orchestration {
   progress: number | null;
   error: string | null;
   pre_audit_id: string;
-  n8n_execution_id: string | null;
+  manus_execution_id: string | null; // ✅ Renommé de n8n_execution_id
   pre_audits?: {
     url: string;
     company_guess: string | null;
@@ -127,143 +138,163 @@ export default function OrchestrationMonitor() {
   }
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Monitoring des Audits Approfondis</h1>
-        <p className="text-muted-foreground">
-          Suivi en temps réel des orchestrations multi-agents et génération de rapports enrichis
-        </p>
+    <div className="min-h-screen flex flex-col">
+      <div className="flex-1 container mx-auto p-6">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-2">Monitoring des Audits Approfondis</h1>
+          <p className="text-muted-foreground">
+            Suivi en temps réel des orchestrations multi-agents MANUS IA 2.0 et génération de rapports enrichis
+          </p>
+        </div>
+
+        <div className="grid gap-4">
+          {orchestrations.length === 0 ? (
+            <Card>
+              <CardContent className="pt-6">
+                <p className="text-center text-muted-foreground">
+                  Aucune orchestration trouvée
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            orchestrations.map((orch) => {
+              const deepAuditReport = orch.audit_reports?.find(r => r.report_type === 'deep_audit');
+              const standardReport = orch.audit_reports?.find(r => !r.report_type || r.report_type === 'standard');
+
+              return (
+                <Card key={orch.id} className="hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <CardTitle className="text-lg mb-2">
+                          {orch.pre_audits?.company_guess || 'Entreprise inconnue'}
+                        </CardTitle>
+                        <CardDescription className="flex items-center gap-2">
+                          <ExternalLink className="w-4 h-4" />
+                          {orch.pre_audits?.url}
+                        </CardDescription>
+                      </div>
+                      <div className="flex flex-col gap-2 items-end">
+                        {getStatusBadge(orch.status)}
+                        {orch.progress !== null && orch.status === 'running' && (
+                          <div className="text-sm text-muted-foreground">
+                            {orch.progress}% complété
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </CardHeader>
+
+                  <CardContent>
+                    <div className="space-y-4">
+                      {/* Timeline */}
+                      <div className="grid grid-cols-3 gap-4 text-sm">
+                        <div>
+                          <div className="font-medium text-muted-foreground">Créé</div>
+                          <div>{new Date(orch.created_at).toLocaleString('fr-FR')}</div>
+                        </div>
+                        {orch.started_at && (
+                          <div>
+                            <div className="font-medium text-muted-foreground">Démarré</div>
+                            <div>{new Date(orch.started_at).toLocaleString('fr-FR')}</div>
+                          </div>
+                        )}
+                        {orch.completed_at && (
+                          <div>
+                            <div className="font-medium text-muted-foreground">Terminé</div>
+                            <div>{new Date(orch.completed_at).toLocaleString('fr-FR')}</div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Current Phase */}
+                      {orch.current_phase && (
+                        <div className="bg-muted/50 p-3 rounded-lg">
+                          <div className="font-medium text-sm">Phase actuelle</div>
+                          <div className="text-sm text-muted-foreground capitalize">
+                            {orch.current_phase.replace(/_/g, ' ')}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Error - Version Améliorée ✅ */}
+                      {orch.error && (
+                        <div className="bg-destructive/10 p-4 rounded-lg border border-destructive/20">
+                          <div className="flex items-start gap-3">
+                            <AlertTriangle className="w-5 h-5 text-destructive mt-0.5" />
+                            <div className="flex-1">
+                              <div className="font-semibold text-sm text-destructive mb-2">
+                                Une erreur s'est produite lors du traitement
+                              </div>
+                              <div className="text-sm text-muted-foreground mb-3">
+                                Le système d'orchestration MANUS IA a rencontré un problème technique. 
+                                Notre équipe a été automatiquement notifiée et travaille à la résolution.
+                              </div>
+                              <details className="mt-2">
+                                <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
+                                  📋 Détails techniques (pour le support)
+                                </summary>
+                                <pre className="text-xs text-destructive/80 mt-3 p-3 bg-background rounded border border-destructive/20 overflow-x-auto">
+{orch.error}
+                                </pre>
+                              </details>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Reports */}
+                      {(deepAuditReport || standardReport) && (
+                        <div className="border-t pt-4">
+                          <div className="font-medium mb-3">Rapports disponibles</div>
+                          <div className="flex gap-2 flex-wrap">
+                            {standardReport && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => viewReport(orch.pre_audit_id, standardReport.id)}
+                              >
+                                <FileText className="w-4 h-4 mr-2" />
+                                Rapport Standard
+                                <Badge variant="secondary" className="ml-2">Standard</Badge>
+                              </Button>
+                            )}
+                            {deepAuditReport && (
+                              <Button
+                                variant="default"
+                                size="sm"
+                                onClick={() => viewReport(orch.pre_audit_id, deepAuditReport.id)}
+                                className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700"
+                              >
+                                <FileText className="w-4 h-4 mr-2" />
+                                Rapport Approfondi
+                                <Badge className="ml-2 bg-yellow-500">Multi-Agent IA</Badge>
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* MANUS Execution ID - Version Améliorée ✅ */}
+                      {orch.manus_execution_id && (
+                        <div className="text-xs text-muted-foreground flex items-center gap-2 bg-muted/30 p-2 rounded">
+                          <span className="font-semibold">MANUS Execution ID:</span>
+                          <code className="bg-background px-2 py-1 rounded font-mono">
+                            {orch.manus_execution_id}
+                          </code>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })
+          )}
+        </div>
       </div>
 
-      <div className="grid gap-4">
-        {orchestrations.length === 0 ? (
-          <Card>
-            <CardContent className="pt-6">
-              <p className="text-center text-muted-foreground">
-                Aucune orchestration trouvée
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          orchestrations.map((orch) => {
-            const deepAuditReport = orch.audit_reports?.find(r => r.report_type === 'deep_audit');
-            const standardReport = orch.audit_reports?.find(r => !r.report_type || r.report_type === 'standard');
-
-            return (
-              <Card key={orch.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="text-lg mb-2">
-                        {orch.pre_audits?.company_guess || 'Entreprise inconnue'}
-                      </CardTitle>
-                      <CardDescription className="flex items-center gap-2">
-                        <ExternalLink className="w-4 h-4" />
-                        {orch.pre_audits?.url}
-                      </CardDescription>
-                    </div>
-                    <div className="flex flex-col gap-2 items-end">
-                      {getStatusBadge(orch.status)}
-                      {orch.progress !== null && orch.status === 'running' && (
-                        <div className="text-sm text-muted-foreground">
-                          {orch.progress}% complété
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </CardHeader>
-
-                <CardContent>
-                  <div className="space-y-4">
-                    {/* Test Callback Component */}
-                    {orch.status === 'running' && orch.progress && orch.progress <= 25 && (
-                      <TestN8nCallback 
-                        orchestrationId={orch.id}
-                        preAuditId={orch.pre_audit_id}
-                      />
-                    )}
-
-                    {/* Timeline */}
-                    <div className="grid grid-cols-3 gap-4 text-sm">
-                      <div>
-                        <div className="font-medium text-muted-foreground">Créé</div>
-                        <div>{new Date(orch.created_at).toLocaleString('fr-FR')}</div>
-                      </div>
-                      {orch.started_at && (
-                        <div>
-                          <div className="font-medium text-muted-foreground">Démarré</div>
-                          <div>{new Date(orch.started_at).toLocaleString('fr-FR')}</div>
-                        </div>
-                      )}
-                      {orch.completed_at && (
-                        <div>
-                          <div className="font-medium text-muted-foreground">Terminé</div>
-                          <div>{new Date(orch.completed_at).toLocaleString('fr-FR')}</div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Current Phase */}
-                    {orch.current_phase && (
-                      <div className="bg-muted/50 p-3 rounded-lg">
-                        <div className="font-medium text-sm">Phase actuelle</div>
-                        <div className="text-sm text-muted-foreground">{orch.current_phase}</div>
-                      </div>
-                    )}
-
-                    {/* Error */}
-                    {orch.error && (
-                      <div className="bg-destructive/10 p-3 rounded-lg border border-destructive/20">
-                        <div className="font-medium text-sm text-destructive">Erreur</div>
-                        <div className="text-sm text-destructive/80">{orch.error}</div>
-                      </div>
-                    )}
-
-                    {/* Reports */}
-                    {(deepAuditReport || standardReport) && (
-                      <div className="border-t pt-4">
-                        <div className="font-medium mb-3">Rapports disponibles</div>
-                        <div className="flex gap-2 flex-wrap">
-                          {standardReport && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => viewReport(orch.pre_audit_id, standardReport.id)}
-                            >
-                              <FileText className="w-4 h-4 mr-2" />
-                              Rapport Standard
-                              <Badge variant="secondary" className="ml-2">Standard</Badge>
-                            </Button>
-                          )}
-                          {deepAuditReport && (
-                            <Button
-                              variant="default"
-                              size="sm"
-                              onClick={() => viewReport(orch.pre_audit_id, deepAuditReport.id)}
-                              className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700"
-                            >
-                              <FileText className="w-4 h-4 mr-2" />
-                              Rapport Approfondi
-                              <Badge className="ml-2 bg-yellow-500">Multi-Agent</Badge>
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Debug Info */}
-                    {orch.n8n_execution_id && (
-                      <div className="text-xs text-muted-foreground">
-                        N8N Execution ID: {orch.n8n_execution_id}
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })
-        )}
-      </div>
+      {/* Footer avec Navigation ✅ */}
+      <AdminFooter />
     </div>
   );
 }
