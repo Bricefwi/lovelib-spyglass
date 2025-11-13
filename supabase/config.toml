@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.orchestrate-multi-agent]
 verify_jwt = false
+
+[functions.send-auth-diagnostic]
+verify_jwt = false

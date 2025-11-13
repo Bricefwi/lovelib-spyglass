@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useEffect } from "react";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import DiagnosticAuth from "./pages/DiagnosticAuth";
 import Onboarding from "./pages/Onboarding";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
@@ -45,6 +46,8 @@ const App = () => {
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/diagnostic-auth" element={<DiagnosticAuth />} />
+            <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/solutions" element={<Solutions />} />
             <Route path="/blog" element={<Blog />} />
