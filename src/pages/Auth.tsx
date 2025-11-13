@@ -136,8 +136,19 @@ export default function Auth() {
       if (error.message.includes("Invalid login credentials")) {
         toast({
           title: "Identifiants invalides",
-          description: "Email ou mot de passe incorrect.",
-          variant: "destructive"
+          description: (
+            <div className="space-y-2">
+              <p>Vérifiez votre email et mot de passe.</p>
+              <button
+                onClick={() => window.location.href = "/diagnostic-auth"}
+                className="text-sm underline hover:no-underline mt-2 block"
+              >
+                📧 Recevoir un diagnostic complet par email
+              </button>
+            </div>
+          ),
+          variant: "destructive",
+          duration: 8000
         });
       } else {
         toast({
@@ -198,7 +209,7 @@ export default function Auth() {
 
     if (error) {
       toast({
-        title: "Erreur de connexion",
+        title: "Erreur de connexion sociale",
         description: error.message,
         variant: "destructive"
       });
