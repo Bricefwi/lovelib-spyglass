@@ -1,187 +1,224 @@
+/**
+ * Supabase Edge Function: orchestrate-multi-agent (MANUS IA Version)
+ *
+ * Déclenche le système d'orchestration MANUS IA 2.0 avec 17 agents spécialisés
+ */
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 interface OrchestrationRequest {
   preAuditId: string;
   url: string;
-  companyInfo?: any;
+  companyInfo?: {
+    name?: string;
+    sector?: string;
+    size?: string;
+    employees?: number;
+    revenue?: number;
+    description?: string;
+  };
 }
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
+  if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     const { preAuditId, url, companyInfo }: OrchestrationRequest = await req.json();
-    
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const n8nWebhookUrl = Deno.env.get('N8N_WEBHOOK_URL');
-    
-    console.log('=== N8N Configuration Check ===');
-    console.log('N8N_WEBHOOK_URL from env:', n8nWebhookUrl);
-    console.log('N8N_WEBHOOK_URL is defined:', !!n8nWebhookUrl);
 
-    if (!n8nWebhookUrl) {
-      console.error('CRITICAL: N8N_WEBHOOK_URL not configured in secrets');
-      throw new Error('N8N_WEBHOOK_URL not configured');
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+    // Configuration MANUS IA Backend
+    const manusBackendUrl = Deno.env.get("MANUS_BACKEND_URL");
+    const manusApiKey = Deno.env.get("MANUS_API_KEY");
+
+    console.log("=== MANUS IA Configuration Check ===");
+    console.log("MANUS_BACKEND_URL:", manusBackendUrl);
+    console.log("MANUS_API_KEY is defined:", !!manusApiKey);
+
+    if (!manusBackendUrl) {
+      throw new Error("MANUS_BACKEND_URL not configured. Please set it in Supabase secrets.");
+    }
+
+    if (!manusApiKey) {
+      throw new Error("MANUS_API_KEY not configured. Please set it in Supabase secrets.");
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    console.log(`Starting multi-agent orchestration for pre-audit: ${preAuditId}`);
+    console.log(`Starting MANUS IA multi-agent orchestration for pre-audit: ${preAuditId}`);
 
-    // Create orchestration record
+    // Create orchestration record with MANUS IA phases
     const { data: orchestration, error: orchError } = await supabase
-      .from('agent_orchestrations')
+      .from("agent_orchestrations")
       .insert({
         pre_audit_id: preAuditId,
-        status: 'running',
+        status: "running",
         started_at: new Date().toISOString(),
-        current_phase: 'market_research',
+        current_phase: "initialization",
         progress: 0,
         phases: [
-          { name: 'market_research', order: 1, status: 'pending' },
-          { name: 'conversational_audits', order: 2, status: 'pending' },
-          { name: 'specialized_analysis', order: 3, status: 'pending' },
-          { name: 'synthesis', order: 4, status: 'pending' }
-        ]
+          {
+            name: "initialization",
+            order: 0,
+            status: "running",
+            agents: ["A01 - MANUS IA Orchestrator"],
+          },
+          {
+            name: "market_study",
+            order: 1,
+            status: "pending",
+            agents: [
+              "A02 - Data Hunter",
+              "A03 - PESTEL Analyst",
+              "A04 - Porter Strategy Expert",
+              "A05 - Competitive Intelligence Officer",
+              "A06 - Benchmark Specialist 2025",
+              "A07 - SWOT Synthesizer",
+            ],
+          },
+          {
+            name: "conversational_audits",
+            order: 2,
+            status: "pending",
+            agents: ["A08 - Marketing Audit Conversationalist", "A09 - Sales Audit Specialist"],
+          },
+          {
+            name: "specialized_analyses",
+            order: 3,
+            status: "pending",
+            agents: [
+              "A10 - SEO/SEM Expert",
+              "A11 - Content Marketing Strategist",
+              "A12 - Social Media Manager",
+              "A13 - Email Marketing Automation Expert",
+              "A14 - Data Analytics Scientist",
+              "A15 - Pricing Intelligence Analyst",
+            ],
+          },
+          {
+            name: "synthesis_verification",
+            order: 4,
+            status: "pending",
+            agents: ["A16 - Report Designer & Data Visualizer", "A17 - Truth Guardian (Anti-Hallucination)"],
+          },
+        ],
       })
       .select()
       .single();
 
     if (orchError) {
-      console.error('Error creating orchestration:', orchError);
+      console.error("Error creating orchestration:", orchError);
       throw orchError;
     }
 
-    console.log('Orchestration created:', orchestration.id);
+    console.log("Orchestration created:", orchestration.id);
 
-    // Payload pour n8n avec 12 agents répartis en 4 phases
-    const n8nPayload = {
+    // Construire le contexte client pour MANUS IA
+    const manusContext = {
+      client: {
+        company: {
+          name: companyInfo?.name || "Entreprise inconnue",
+          website: url,
+          legal_entity: "SAS",
+        },
+        business: {
+          sector: companyInfo?.sector || "Non spécifié",
+          business_model: "B2B",
+          description: companyInfo?.description || "",
+        },
+        size: companyInfo?.size
+          ? {
+              category: companyInfo.size,
+              employees: companyInfo.employees,
+              revenue: companyInfo.revenue,
+            }
+          : undefined,
+        objectives: {
+          primary: [
+            "Améliorer la visibilité en ligne",
+            "Optimiser le taux de conversion",
+            "Augmenter le ROI marketing",
+          ],
+        },
+      },
+      metadata: {
+        request_id: orchestration.id,
+        timestamp: new Date().toISOString(),
+        source: "lovable-spyglass",
+      },
       orchestrationId: orchestration.id,
-      preAuditId,
-      url,
-      companyInfo: companyInfo || {},
-      supabaseUrl,
-      supabaseKey,
-      phases: [
-        {
-          name: 'market_research',
-          order: 1,
-          agents: [
-            { name: 'market_researcher', role: 'Analyste de marché principal' },
-            { name: 'competitor_analyst', role: 'Analyste concurrentiel' },
-            { name: 'trend_analyzer', role: 'Analyste des tendances sectorielles' }
-          ]
-        },
-        {
-          name: 'conversational_audits',
-          order: 2,
-          agents: [
-            { name: 'marketing_auditor', role: 'Auditeur marketing digital' },
-            { name: 'sales_auditor', role: 'Auditeur commercial' },
-            { name: 'tech_auditor', role: 'Auditeur technique' },
-            { name: 'strategy_auditor', role: 'Auditeur stratégique' }
-          ]
-        },
-        {
-          name: 'specialized_analysis',
-          order: 3,
-          agents: [
-            { name: 'seo_specialist', role: 'Spécialiste SEO' },
-            { name: 'content_analyzer', role: 'Analyste de contenu' },
-            { name: 'ux_auditor', role: 'Auditeur UX/UI' },
-            { name: 'conversion_optimizer', role: 'Optimiseur de conversion' }
-          ]
-        },
-        {
-          name: 'synthesis',
-          order: 4,
-          agents: [
-            { name: 'synthesizer', role: 'Synthétiseur principal' }
-          ]
-        }
-      ]
+      callbackUrl: `${supabaseUrl}/functions/v1/n8n-callback`,
     };
 
-    console.log('=== Starting N8N Webhook Call ===');
-    console.log('N8N Webhook URL:', n8nWebhookUrl);
-    console.log('Timestamp:', new Date().toISOString());
-    console.log('Payload size:', JSON.stringify(n8nPayload).length, 'bytes');
-    console.log('Full payload:', JSON.stringify(n8nPayload, null, 2));
+    console.log("=== Starting MANUS IA Backend Call ===");
+    console.log("MANUS Backend URL:", manusBackendUrl);
 
-    // Appel asynchrone à n8n - ne pas attendre la réponse
-    console.log('Initiating fetch to N8N...');
-    fetch(n8nWebhookUrl, {
-      method: 'POST',
+    // Appel asynchrone au backend MANUS IA
+    fetch(`${manusBackendUrl}/api/v1/audit`, {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${manusApiKey}`,
       },
-      body: JSON.stringify(n8nPayload),
+      body: JSON.stringify(manusContext),
     })
       .then(async (response) => {
-        console.log('=== N8N Response Received ===');
-        console.log('Response status:', response.status);
-        console.log('Response ok:', response.ok);
-        console.log('Response headers:', JSON.stringify([...response.headers.entries()]));
-        
+        console.log("=== MANUS IA Backend Response ===");
+        console.log("Response status:", response.status);
+
         const responseText = await response.text();
-        console.log('Response body length:', responseText.length);
-        console.log('Response body:', responseText);
+        console.log("Response body:", responseText);
 
         if (!response.ok) {
-          console.error('n8n webhook error:', responseText);
-          
-          // Update orchestration status to error
-          await supabase
-            .from('agent_orchestrations')
-            .update({
-              status: 'error',
-              error: `n8n webhook failed (${response.status}): ${responseText}`,
-              completed_at: new Date().toISOString()
-            })
-            .eq('id', orchestration.id);
-        } else {
-          let n8nResult;
-          try {
-            n8nResult = JSON.parse(responseText);
-          } catch (e) {
-            n8nResult = { raw: responseText };
-          }
-          
-          console.log('n8n webhook response:', n8nResult);
+          console.error("MANUS IA backend error:", responseText);
 
-          // Update orchestration with n8n execution ID
           await supabase
-            .from('agent_orchestrations')
+            .from("agent_orchestrations")
             .update({
-              n8n_execution_id: n8nResult.executionId || n8nResult.id || 'pending'
+              status: "error",
+              error: `MANUS IA backend failed (${response.status}): ${responseText}`,
+              completed_at: new Date().toISOString(),
             })
-            .eq('id', orchestration.id);
+            .eq("id", orchestration.id);
+        } else {
+          let manusResult;
+          try {
+            manusResult = JSON.parse(responseText);
+          } catch (e) {
+            manusResult = { raw: responseText };
+          }
+
+          console.log("MANUS IA backend response:", manusResult);
+
+          await supabase
+            .from("agent_orchestrations")
+            .update({
+              n8n_execution_id: manusResult.audit_id || manusResult.id || "manus-" + orchestration.id,
+            })
+            .eq("id", orchestration.id);
         }
       })
       .catch(async (error) => {
-        console.error('=== N8N Fetch Error ===');
-        console.error('Error type:', error.constructor.name);
-        console.error('Error message:', error.message);
-        console.error('Error stack:', error.stack);
-        console.error('Full error:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
-        
+        console.error("=== MANUS IA Backend Fetch Error ===");
+        console.error("Error:", error.message);
+
         await supabase
-          .from('agent_orchestrations')
+          .from("agent_orchestrations")
           .update({
-            status: 'error',
-            error: `n8n webhook unreachable: ${error.message}`,
-            completed_at: new Date().toISOString()
+            status: "error",
+            error: `MANUS IA backend unreachable: ${error.message}`,
+            completed_at: new Date().toISOString(),
           })
-          .eq('id', orchestration.id);
+          .eq("id", orchestration.id);
       });
 
     // Répondre immédiatement au client
@@ -189,24 +226,30 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         orchestrationId: orchestration.id,
-        message: 'Multi-agent orchestration started successfully. n8n is processing asynchronously.',
+        message:
+          "MANUS IA 2.0 multi-agent orchestration started successfully. Processing 17 specialized agents across 4 phases.",
+        system: "MANUS IA 2.0",
+        agents: 17,
+        phases: 4,
+        qualityGates: true,
+        antiHallucination: true,
       }),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
     );
-
   } catch (error) {
-    console.error('Error in orchestrate-multi-agent:', error);
+    console.error("Error in orchestrate-multi-agent (MANUS IA):", error);
     return new Response(
       JSON.stringify({
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : "Unknown error",
+        system: "MANUS IA 2.0",
       }),
       {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
     );
   }
 });
