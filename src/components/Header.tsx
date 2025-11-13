@@ -38,9 +38,15 @@ export const Header = () => {
     { name: "Contact", href: "/contact" },
   ];
 
+  const adminNavigation = isAdmin ? [
+    { name: "Audits", href: "/admin/audits" },
+    { name: "Blog", href: "/admin/blog" },
+    { name: "Orchestrations", href: "/admin/orchestrations" }
+  ] : [];
+
   const navigation = [
     ...baseNavigation,
-    ...(isAdmin ? [{ name: "Admin", href: "/admin/audits" }] : []),
+    ...adminNavigation,
     ...(isClient ? [{ name: "Mes Audits", href: "/client/audits" }] : []),
   ];
 

@@ -21,6 +21,7 @@ import AuditGratuit from "./pages/AuditGratuit";
 import RGPD from "./pages/RGPD";
 import CGU from "./pages/CGU";
 import AdminAudits from "./pages/AdminAudits";
+import AdminBlog from "./pages/AdminBlog";
 import ClientAudits from "./pages/ClientAudits";
 import AuditReport from "./pages/AuditReport";
 import OrchestrationMonitor from "./pages/OrchestrationMonitor";
@@ -61,6 +62,11 @@ const App = () => {
             <Route path="/admin/audits" element={
               <ProtectedRoute requireAuth requireAdmin>
                 <AdminAudits />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/blog" element={
+              <ProtectedRoute requireAuth requireAdmin>
+                <AdminBlog />
               </ProtectedRoute>
             } />
             <Route path="/admin/orchestrations" element={
