@@ -1245,6 +1245,36 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limits: {
+        Row: {
+          created_at: string | null
+          id: string
+          identifier: string
+          identifier_type: string
+          request_count: number
+          resource_type: string
+          window_start: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          identifier: string
+          identifier_type: string
+          request_count?: number
+          resource_type: string
+          window_start?: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          identifier?: string
+          identifier_type?: string
+          request_count?: number
+          resource_type?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       reports: {
         Row: {
           client_id: string
@@ -1423,12 +1453,26 @@ export type Database = {
         Args: { p_admin_id: string; p_user_id: string }
         Returns: undefined
       }
+      check_rate_limit: {
+        Args: {
+          p_identifier: string
+          p_identifier_type: string
+          p_max_requests: number
+          p_resource_type: string
+          p_window_minutes: number
+        }
+        Returns: Json
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_free_audits_used: {
+        Args: { p_user_id: string }
+        Returns: undefined
       }
       is_admin:
         | { Args: never; Returns: boolean }

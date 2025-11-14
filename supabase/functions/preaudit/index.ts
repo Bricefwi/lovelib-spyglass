@@ -44,18 +44,60 @@ serve(async (req) => {
     const { url } = validation.data;
     console.log(`Starting pre-audit for: ${url}`);
     
-    // Extract JWT from request headers to authenticate the user
+    // **SÉCURITÉ : Vérifier l'authentification**
     const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ ok: false, error: "Non authentifié. Veuillez vous connecter." }), 
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
     
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_ANON_KEY")!,
       {
         global: {
-          headers: authHeader ? { Authorization: authHeader } : {}
+          headers: { Authorization: authHeader }
         }
       }
     );
+
+    // Client admin pour opérations privilégiées
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
+    // Vérifier l'utilisateur
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      console.error('Auth error:', authError);
+      return new Response(
+        JSON.stringify({ ok: false, error: "Session invalide. Veuillez vous reconnecter." }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // **SÉCURITÉ : Rate limiting - max 3 audits par heure**
+    const rateLimitCheck = await supabaseAdmin.rpc('check_rate_limit', {
+      p_resource_type: 'preaudit',
+      p_identifier: user.id,
+      p_identifier_type: 'user',
+      p_max_requests: 3,
+      p_window_minutes: 60
+    });
+
+    if (rateLimitCheck.data && !rateLimitCheck.data.allowed) {
+      console.warn(`Rate limit exceeded for user ${user.id} on preaudit`);
+      return new Response(
+        JSON.stringify({ 
+          ok: false, 
+          error: 'Limite d\'audits atteinte. Veuillez patienter une heure ou contacter le support.' 
+        }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     const domain = url.replace(/^https?:\/\//,'').replace(/^www\./,'').split('/')[0];
     const websiteUrl = `https://${domain}`;
@@ -83,8 +125,10 @@ serve(async (req) => {
       console.log(`Created new company: ${company.id}`);
     }
     
-    const { data: pre, error: preError } = await supabase.from('pre_audits').insert({ 
-      company_id: company.id, 
+    // Utiliser service_role pour créer le pre_audit (bypass RLS si nécessaire)
+    const { data: pre, error: preError } = await supabaseAdmin.from('pre_audits').insert({ 
+      company_id: company.id,
+      created_by: user.id, // Important: attacher à l'utilisateur
       url, 
       status: 'collecting', 
       timeline: [{at: new Date().toISOString(), label: 'Création'}] 
