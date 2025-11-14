@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import DiagnosticAuth from "./pages/DiagnosticAuth";
 import Onboarding from "./pages/Onboarding";
+import OnboardingCompany from "./pages/OnboardingCompany";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import Solutions from "./pages/Solutions";
@@ -49,7 +50,7 @@ const App = () => {
             <Route path="/auth" element={<Auth />} />
             <Route path="/diagnostic-auth" element={<DiagnosticAuth />} />
             <Route path="/onboarding" element={<Onboarding />} />
-            <Route path="/onboarding" element={<Onboarding />} />
+            <Route path="/onboarding/company" element={<OnboardingCompany />} />
             <Route path="/solutions" element={<Solutions />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
