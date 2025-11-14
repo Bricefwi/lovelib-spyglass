@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -9,13 +10,15 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface AuditResultRequest {
-  auditResultId: string;
-  website: string;
-  reportMarkdown: string;
-  scores: any;
-  reportId?: string;
-}
+// Validation schema
+const sendAuditSchema = z.object({
+  orchestrationId: z.string().uuid(),
+  recipientEmail: z.string().email(),
+  reportId: z.string().uuid().optional(),
+  website: z.string().url().optional(),
+  reportMarkdown: z.string().optional(),
+  scores: z.any().optional(),
+});
 
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
@@ -23,18 +26,31 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { auditResultId, website, reportMarkdown, scores, reportId }: AuditResultRequest = await req.json();
+    const body = await req.json();
+    
+    // Validate input
+    const validation = sendAuditSchema.safeParse(body);
+    if (!validation.success) {
+      console.error("Validation error:", validation.error);
+      return new Response(
+        JSON.stringify({ error: "Invalid request data", details: validation.error.format() }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
-    console.log(`Sending audit results for ${website} - ID: ${auditResultId}, Report ID: ${reportId}`);
+    const { orchestrationId, recipientEmail, reportId, website, reportMarkdown, scores } = validation.data;
 
-    const subject = `🎯 Votre Pré-Audit Digital IMOTION - ${website}`;
+    console.log(`Sending audit results - Orchestration: ${orchestrationId}, Report: ${reportId || 'N/A'}`);
+
+    const subject = `🎯 Votre Pré-Audit Digital IMOTION${website ? ` - ${website}` : ''}`;
     
     // Récupérer le rapport HTML depuis la base de données si un reportId est fourni
     let reportHtml = '';
     if (reportId) {
+      // SÉCURITÉ: Utiliser ANON_KEY au lieu de SERVICE_ROLE_KEY
       const supabase = createClient(
         Deno.env.get("SUPABASE_URL")!,
-        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+        Deno.env.get("SUPABASE_ANON_KEY")!
       );
 
       const { data: report } = await supabase
@@ -52,8 +68,8 @@ const handler = async (req: Request): Promise<Response> => {
     // Si on a un rapport HTML complet, l'utiliser directement pour l'email
     if (reportHtml) {
       const emailResponse = await resend.emails.send({
-        from: "IMOTION Tests <onboarding@resend.dev>",
-        to: ["patrice.simion@gmail.com"],
+        from: "IMOTION <noreply@imotion.tech>",
+        to: [recipientEmail],
         subject: subject,
         html: reportHtml,
       });
@@ -158,8 +174,8 @@ const handler = async (req: Request): Promise<Response> => {
     `;
 
     const emailResponse = await resend.emails.send({
-      from: "IMOTION Tests <onboarding@resend.dev>",
-      to: ["patrice.simion@gmail.com"],
+      from: "IMOTION <noreply@imotion.tech>",
+      to: [recipientEmail],
       subject: subject,
       html: emailContent,
     });
@@ -175,8 +191,13 @@ const handler = async (req: Request): Promise<Response> => {
     });
   } catch (error: any) {
     console.error("Error in send-audit-results function:", error);
+    const requestId = crypto.randomUUID();
+    console.error(`Request ID: ${requestId}`);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: "An error occurred while sending the audit results",
+        requestId 
+      }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
