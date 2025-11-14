@@ -36,7 +36,7 @@ serve(async (req) => {
 
     // Fetch FAQ knowledge base
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const { data: faqEntries } = await supabase
@@ -110,9 +110,13 @@ ${context}`
     );
 
   } catch (error) {
-    console.error('Error in faq-assistant:', error);
+    const requestId = crypto.randomUUID();
+    console.error(`[${requestId}] Error in faq-assistant:`, error);
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Erreur inconnue' }),
+      JSON.stringify({ 
+        error: 'Une erreur est survenue lors du traitement de votre question. Veuillez réessayer.',
+        requestId 
+      }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
