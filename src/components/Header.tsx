@@ -41,7 +41,8 @@ export const Header = () => {
   const adminNavigation = isAdmin ? [
     { name: "Audits", href: "/admin/audits" },
     { name: "Blog", href: "/admin/blog" },
-    { name: "Orchestrations", href: "/admin/orchestrations" }
+    { name: "Orchestrations", href: "/admin/orchestrations" },
+    { name: "Veille IA", href: "/veille-ia" }
   ] : [];
 
   const navigation = [
