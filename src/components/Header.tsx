@@ -30,6 +30,18 @@ export const Header = () => {
     navigate("/");
   };
 
+  const handleStartProject = () => {
+    if (session) {
+      if (isAdmin) {
+        navigate("/admin/audits");
+      } else {
+        navigate("/client/audits");
+      }
+    } else {
+      navigate("/auth");
+    }
+  };
+
   const baseNavigation = [
     { name: "Accueil", href: "/" },
     { name: "Solutions", href: "/solutions" },
@@ -93,7 +105,7 @@ export const Header = () => {
                 <Button variant="ghost" size="sm" onClick={() => navigate("/auth")}>
                   Se connecter
                 </Button>
-                <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => navigate("/auth")}>
+                <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={handleStartProject}>
                   Démarrer un projet
                 </Button>
               </>
@@ -140,7 +152,7 @@ export const Header = () => {
                     <Button variant="ghost" size="sm" onClick={() => navigate("/auth")}>
                       Se connecter
                     </Button>
-                    <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => navigate("/auth")}>
+                    <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={handleStartProject}>
                       Démarrer un projet
                     </Button>
                   </>
