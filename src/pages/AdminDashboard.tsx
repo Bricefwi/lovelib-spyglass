@@ -20,7 +20,7 @@ interface DashboardStats {
   blockedUsers: number;
   totalAudits: number;
   auditsToday: number;
-  rateLimit Warnings: number;
+  rateLimitWarnings: number;
 }
 
 export default function AdminDashboard() {
