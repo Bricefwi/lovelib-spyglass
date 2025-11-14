@@ -44,10 +44,17 @@ serve(async (req) => {
     const { url } = validation.data;
     console.log(`Starting pre-audit for: ${url}`);
     
-    // SÉCURITÉ: Utiliser ANON_KEY au lieu de SERVICE_ROLE_KEY
+    // Extract JWT from request headers to authenticate the user
+    const authHeader = req.headers.get('Authorization');
+    
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      {
+        global: {
+          headers: authHeader ? { Authorization: authHeader } : {}
+        }
+      }
     );
 
     const domain = url.replace(/^https?:\/\//,'').replace(/^www\./,'').split('/')[0];
