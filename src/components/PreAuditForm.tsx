@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,7 +17,30 @@ export const PreAuditForm = () => {
   const [auditType, setAuditType] = useState<"standard" | "advanced">("standard");
   const [orchestrationId, setOrchestrationId] = useState<string>("");
   const [showProgress, setShowProgress] = useState(false);
+  const [auditsRemaining, setAuditsRemaining] = useState<number | null>(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
+
+  // Récupérer le nombre d'audits restants au chargement
+  useEffect(() => {
+    const fetchAuditsRemaining = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('free_audits_used')
+        .eq('user_id', user.id)
+        .single();
+
+      if (profile) {
+        const remaining = 3 - (profile.free_audits_used || 0);
+        setAuditsRemaining(remaining);
+      }
+    };
+
+    fetchAuditsRemaining();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,6 +76,89 @@ export const PreAuditForm = () => {
       }
 
       if (auditType === "advanced") {
+        // Vérifier l'accès avant de lancer l'audit avancé
+        const { data: accessCheck, error: accessError } = await supabase.functions.invoke('check-audit-access', {
+          body: {
+            pre_audit_id: preAuditId
+          }
+        });
+
+        if (accessError) {
+          console.error('Error checking access:', accessError);
+          toast({
+            title: "❌ Erreur de vérification",
+            description: "Impossible de vérifier vos droits d'accès. Veuillez réessayer.",
+            variant: "destructive"
+          });
+          setIsLoading(false);
+          setStep("idle");
+          return;
+        }
+
+        // Si l'accès est refusé
+        if (!accessCheck?.allowed) {
+          const reason = accessCheck?.reason || 'unknown';
+          const denialMessages: Record<string, { title: string; description: string }> = {
+            'email_not_confirmed': {
+              title: "📧 Email non confirmé",
+              description: "Veuillez confirmer votre email avant de lancer un audit. Vérifiez votre boîte mail."
+            },
+            'onboarding_not_completed': {
+              title: "🏢 Identification entreprise requise",
+              description: "Veuillez compléter votre profil entreprise avant de lancer un audit."
+            },
+            'free_audits_exhausted': {
+              title: "🎯 Audits gratuits épuisés",
+              description: `Vous avez utilisé vos ${accessCheck?.free_audits_limit || 3} audits gratuits. Découvrez nos offres premium pour continuer.`
+            },
+            'rate_limit_exceeded': {
+              title: "⏱️ Trop de tentatives",
+              description: "Vous avez atteint la limite de tentatives. Veuillez patienter avant de réessayer."
+            },
+            'trust_score_too_low': {
+              title: "⚠️ Vérification en cours",
+              description: "Votre compte est en cours de vérification par notre équipe. Veuillez patienter."
+            },
+            'account_blocked': {
+              title: "🚫 Compte temporairement bloqué",
+              description: "Votre compte est temporairement bloqué. Contactez le support pour plus d'informations."
+            },
+            'account_rejected': {
+              title: "❌ Compte rejeté",
+              description: "Votre demande d'accès a été rejetée. Contactez le support pour plus d'informations."
+            }
+          };
+
+          const message = denialMessages[reason] || {
+            title: "❌ Accès refusé",
+            description: "Vous ne pouvez pas lancer d'audit pour le moment."
+          };
+
+          toast({
+            title: message.title,
+            description: message.description,
+            variant: "destructive"
+          });
+
+          // Rediriger selon la raison
+          if (reason === 'onboarding_not_completed') {
+            navigate('/onboarding/company');
+          } else if (reason === 'free_audits_exhausted') {
+            navigate('/pricing');
+          }
+
+          setIsLoading(false);
+          setStep("idle");
+          return;
+        }
+
+        // Si l'accès est autorisé, afficher un message de succès
+        toast({
+          title: "✅ Vérification réussie",
+          description: `Audits gratuits restants : ${accessCheck?.free_audits_remaining || 0}/${accessCheck?.free_audits_limit || 3}`,
+          variant: "default"
+        });
+
         // Launch multi-agent orchestration
         setStep("generating");
         toast({
@@ -72,6 +179,11 @@ export const PreAuditForm = () => {
         setOrchestrationId(orchData.orchestrationId);
         setShowProgress(true);
         setIsLoading(false);
+
+        // Mettre à jour le compteur d'audits restants
+        if (accessCheck?.free_audits_remaining !== undefined) {
+          setAuditsRemaining(accessCheck.free_audits_remaining - 1);
+        }
 
         toast({
           title: "✅ Analyse lancée !",
@@ -151,6 +263,34 @@ export const PreAuditForm = () => {
               />
             ) : (
               <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Badge Audits Restants */}
+                {auditsRemaining !== null && auditType === "advanced" && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-semibold text-blue-900">
+                          Audits gratuits restants
+                        </p>
+                        <p className="text-sm text-blue-700">
+                          Vous avez {auditsRemaining} audit{auditsRemaining > 1 ? 's' : ''} gratuit{auditsRemaining > 1 ? 's' : ''} restant{auditsRemaining > 1 ? 's' : ''}
+                        </p>
+                      </div>
+                      <div className="text-3xl font-bold text-blue-600">
+                        {auditsRemaining}/3
+                      </div>
+                    </div>
+                    {auditsRemaining === 0 && (
+                      <Button 
+                        variant="link" 
+                        className="p-0 h-auto mt-2"
+                        onClick={() => navigate('/pricing')}
+                      >
+                        💡 Découvrez nos offres premium →
+                      </Button>
+                    )}
+                  </div>
+                )}
+
                 <div>
                   <Input
                     type="url"
@@ -198,7 +338,7 @@ export const PreAuditForm = () => {
                   type="submit" 
                   size="lg" 
                   className="w-full bg-primary text-primary-foreground hover:bg-primary/90 text-base py-6 font-semibold"
-                  disabled={isLoading}
+                  disabled={isLoading || (auditType === "advanced" && auditsRemaining === 0)}
                 >
                   {isLoading ? (
                     <>
@@ -208,6 +348,10 @@ export const PreAuditForm = () => {
                       {step === "done" && "Terminé !"}
                       {step === "error" && "Erreur"}
                       {step === "idle" && "Analyse en cours..."}
+                    </>
+                  ) : auditsRemaining === 0 && auditType === "advanced" ? (
+                    <>
+                      🎯 Audits gratuits épuisés
                     </>
                   ) : (
                     <>
