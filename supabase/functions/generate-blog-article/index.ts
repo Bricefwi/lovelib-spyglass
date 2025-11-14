@@ -28,7 +28,7 @@ serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const { topic, category, manual } = await req.json() as ArticleRequest;
@@ -105,11 +105,13 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error generating blog article:', error);
+    const requestId = crypto.randomUUID();
+    console.error(`[${requestId}] Error generating blog article:`, error);
     return new Response(
       JSON.stringify({
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: 'Une erreur est survenue lors de la génération de l\'article.',
+        requestId
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

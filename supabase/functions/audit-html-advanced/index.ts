@@ -28,7 +28,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+      Deno.env.get("SUPABASE_ANON_KEY")!
     );
 
     // Fetch pre-audit data
@@ -127,9 +127,13 @@ IMPORTANT: Génère UNIQUEMENT le code HTML complet, sans commentaires, sans mar
     });
 
   } catch (error: any) {
-    console.error("Error in audit-html-advanced function:", error);
+    const requestId = crypto.randomUUID();
+    console.error(`[${requestId}] Error in audit-html-advanced function:`, error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: 'Une erreur est survenue lors de la génération du rapport.',
+        requestId 
+      }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },

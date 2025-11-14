@@ -417,10 +417,12 @@ IMPORTANT:
     });
     
   } catch(e) {
-    console.error('Error in preaudit:', e);
+    const requestId = crypto.randomUUID();
+    console.error(`[${requestId}] Error in preaudit:`, e);
     return new Response(JSON.stringify({ 
       ok: false, 
-      error: e instanceof Error ? e.message : String(e) 
+      error: 'Une erreur est survenue lors de l\'analyse. Veuillez réessayer.',
+      requestId
     }), { 
       status: 500, 
       headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
