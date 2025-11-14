@@ -44,9 +44,10 @@ serve(async (req) => {
     const { url } = validation.data;
     console.log(`Starting pre-audit for: ${url}`);
     
+    // SÉCURITÉ: Utiliser ANON_KEY au lieu de SERVICE_ROLE_KEY
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+      Deno.env.get("SUPABASE_ANON_KEY")!
     );
 
     const domain = url.replace(/^https?:\/\//,'').replace(/^www\./,'').split('/')[0];

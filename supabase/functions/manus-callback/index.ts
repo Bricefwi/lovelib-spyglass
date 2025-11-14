@@ -1,25 +1,23 @@
 /**
- * Supabase Edge Function: manus-callback (Version Corrigée)
+ * Supabase Edge Function: manus-callback (SECURED VERSION)
  * 
- * Reçoit les résultats du backend MANUS IA Railway et :
- * 1. Met à jour l'orchestration dans la BDD
- * 2. Sauvegarde le rapport brut
- * 3. Génère le HTML professionnel avec le template IMOTION
+ * Reçoit les résultats du backend MANUS IA Railway avec vérification HMAC
  * 
- * Changements vs n8n-callback:
- * - ✅ Renommage n8n → manus
- * - ✅ Ajout génération HTML professionnel
- * - ✅ Meilleure validation des données
- * - ✅ Logs plus clairs
+ * Sécurité:
+ * - ✅ Vérification signature HMAC (X-MANUS-Signature)
+ * - ✅ Utilise SUPABASE_ANON_KEY au lieu de SERVICE_ROLE_KEY
+ * - ✅ Validation Zod complète
+ * - ✅ Rate limiting potentiel
  */
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+import { createHmac } from "https://deno.land/std@0.168.0/node/crypto.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-manus-signature',
 };
 
 // Schema de validation pour le callback MANUS IA
@@ -374,10 +372,43 @@ serve(async (req) => {
   }
 
   try {
-    const body = await req.json();
+    // SÉCURITÉ: Vérifier la signature HMAC
+    const WEBHOOK_SECRET = Deno.env.get('MANUS_WEBHOOK_SECRET');
+    if (!WEBHOOK_SECRET) {
+      console.error('❌ MANUS_WEBHOOK_SECRET not configured');
+      return new Response(
+        JSON.stringify({ error: 'Webhook secret not configured' }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const signature = req.headers.get('X-MANUS-Signature');
+    if (!signature) {
+      console.error('❌ Missing X-MANUS-Signature header');
+      return new Response(
+        JSON.stringify({ error: 'Missing webhook signature' }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const bodyText = await req.text();
+    const expectedSignature = createHmac('sha256', WEBHOOK_SECRET)
+      .update(bodyText)
+      .digest('hex');
+
+    if (signature !== expectedSignature) {
+      console.error('❌ Invalid webhook signature');
+      return new Response(
+        JSON.stringify({ error: 'Invalid webhook signature' }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    console.log("✅ Webhook signature verified");
+
+    const body = JSON.parse(bodyText);
     
     console.log("=== MANUS IA Callback Received ===");
-    console.log("Body:", JSON.stringify(body, null, 2));
     
     // Validate input
     const validation = callbackSchema.safeParse(body);
@@ -397,8 +428,9 @@ serve(async (req) => {
     console.log(`✅ Callback validated for orchestration: ${orchestrationId}`);
     console.log(`Status: ${status}, Progress: ${progress}%`);
 
+    // SÉCURITÉ: Utiliser ANON_KEY au lieu de SERVICE_ROLE_KEY
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // 1. Mettre à jour l'orchestration
