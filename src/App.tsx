@@ -29,6 +29,7 @@ import AuditReport from "./pages/AuditReport";
 import OrchestrationMonitor from "./pages/OrchestrationMonitor";
 import VeilleIA from "./pages/VeilleIA";
 import NotFound from "./pages/NotFound";
+import Dashboard from "./pages/Dashboard";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -77,6 +78,11 @@ const App = () => {
             <Route path="/admin/orchestrations" element={
               <ProtectedRoute requireAuth requireAdmin>
                 <OrchestrationMonitor />
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard" element={
+              <ProtectedRoute requireAuth requireOnboarding>
+                <Dashboard />
               </ProtectedRoute>
             } />
             <Route path="/client/audits" element={

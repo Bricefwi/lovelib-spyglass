@@ -1043,52 +1043,103 @@ export type Database = {
       }
       profiles: {
         Row: {
+          account_status: string | null
+          blocked_until: string | null
+          company_address: string | null
+          company_creation_date: string | null
           company_id: string | null
+          company_legal_form: string | null
+          company_legal_name: string | null
+          company_siren: string | null
+          company_siret: string | null
+          company_website: string | null
           created_at: string
           email: string
           firstname: string
+          free_audits_used: number | null
           gdpr_consent: boolean | null
           id: string
+          job_title: string | null
+          last_audit_at: string | null
           last_login: string | null
           lastname: string
           oauth_provider: string | null
           oauth_uid: string | null
           phone: string | null
+          professional_email: string | null
+          professional_phone: string | null
           role: Database["public"]["Enums"]["app_role"]
+          trust_score: number | null
           updated_at: string
           user_id: string
+          verification_document_url: string | null
+          verification_method: string | null
         }
         Insert: {
+          account_status?: string | null
+          blocked_until?: string | null
+          company_address?: string | null
+          company_creation_date?: string | null
           company_id?: string | null
+          company_legal_form?: string | null
+          company_legal_name?: string | null
+          company_siren?: string | null
+          company_siret?: string | null
+          company_website?: string | null
           created_at?: string
           email: string
           firstname: string
+          free_audits_used?: number | null
           gdpr_consent?: boolean | null
           id?: string
+          job_title?: string | null
+          last_audit_at?: string | null
           last_login?: string | null
           lastname: string
           oauth_provider?: string | null
           oauth_uid?: string | null
           phone?: string | null
+          professional_email?: string | null
+          professional_phone?: string | null
           role?: Database["public"]["Enums"]["app_role"]
+          trust_score?: number | null
           updated_at?: string
           user_id: string
+          verification_document_url?: string | null
+          verification_method?: string | null
         }
         Update: {
+          account_status?: string | null
+          blocked_until?: string | null
+          company_address?: string | null
+          company_creation_date?: string | null
           company_id?: string | null
+          company_legal_form?: string | null
+          company_legal_name?: string | null
+          company_siren?: string | null
+          company_siret?: string | null
+          company_website?: string | null
           created_at?: string
           email?: string
           firstname?: string
+          free_audits_used?: number | null
           gdpr_consent?: boolean | null
           id?: string
+          job_title?: string | null
+          last_audit_at?: string | null
           last_login?: string | null
           lastname?: string
           oauth_provider?: string | null
           oauth_uid?: string | null
           phone?: string | null
+          professional_email?: string | null
+          professional_phone?: string | null
           role?: Database["public"]["Enums"]["app_role"]
+          trust_score?: number | null
           updated_at?: string
           user_id?: string
+          verification_document_url?: string | null
+          verification_method?: string | null
         }
         Relationships: []
       }
