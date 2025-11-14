@@ -13,16 +13,16 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.consolidate]
-verify_jwt = false
+verify_jwt = true
 
 [functions.audit-generate]
-verify_jwt = false
+verify_jwt = true
 
 [functions.n8n-callback]
 verify_jwt = false
 
 [functions.orchestrate-multi-agent]
-verify_jwt = false
+verify_jwt = true
 
 [functions.send-auth-diagnostic]
 verify_jwt = false
