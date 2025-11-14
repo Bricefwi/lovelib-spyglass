@@ -41,13 +41,9 @@ export default function AdminDashboard() {
         setLoading(true);
 
         // Fetch dashboard statistics
-        const [usersResult, auditsResult, accessControlResult] = await Promise.all([
+        const [usersResult, auditsResult] = await Promise.all([
           supabase.from("profiles").select("user_id, account_status, blocked_until"),
           supabase.from("pre_audits").select("id, created_at"),
-          supabase
-            .from("audit_access_control")
-            .select("id, allowed, created_at")
-            .gte("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()),
         ]);
 
         const totalUsers = usersResult.data?.length || 0;
@@ -65,9 +61,6 @@ export default function AdminDashboard() {
         const auditsToday =
           auditsResult.data?.filter((a) => a.created_at?.startsWith(today)).length || 0;
 
-        const rateLimitWarnings =
-          accessControlResult.data?.filter((a) => !a.allowed).length || 0;
-
         setStats({
           totalUsers,
           activeUsers,
@@ -75,7 +68,7 @@ export default function AdminDashboard() {
           blockedUsers,
           totalAudits,
           auditsToday,
-          rateLimitWarnings,
+          rateLimitWarnings: 0, // Placeholder - needs audit_access_control table query
         });
       } catch (error) {
         console.error("Error fetching admin stats:", error);

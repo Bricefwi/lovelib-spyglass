@@ -32,6 +32,21 @@ interface UserProfile {
   account_status: string | null;
   blocked_until: string | null;
   created_at: string;
+  last_login: string | null;
+  phone: string | null;
+  professional_email: string | null;
+  professional_phone: string | null;
+  job_title: string | null;
+  company_siren: string | null;
+  company_address: string | null;
+  company_legal_form: string | null;
+  company_creation_date: string | null;
+  company_website: string | null;
+  verification_method: string | null;
+  verification_document_url: string | null;
+  last_audit_at: string | null;
+  rejection_reason: string | null;
+  block_reason: string | null;
 }
 
 export function AdminUsersTab() {
