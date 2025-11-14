@@ -12,6 +12,36 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
+
+// **SÉCURITÉ : Schéma de validation des entrées**
+const accessCheckSchema = z.object({
+  pre_audit_id: z.string().uuid({ message: "pre_audit_id doit être un UUID valide" }).optional(),
+  websiteUrl: z.string()
+    .url({ message: "URL invalide" })
+    .max(2048, { message: "URL trop longue" })
+    .refine(
+      (url) => {
+        const parsed = new URL(url);
+        // Whitelist des protocoles autorisés
+        return parsed.protocol === 'https:' || parsed.protocol === 'http:';
+      },
+      { message: "Seuls les protocoles HTTP et HTTPS sont autorisés" }
+    )
+    .refine(
+      (url) => {
+        const parsed = new URL(url);
+        // Blocage des adresses locales (SSRF protection)
+        const hostname = parsed.hostname.toLowerCase();
+        return !['localhost', '127.0.0.1', '0.0.0.0', '::1'].includes(hostname) &&
+               !hostname.startsWith('192.168.') &&
+               !hostname.startsWith('10.') &&
+               !hostname.startsWith('172.');
+      },
+      { message: "Les URLs locales ne sont pas autorisées" }
+    )
+    .optional()
+});
 
 // Types
 interface AccessCheckResult {

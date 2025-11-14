@@ -273,6 +273,39 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_access_control: {
+        Row: {
+          allowed: boolean
+          created_at: string | null
+          denial_reason: string | null
+          free_audits_remaining: number | null
+          id: string
+          ip_address: string | null
+          trust_score: number | null
+          user_id: string | null
+        }
+        Insert: {
+          allowed: boolean
+          created_at?: string | null
+          denial_reason?: string | null
+          free_audits_remaining?: number | null
+          id?: string
+          ip_address?: string | null
+          trust_score?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          allowed?: boolean
+          created_at?: string | null
+          denial_reason?: string | null
+          free_audits_remaining?: number | null
+          id?: string
+          ip_address?: string | null
+          trust_score?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action: string
@@ -835,6 +868,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      company_verification_logs: {
+        Row: {
+          created_at: string | null
+          id: string
+          ip_address: string | null
+          legal_name: string | null
+          siret: string
+          user_agent: string | null
+          user_id: string | null
+          verification_method: string | null
+          verification_result: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          legal_name?: string | null
+          siret: string
+          user_agent?: string | null
+          user_id?: string | null
+          verification_method?: string | null
+          verification_result: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          legal_name?: string | null
+          siret?: string
+          user_agent?: string | null
+          user_id?: string | null
+          verification_method?: string | null
+          verification_result?: string
+        }
+        Relationships: []
       }
       deltas: {
         Row: {
