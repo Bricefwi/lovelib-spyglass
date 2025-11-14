@@ -30,6 +30,7 @@ import OrchestrationMonitor from "./pages/OrchestrationMonitor";
 import VeilleIA from "./pages/VeilleIA";
 import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/Dashboard";
+import { HowItWorks } from "./pages/HowItWorks";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -56,6 +57,7 @@ const App = () => {
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
             <Route path="/faq" element={<FAQ />} />
+            <Route path="/how-it-works" element={<HowItWorks />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/audit-methodologie" element={<AuditMethodologie />} />
             <Route path="/audit-gratuit" element={<AuditGratuit />} />
