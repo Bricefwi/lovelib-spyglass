@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_activity_logs: {
+        Row: {
+          action: string
+          admin_id: string
+          created_at: string | null
+          details: Json | null
+          id: string
+          target_user_id: string | null
+        }
+        Insert: {
+          action: string
+          admin_id: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          target_user_id?: string | null
+        }
+        Update: {
+          action?: string
+          admin_id?: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          target_user_id?: string | null
+        }
+        Relationships: []
+      }
       admins: {
         Row: {
           created_at: string
@@ -1044,6 +1071,7 @@ export type Database = {
       profiles: {
         Row: {
           account_status: string | null
+          block_reason: string | null
           blocked_until: string | null
           company_address: string | null
           company_creation_date: string | null
@@ -1068,6 +1096,7 @@ export type Database = {
           phone: string | null
           professional_email: string | null
           professional_phone: string | null
+          rejection_reason: string | null
           role: Database["public"]["Enums"]["app_role"]
           trust_score: number | null
           updated_at: string
@@ -1077,6 +1106,7 @@ export type Database = {
         }
         Insert: {
           account_status?: string | null
+          block_reason?: string | null
           blocked_until?: string | null
           company_address?: string | null
           company_creation_date?: string | null
@@ -1101,6 +1131,7 @@ export type Database = {
           phone?: string | null
           professional_email?: string | null
           professional_phone?: string | null
+          rejection_reason?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           trust_score?: number | null
           updated_at?: string
@@ -1110,6 +1141,7 @@ export type Database = {
         }
         Update: {
           account_status?: string | null
+          block_reason?: string | null
           blocked_until?: string | null
           company_address?: string | null
           company_creation_date?: string | null
@@ -1134,6 +1166,7 @@ export type Database = {
           phone?: string | null
           professional_email?: string | null
           professional_phone?: string | null
+          rejection_reason?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           trust_score?: number | null
           updated_at?: string
@@ -1287,6 +1320,40 @@ export type Database = {
       }
     }
     Functions: {
+      admin_adjust_trust_score: {
+        Args: {
+          p_admin_id: string
+          p_new_score: number
+          p_reason: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
+      admin_approve_user: {
+        Args: { p_admin_id: string; p_user_id: string }
+        Returns: undefined
+      }
+      admin_block_user: {
+        Args: {
+          p_admin_id: string
+          p_blocked_until: string
+          p_reason: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
+      admin_reject_user: {
+        Args: { p_admin_id: string; p_reason: string; p_user_id: string }
+        Returns: undefined
+      }
+      admin_reset_free_audits: {
+        Args: { p_admin_id: string; p_reason: string; p_user_id: string }
+        Returns: undefined
+      }
+      admin_unblock_user: {
+        Args: { p_admin_id: string; p_user_id: string }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

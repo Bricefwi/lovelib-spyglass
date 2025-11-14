@@ -44,6 +44,7 @@ export const Header = () => {
 
   const baseNavigation = [
     { name: "Accueil", href: "/" },
+    { name: "Comment ça marche", href: "/how-it-works" },
     { name: "Solutions", href: "/solutions" },
     { name: "Blog", href: "/blog" },
     { name: "FAQ", href: "/faq" },
