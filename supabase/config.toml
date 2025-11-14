@@ -32,3 +32,9 @@ verify_jwt = true
 
 [functions.manus-callback]
 verify_jwt = false
+
+[functions.validate-company-siret]
+verify_jwt = true
+
+[functions.check-audit-access]
+verify_jwt = true
