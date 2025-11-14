@@ -1,7 +1,7 @@
 project_id = "gzfrcshvrktpejctlgta"
 
 [functions.preaudit]
-verify_jwt = false
+verify_jwt = true
 
 [functions.audit-html]
 verify_jwt = false
@@ -10,7 +10,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.send-audit-results]
-verify_jwt = false
+verify_jwt = true
 
 [functions.consolidate]
 verify_jwt = true
@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.collect-ai-news]
 verify_jwt = true
+
+[functions.manus-callback]
+verify_jwt = false
