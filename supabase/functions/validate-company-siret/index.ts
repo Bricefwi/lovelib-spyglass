@@ -1,34 +1,35 @@
 // ============================================================================
 // EDGE FUNCTION : validate-company-siret
 // ============================================================================
-// Objectif : Valider un SIRET/SIREN via l'API INSEE et retourner les données légales
-// API : https://api.insee.fr/catalogue/site/themes/wso2/subthemes/insee/pages/item-info.jag?name=Sirene&version=V3&provider=insee
+// Objectif : Valider un SIRET/SIREN via l'API Recherche Entreprise (PUBLIQUE)
+// API : https://recherche-entreprises.api.gouv.fr/
 // ============================================================================
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 // Types
-interface InseeEtablissement {
-  siret: string;
+interface RechercheEntrepriseResult {
   siren: string;
-  etatAdministratifEtablissement: string;
-  dateCreationEtablissement: string;
-  uniteLegale: {
-    denominationUniteLegale: string;
-    categorieJuridiqueUniteLegale: string;
+  siret: string;
+  nom_complet: string;
+  nom_raison_sociale: string;
+  siege: {
+    siret: string;
+    adresse: string;
+    code_postal: string;
+    commune: string;
   };
-  adresseEtablissement: {
-    numeroVoieEtablissement: string;
-    typeVoieEtablissement: string;
-    libelleVoieEtablissement: string;
-    codePostalEtablissement: string;
-    libelleCommuneEtablissement: string;
-  };
+  activite_principale: string;
+  nature_juridique: string;
+  date_creation: string;
+  etat_administratif: string;
+  tranche_effectif_salarie?: string;
 }
 
-interface InseeResponse {
-  etablissement: InseeEtablissement;
+interface RechercheEntrepriseResponse {
+  results: RechercheEntrepriseResult[];
+  total_results: number;
 }
 
 interface ValidationResult {
@@ -58,13 +59,12 @@ function extractSiren(siret: string): string {
   return siret.substring(0, 9);
 }
 
-// Fonction pour appeler l'API INSEE
-async function fetchInseeData(siret: string, token: string): Promise<InseeResponse> {
+// Fonction pour appeler l'API Recherche Entreprise (PUBLIQUE)
+async function fetchEntrepriseData(siret: string): Promise<RechercheEntrepriseResponse> {
   const response = await fetch(
-    `https://api.insee.fr/entreprises/sirene/V3/siret/${siret}`,
+    `https://recherche-entreprises.api.gouv.fr/search?siret=${siret}`,
     {
       headers: {
-        'Authorization': `Bearer ${token}`,
         'Accept': 'application/json'
       }
     }
@@ -72,7 +72,7 @@ async function fetchInseeData(siret: string, token: string): Promise<InseeRespon
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`API INSEE error (${response.status}): ${errorText}`);
+    throw new Error(`API Recherche Entreprise error (${response.status}): ${errorText}`);
   }
 
   return await response.json();
@@ -92,22 +92,6 @@ serve(async (req) => {
   }
 
   try {
-    // Récupérer le token INSEE
-    const inseeToken = Deno.env.get('INSEE_API_TOKEN');
-    if (!inseeToken) {
-      console.error('INSEE_API_TOKEN not configured');
-      return new Response(
-        JSON.stringify({ 
-          valid: false,
-          error: 'Service de validation temporairement indisponible. Veuillez réessayer plus tard.' 
-        }),
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
-    }
-
     // Parser le body
     const { siret } = await req.json();
 
@@ -143,19 +127,19 @@ serve(async (req) => {
 
     console.log(`Validating SIRET: ${cleanSiret}`);
 
-    // Appel API INSEE
-    let inseeData: InseeResponse;
+    // Appel API Recherche Entreprise
+    let entrepriseData: RechercheEntrepriseResponse;
     try {
-      inseeData = await fetchInseeData(cleanSiret, inseeToken);
+      entrepriseData = await fetchEntrepriseData(cleanSiret);
     } catch (error) {
-      console.error('INSEE API error:', error);
+      console.error('API Recherche Entreprise error:', error);
       
       // Si 404, SIRET introuvable
       if (error instanceof Error && error.message.includes('404')) {
         return new Response(
           JSON.stringify({ 
             valid: false,
-            error: 'SIRET introuvable dans la base INSEE. Vérifiez le numéro saisi.' 
+            error: 'SIRET introuvable dans la base Sirene. Vérifiez le numéro saisi.' 
           }),
           { 
             status: 404, 
@@ -177,15 +161,29 @@ serve(async (req) => {
       );
     }
 
-    const etablissement = inseeData.etablissement;
+    // Vérifier qu'on a des résultats
+    if (entrepriseData.total_results === 0 || entrepriseData.results.length === 0) {
+      return new Response(
+        JSON.stringify({ 
+          valid: false,
+          error: 'SIRET introuvable dans la base Sirene. Vérifiez le numéro saisi.' 
+        }),
+        { 
+          status: 404, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
+    const etablissement = entrepriseData.results[0];
 
     // Vérifier que l'entreprise est active
-    const isActive = etablissement.etatAdministratifEtablissement === 'A';
+    const isActive = etablissement.etat_administratif === 'A';
     if (!isActive) {
       return new Response(
         JSON.stringify({ 
           valid: false,
-          error: 'Cette entreprise n\'est plus active selon la base INSEE.' 
+          error: 'Cette entreprise n\'est plus active selon la base Sirene.' 
         }),
         { 
           status: 400, 
@@ -194,22 +192,11 @@ serve(async (req) => {
       );
     }
 
-    // Construire l'adresse complète
-    const adresse = etablissement.adresseEtablissement;
-    const fullAddress = [
-      adresse.numeroVoieEtablissement,
-      adresse.typeVoieEtablissement,
-      adresse.libelleVoieEtablissement
-    ]
-      .filter(Boolean)
-      .join(' ') + 
-      `, ${adresse.codePostalEtablissement} ${adresse.libelleCommuneEtablissement}`;
-
     // Extraire SIREN
     const siren = extractSiren(cleanSiret);
 
     // Logger le succès
-    console.log(`✅ SIRET validated: ${cleanSiret} - ${etablissement.uniteLegale.denominationUniteLegale}`);
+    console.log(`✅ SIRET validated: ${cleanSiret} - ${etablissement.nom_raison_sociale}`);
 
     // Créer le client Supabase pour logger
     const supabaseClient = createClient(
@@ -230,13 +217,13 @@ serve(async (req) => {
             .insert({
               user_id: user.id,
               siret: cleanSiret,
-              verification_type: 'insee_api',
+              verification_type: 'recherche_entreprise_api',
               verification_status: 'success',
               verification_data: {
-                legal_name: etablissement.uniteLegale.denominationUniteLegale,
-                address: fullAddress,
-                legal_form: etablissement.uniteLegale.categorieJuridiqueUniteLegale,
-                creation_date: etablissement.dateCreationEtablissement,
+                legal_name: etablissement.nom_raison_sociale,
+                address: etablissement.siege.adresse,
+                legal_form: etablissement.nature_juridique,
+                creation_date: etablissement.date_creation,
                 is_active: isActive
               }
             });
@@ -252,10 +239,10 @@ serve(async (req) => {
       valid: true,
       siret: cleanSiret,
       siren: siren,
-      legalName: etablissement.uniteLegale.denominationUniteLegale,
-      address: fullAddress,
-      legalForm: etablissement.uniteLegale.categorieJuridiqueUniteLegale,
-      creationDate: etablissement.dateCreationEtablissement,
+      legalName: etablissement.nom_raison_sociale,
+      address: etablissement.siege.adresse,
+      legalForm: etablissement.nature_juridique,
+      creationDate: etablissement.date_creation,
       isActive: isActive
     };
 
