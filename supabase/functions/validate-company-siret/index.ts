@@ -101,6 +101,58 @@ serve(async (req) => {
   }
 
   try {
+    // **SÉCURITÉ : Vérifier l'authentification**
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ valid: false, error: 'Non authentifié' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Créer client avec auth user
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    // Créer client admin pour les logs
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    // Vérifier l'utilisateur
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      console.error('Auth error:', authError);
+      return new Response(
+        JSON.stringify({ valid: false, error: 'Session invalide' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // **SÉCURITÉ : Rate limiting - max 5 validations par minute**
+    const rateLimitCheck = await supabaseAdmin.rpc('check_rate_limit', {
+      p_resource_type: 'validate_siret',
+      p_identifier: user.id,
+      p_identifier_type: 'user',
+      p_max_requests: 5,
+      p_window_minutes: 1
+    });
+
+    if (rateLimitCheck.data && !rateLimitCheck.data.allowed) {
+      console.warn(`Rate limit exceeded for user ${user.id}`);
+      return new Response(
+        JSON.stringify({ 
+          valid: false, 
+          error: 'Trop de tentatives. Veuillez patienter une minute.' 
+        }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Parser le body
     const body = await req.json();
     
