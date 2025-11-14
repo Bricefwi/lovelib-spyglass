@@ -69,6 +69,54 @@ serve(async (req) => {
 
     console.log(`Starting MANUS IA multi-agent orchestration for pre-audit: ${preAuditId}`);
 
+    // Get user_id from JWT token
+    const authHeader = req.headers.get('Authorization');
+    let userId: string | null = null;
+    
+    if (authHeader) {
+      try {
+        const token = authHeader.replace('Bearer ', '');
+        const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+        if (user && !userError) {
+          userId = user.id;
+          console.log(`User ID from JWT: ${userId}`);
+        }
+      } catch (e) {
+        console.error('Error extracting user from JWT:', e);
+      }
+    }
+
+    // Increment free_audits_used counter for authenticated users
+    if (userId) {
+      // First, get current value
+      const { data: profile, error: fetchError } = await supabase
+        .from('profiles')
+        .select('free_audits_used')
+        .eq('user_id', userId)
+        .single();
+      
+      if (fetchError) {
+        console.error('Error fetching audit counter:', fetchError);
+      } else {
+        const currentCount = profile?.free_audits_used || 0;
+        
+        // Then increment
+        const { error: incrementError } = await supabase
+          .from('profiles')
+          .update({ 
+            free_audits_used: currentCount + 1,
+            last_audit_at: new Date().toISOString()
+          })
+          .eq('user_id', userId);
+        
+        if (incrementError) {
+          console.error('Error incrementing audit counter:', incrementError);
+        } else {
+          console.log(`✅ Incremented audit counter for user ${userId}: ${currentCount} -> ${currentCount + 1}`);
+        }
+      }
+    }
+
     // Create orchestration record with MANUS IA phases
     const { data: orchestration, error: orchError } = await supabase
       .from("agent_orchestrations")
