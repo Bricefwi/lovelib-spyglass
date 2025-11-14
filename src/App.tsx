@@ -26,6 +26,7 @@ import AdminBlog from "./pages/AdminBlog";
 import ClientAudits from "./pages/ClientAudits";
 import AuditReport from "./pages/AuditReport";
 import OrchestrationMonitor from "./pages/OrchestrationMonitor";
+import VeilleIA from "./pages/VeilleIA";
 import NotFound from "./pages/NotFound";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
@@ -83,6 +84,11 @@ const App = () => {
               </ProtectedRoute>
             } />
             <Route path="/audit-report/:id" element={<AuditReport />} />
+            <Route path="/veille-ia" element={
+              <ProtectedRoute requireAuth requireAdmin>
+                <VeilleIA />
+              </ProtectedRoute>
+            } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

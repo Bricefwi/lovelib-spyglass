@@ -210,6 +210,42 @@ export type Database = {
           },
         ]
       }
+      ai_news_reports: {
+        Row: {
+          created_at: string
+          date: string
+          html_content: string | null
+          id: string
+          recommendations: Json
+          summary: string
+          top_news: Json
+          trends: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          html_content?: string | null
+          id?: string
+          recommendations?: Json
+          summary: string
+          top_news?: Json
+          trends?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          html_content?: string | null
+          id?: string
+          recommendations?: Json
+          summary?: string
+          top_news?: Json
+          trends?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action: string
