@@ -6,24 +6,26 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface OrchestrationRequest {
-  preAuditId: string;
-  url: string;
-  companyInfo?: {
-    name?: string;
-    sector?: string;
-    size?: string;
-    employees?: number;
-    revenue?: number;
-    description?: string;
-  };
-}
+// Input validation schema
+const orchestrationSchema = z.object({
+  preAuditId: z.string().uuid({ message: "Invalid pre-audit ID format" }),
+  url: z.string().url({ message: "Invalid URL" }).max(500, { message: "URL too long" }),
+  companyInfo: z.object({
+    name: z.string().max(200).optional(),
+    sector: z.string().max(100).optional(),
+    size: z.string().max(50).optional(),
+    employees: z.number().int().positive().optional(),
+    revenue: z.number().positive().optional(),
+    description: z.string().max(1000).optional()
+  }).optional()
+});
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -31,10 +33,21 @@ serve(async (req) => {
   }
 
   try {
-    const { preAuditId, url, companyInfo }: OrchestrationRequest = await req.json();
+    const body = await req.json();
+    
+    // Validate input
+    const validation = orchestrationSchema.safeParse(body);
+    if (!validation.success) {
+      return new Response(
+        JSON.stringify({ error: validation.error.errors[0].message }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    const { preAuditId, url, companyInfo } = validation.data;
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
     // Configuration MANUS IA Backend
     const manusBackendUrl = Deno.env.get("MANUS_BACKEND_URL");
