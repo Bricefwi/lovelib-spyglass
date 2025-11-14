@@ -1,7 +1,10 @@
+import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet";
 import { 
   Sparkles, 
   TrendingUp, 
@@ -21,7 +24,27 @@ export const HowItWorks = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-accent/10">
+    <>
+      <Helmet>
+        <title>Comment ça marche ? | Audit Digital IA - IMOTION</title>
+        <meta
+          name="description"
+          content="Découvrez comment notre IA analyse votre site web en 3 étapes simples. 17 agents spécialisés, validation SIRET, rapport détaillé. 3 audits gratuits pour démarrer."
+        />
+        <meta
+          name="keywords"
+          content="audit digital IA, analyse site web, intelligence artificielle, MANUS IA, rapport marketing, validation SIRET, audit gratuit"
+        />
+        <meta property="og:title" content="Comment ça marche ? | Audit Digital IA" />
+        <meta
+          property="og:description"
+          content="3 étapes simples : Inscrivez-vous, Validez votre entreprise, Lancez l'analyse IA. 3 audits gratuits sans carte bancaire."
+        />
+        <meta property="og:type" content="website" />
+        <link rel="canonical" href="https://votre-site.com/how-it-works" />
+      </Helmet>
+      <Header />
+      <div className="min-h-screen bg-gradient-to-b from-background via-background to-accent/10">
       {/* Hero Section */}
       <section className="py-20 px-6">
         <div className="container mx-auto max-w-6xl text-center">
@@ -511,6 +534,8 @@ export const HowItWorks = () => {
           </Button>
         </div>
       </section>
-    </div>
+      </div>
+      <Footer />
+    </>
   );
 };
