@@ -7,6 +7,15 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
+
+// Schéma de validation Zod pour les entrées
+const siretValidationSchema = z.object({
+  siret: z.string()
+    .trim()
+    .length(14, { message: "Le SIRET doit contenir exactement 14 chiffres" })
+    .regex(/^[0-9]{14}$/, { message: "Le SIRET ne doit contenir que des chiffres" })
+});
 
 // Types
 interface RechercheEntrepriseResult {
@@ -93,13 +102,19 @@ serve(async (req) => {
 
   try {
     // Parser le body
-    const { siret } = await req.json();
-
-    if (!siret) {
+    const body = await req.json();
+    
+    // **SÉCURITÉ : Validation Zod stricte des entrées**
+    const validation = siretValidationSchema.safeParse(body);
+    
+    if (!validation.success) {
+      const errorMessage = validation.error.errors[0]?.message || 'Données invalides';
+      console.error('Validation error:', validation.error);
+      
       return new Response(
         JSON.stringify({ 
           valid: false,
-          error: 'Le SIRET est requis' 
+          error: errorMessage
         }),
         { 
           status: 400, 
@@ -108,23 +123,7 @@ serve(async (req) => {
       );
     }
 
-    // Nettoyer le SIRET (enlever espaces et tirets)
-    const cleanSiret = siret.replace(/[\s-]/g, '');
-
-    // Validation format
-    if (!isValidSiretFormat(cleanSiret)) {
-      return new Response(
-        JSON.stringify({ 
-          valid: false,
-          error: 'Format SIRET invalide. Le SIRET doit contenir exactement 14 chiffres.' 
-        }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
-    }
-
+    const cleanSiret = validation.data.siret;
     console.log(`Validating SIRET: ${cleanSiret}`);
 
     // Appel API Recherche Entreprise
