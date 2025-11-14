@@ -2,9 +2,19 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import marketingWorkspace from "@/assets/marketing-workspace.jpg";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Session } from "@supabase/supabase-js";
 
 export const HeroSection = () => {
   const navigate = useNavigate();
+  const [session, setSession] = useState<Session | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+  }, []);
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-background pt-20">
@@ -27,7 +37,7 @@ export const HeroSection = () => {
             <Button 
               size="lg" 
               className="bg-primary text-primary-foreground hover:bg-primary/90 px-8 py-6 text-base font-semibold"
-              onClick={() => navigate('/auth')}
+              onClick={() => navigate(session ? '/client/new-project' : '/auth')}
             >
               Démarrer un projet
               <ArrowRight className="ml-2 w-5 h-5" />
