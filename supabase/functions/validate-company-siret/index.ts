@@ -151,7 +151,7 @@ serve(async (req) => {
       console.error('INSEE API error:', error);
       
       // Si 404, SIRET introuvable
-      if (error.message.includes('404')) {
+      if (error instanceof Error && error.message.includes('404')) {
         return new Response(
           JSON.stringify({ 
             valid: false,
