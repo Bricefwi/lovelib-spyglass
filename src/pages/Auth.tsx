@@ -9,7 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { Loader2, ArrowLeft, Mail, Clock, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { z } from "zod";
 import { useUserRole } from "@/hooks/useUserRole";
 
@@ -21,12 +22,12 @@ export default function Auth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [showConfirmationMessage, setShowConfirmationMessage] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { role, loading: roleLoading } = useUserRole();
 
   useEffect(() => {
-    // Check if user is already logged in and redirect based on role
     if (!roleLoading && role) {
       if (role === 'admin') {
         navigate("/admin/audits");
@@ -41,7 +42,6 @@ export default function Auth() {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session && event === "SIGNED_IN") {
-        // Wait a bit for role to be fetched, then redirect will happen via the first useEffect
         setTimeout(() => {
           // Trigger role check
         }, 500);
@@ -74,7 +74,7 @@ export default function Auth() {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/onboarding`
+        emailRedirectTo: `${window.location.origin}/onboarding/company`
       }
     });
 
@@ -95,15 +95,7 @@ export default function Auth() {
         });
       }
     } else {
-      toast({
-        title: "Inscription réussie !",
-        description: "Vous pouvez maintenant vous connecter.",
-      });
-      // Auto-switch to sign in tab
-      setTimeout(() => {
-        const signInTab = document.querySelector('[value="signin"]') as HTMLElement;
-        signInTab?.click();
-      }, 1500);
+      setShowConfirmationMessage(true);
     }
   };
 
@@ -125,8 +117,8 @@ export default function Auth() {
     }
 
     setIsLoading(true);
-
-    const { error } = await supabase.auth.signInWithPassword({
+    
+    const { error, data } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -134,29 +126,21 @@ export default function Auth() {
     setIsLoading(false);
 
     if (error) {
-      if (error.message.includes("Invalid login credentials")) {
+      toast({
+        title: "Erreur de connexion",
+        description: error.message,
+        variant: "destructive"
+      });
+    } else if (data?.user) {
+      if (!data.user.email_confirmed_at) {
+        await supabase.auth.signOut();
+        
         toast({
-          title: "Identifiants invalides",
-          description: (
-            <div className="space-y-2">
-              <p>Vérifiez votre email et mot de passe.</p>
-              <button
-                onClick={() => window.location.href = "/diagnostic-auth"}
-                className="text-sm underline hover:no-underline mt-2 block"
-              >
-                📧 Recevoir un diagnostic complet par email
-              </button>
-            </div>
-          ),
-          variant: "destructive",
-          duration: 8000
-        });
-      } else {
-        toast({
-          title: "Erreur de connexion",
-          description: error.message,
+          title: "Email non confirmé",
+          description: "Veuillez confirmer votre adresse email avant de vous connecter. Vérifiez votre boîte mail et vos spams.",
           variant: "destructive"
         });
+        return;
       }
     }
   };
@@ -178,9 +162,9 @@ export default function Auth() {
     }
 
     setIsLoading(true);
-
+    
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth`,
+      redirectTo: `${window.location.origin}/auth/reset-password`,
     });
 
     setIsLoading(false);
@@ -193,29 +177,82 @@ export default function Auth() {
       });
     } else {
       toast({
-        title: "Email envoyé !",
-        description: "Vérifiez votre boîte mail pour réinitialiser votre mot de passe.",
+        title: "Email envoyé",
+        description: "Consultez votre boîte mail pour réinitialiser votre mot de passe.",
       });
       setShowForgotPassword(false);
     }
   };
 
   const handleSocialLogin = async (provider: 'google' | 'apple' | 'azure' | 'facebook') => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider,
+    await supabase.auth.signInWithOAuth({
+      provider: provider,
       options: {
-        redirectTo: `${window.location.origin}/onboarding`,
+        redirectTo: `${window.location.origin}/onboarding/company`,
       },
     });
-
-    if (error) {
-      toast({
-        title: "Erreur de connexion sociale",
-        description: error.message,
-        variant: "destructive"
-      });
-    }
   };
+
+  if (showConfirmationMessage) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-6 py-12">
+        <div className="w-full max-w-md">
+          <Card className="border-2 shadow-lg">
+            <CardHeader className="text-center">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Mail className="w-8 h-8 text-green-600" />
+              </div>
+              <CardTitle className="text-2xl text-green-600">Inscription réussie !</CardTitle>
+              <CardDescription>Un email de confirmation a été envoyé</CardDescription>
+            </CardHeader>
+            
+            <CardContent className="space-y-4">
+              <Alert>
+                <Mail className="h-4 w-4" />
+                <AlertTitle>Vérifiez votre boîte mail</AlertTitle>
+                <AlertDescription>
+                  Un email de confirmation a été envoyé à <strong>{email}</strong>
+                </AlertDescription>
+              </Alert>
+
+              <Alert>
+                <Clock className="h-4 w-4" />
+                <AlertTitle>Activation requise</AlertTitle>
+                <AlertDescription>
+                  Veuillez cliquer sur le lien dans l'email pour activer votre compte.
+                  <br />
+                  <strong>Le lien expire dans 24 heures.</strong>
+                </AlertDescription>
+              </Alert>
+
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Pensez à vérifier vos spams</AlertTitle>
+                <AlertDescription>
+                  Si vous ne voyez pas l'email, vérifiez votre dossier spam/courrier indésirable.
+                </AlertDescription>
+              </Alert>
+
+              <div className="pt-4">
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    setShowConfirmationMessage(false);
+                    setEmail("");
+                    setPassword("");
+                  }}
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Retour à la connexion
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-6 py-12">
@@ -305,19 +342,19 @@ export default function Auth() {
                         />
                       </div>
                       <div>
-                        <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center justify-between mb-2">
                           <Label htmlFor="signin-password">Mot de passe</Label>
-                          <button
+                          <Button
                             type="button"
+                            variant="link"
+                            className="p-0 h-auto text-sm"
                             onClick={() => setShowForgotPassword(true)}
-                            className="text-xs text-primary hover:underline"
                           >
                             Mot de passe oublié ?
-                          </button>
+                          </Button>
                         </div>
                         <PasswordInput
                           id="signin-password"
-                          placeholder="••••••••"
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
                           disabled={isLoading}
@@ -371,18 +408,6 @@ export default function Auth() {
                         <Button
                           type="button"
                           variant="outline"
-                          onClick={() => handleSocialLogin('apple')}
-                          disabled={isLoading}
-                        >
-                          <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
-                          </svg>
-                          Apple
-                        </Button>
-
-                        <Button
-                          type="button"
-                          variant="outline"
                           onClick={() => handleSocialLogin('azure')}
                           disabled={isLoading}
                         >
@@ -393,18 +418,6 @@ export default function Auth() {
                             <path fill="#ffb900" d="M13 13h10v10H13z"/>
                           </svg>
                           Microsoft
-                        </Button>
-
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => handleSocialLogin('facebook')}
-                          disabled={isLoading}
-                        >
-                          <svg className="w-5 h-5 mr-2" fill="#1877F2" viewBox="0 0 24 24">
-                            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                          </svg>
-                          Facebook
                         </Button>
                       </div>
                     </div>
@@ -430,7 +443,6 @@ export default function Auth() {
                     <Label htmlFor="signup-password">Mot de passe</Label>
                     <PasswordInput
                       id="signup-password"
-                      placeholder="••••••••"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       disabled={isLoading}
@@ -451,7 +463,7 @@ export default function Auth() {
                         Inscription...
                       </>
                     ) : (
-                      "Créer un compte"
+                      "S'inscrire"
                     )}
                   </Button>
                 </form>
