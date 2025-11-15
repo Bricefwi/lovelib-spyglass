@@ -102,19 +102,20 @@ serve(async (req) => {
     const domain = url.replace(/^https?:\/\//,'').replace(/^www\./,'').split('/')[0];
     const websiteUrl = `https://${domain}`;
     
-    // Chercher d'abord une company existante avec ce website
+    // Chercher d'abord une company existante avec ce website (via service_role pour bypass RLS)
     let company: any;
-    const { data: existingCompany } = await supabase.from('companies').select().eq('website', websiteUrl).maybeSingle();
+    const { data: existingCompany } = await supabaseAdmin.from('companies').select().eq('website', websiteUrl).maybeSingle();
     
     if (existingCompany) {
       company = existingCompany;
       console.log(`Using existing company: ${company.id}`);
     } else {
-      // Créer une nouvelle company avec un nom temporaire
-      const { data: newCompany, error: companyError } = await supabase.from('companies').insert({ 
+      // Créer une nouvelle company avec service_role (bypass RLS)
+      const { data: newCompany, error: companyError } = await supabaseAdmin.from('companies').insert({ 
         name: domain, 
         website: websiteUrl,
-        city: 'Unknown'
+        city: 'Unknown',
+        country: 'FR'
       }).select().single();
       
       if (companyError) {
