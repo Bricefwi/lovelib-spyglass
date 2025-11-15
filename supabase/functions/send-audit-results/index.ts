@@ -80,8 +80,9 @@ const handler = async (req: Request): Promise<Response> => {
     console.log('HTML report fetched successfully');
 
     // Envoyer l'email avec le rapport HTML complet
+    // TEMPORAIRE: Utiliser onboarding@resend.dev en attendant la vérification du domaine imotion.tech
     const emailResponse = await resend.emails.send({
-      from: "IMOTION <noreply@imotion.tech>",
+      from: "IMOTION Conseil <onboarding@resend.dev>",
       to: [targetEmail],
       subject: subject,
       html: report.html,
