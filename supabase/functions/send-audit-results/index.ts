@@ -56,7 +56,7 @@ const handler = async (req: Request): Promise<Response> => {
         pre_audits!inner(url)
       `)
       .eq('id', reportId)
-      .single();
+      .maybeSingle();
 
     if (reportError || !report) {
       console.error('Report not found:', reportError);
