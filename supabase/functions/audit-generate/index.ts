@@ -43,6 +43,7 @@ serve(async (req) => {
     const { pre_audit_id } = validation.data;
 
     console.log("Generating audit for pre_audit_id:", pre_audit_id);
+    console.log("SUPABASE_SERVICE_ROLE_KEY exists:", !!Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"));
 
     // Utiliser service_role pour bypass RLS
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
