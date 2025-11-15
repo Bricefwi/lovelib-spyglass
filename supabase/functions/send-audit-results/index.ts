@@ -41,10 +41,10 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`Sending audit report ${reportId} to ${targetEmail}`);
 
-    // Utiliser ANON_KEY
+    // Utiliser SERVICE_ROLE pour bypasser RLS
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
     // Récupérer le rapport HTML et les infos du pre_audit
