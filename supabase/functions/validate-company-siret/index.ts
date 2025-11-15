@@ -256,10 +256,10 @@ serve(async (req) => {
     );
 
     // Logger la vérification (si utilisateur authentifié)
-    const authHeader = req.headers.get('Authorization');
-    if (authHeader) {
+    const authHeaderLog = req.headers.get('Authorization');
+    if (authHeaderLog) {
       try {
-        const token = authHeader.replace('Bearer ', '');
+        const token = authHeaderLog.replace('Bearer ', '');
         const { data: { user } } = await supabaseClient.auth.getUser(token);
         
         if (user) {
