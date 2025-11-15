@@ -79,12 +79,12 @@ serve(async (req) => {
       );
     }
 
-    // **SÉCURITÉ : Rate limiting - max 3 audits par heure**
+    // **SÉCURITÉ : Rate limiting - max 20 audits par heure (phase de test)**
     const rateLimitCheck = await supabaseAdmin.rpc('check_rate_limit', {
       p_resource_type: 'preaudit',
       p_identifier: user.id,
       p_identifier_type: 'user',
-      p_max_requests: 3,
+      p_max_requests: 20,
       p_window_minutes: 60
     });
 
