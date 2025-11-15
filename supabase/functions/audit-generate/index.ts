@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
 
 const corsHeaders = {
@@ -44,21 +44,22 @@ serve(async (req) => {
 
     console.log("Generating audit for pre_audit_id:", pre_audit_id);
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Utiliser service_role pour bypass RLS
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     // 1) Récupération consolidated et report_id
     const { data: preAudit, error: fetchError } = await supabase
       .from("pre_audits")
       .select("consolidated,confidence,url")
       .eq("id", pre_audit_id)
-      .single();
+      .maybeSingle();
 
     // 2) Récupérer le report_id associé
     const { data: reportData } = await supabase
       .from("audit_reports")
       .select("id")
       .eq("pre_audit_id", pre_audit_id)
-      .single();
+      .maybeSingle();
 
     if (fetchError || !preAudit) {
       console.error("Fetch error:", fetchError);
