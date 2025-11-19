@@ -1104,6 +1104,7 @@ export type Database = {
       }
       pre_audits: {
         Row: {
+          audit_logs: Json | null
           company_guess: string | null
           company_id: string | null
           company_siret: string | null
@@ -1124,6 +1125,7 @@ export type Database = {
           url: string
         }
         Insert: {
+          audit_logs?: Json | null
           company_guess?: string | null
           company_id?: string | null
           company_siret?: string | null
@@ -1144,6 +1146,7 @@ export type Database = {
           url: string
         }
         Update: {
+          audit_logs?: Json | null
           company_guess?: string | null
           company_id?: string | null
           company_siret?: string | null
