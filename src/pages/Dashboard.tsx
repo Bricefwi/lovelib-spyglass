@@ -8,6 +8,7 @@ import { Building2, TrendingUp, FileText, Sparkles, Shield, AlertCircle } from '
 import { toast } from 'sonner';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
+import { AuditTrigger } from '@/components/AuditTrigger';
 
 interface ProfileData {
   company_legal_name: string;
@@ -111,6 +112,11 @@ const Dashboard = () => {
         <div className="max-w-6xl mx-auto">
           <h1 className="text-3xl font-bold mb-2">Tableau de bord</h1>
           <p className="text-muted-foreground mb-8">Bienvenue sur votre espace client IMOTION</p>
+          
+          {/* Audit Trigger - MANUS IA */}
+          <div className="mb-8">
+            <AuditTrigger />
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             {/* Informations Entreprise */}
