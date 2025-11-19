@@ -1106,10 +1106,12 @@ export type Database = {
         Row: {
           company_guess: string | null
           company_id: string | null
+          company_siret: string | null
           confidence: number | null
           consolidated: Json | null
           created_at: string | null
           created_by: string | null
+          current_phase: string | null
           domain: string | null
           id: string
           last_step: string | null
@@ -1124,10 +1126,12 @@ export type Database = {
         Insert: {
           company_guess?: string | null
           company_id?: string | null
+          company_siret?: string | null
           confidence?: number | null
           consolidated?: Json | null
           created_at?: string | null
           created_by?: string | null
+          current_phase?: string | null
           domain?: string | null
           id?: string
           last_step?: string | null
@@ -1142,10 +1146,12 @@ export type Database = {
         Update: {
           company_guess?: string | null
           company_id?: string | null
+          company_siret?: string | null
           confidence?: number | null
           consolidated?: Json | null
           created_at?: string | null
           created_by?: string | null
+          current_phase?: string | null
           domain?: string | null
           id?: string
           last_step?: string | null
