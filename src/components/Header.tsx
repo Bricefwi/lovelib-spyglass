@@ -97,6 +97,9 @@ export const Header = () => {
                 <span className="text-sm text-muted-foreground">
                   {session.user.email}
                 </span>
+                <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard")}>
+                  Mon Tableau de Bord
+                </Button>
                 <Button variant="ghost" size="sm" onClick={handleSignOut}>
                   Déconnexion
                 </Button>
@@ -144,6 +147,9 @@ export const Header = () => {
                     <span className="text-sm text-muted-foreground px-2">
                       {session.user.email}
                     </span>
+                    <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard")}>
+                      Mon Tableau de Bord
+                    </Button>
                     <Button variant="ghost" size="sm" onClick={handleSignOut}>
                       Déconnexion
                     </Button>
