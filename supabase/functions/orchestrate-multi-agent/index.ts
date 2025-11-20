@@ -122,72 +122,44 @@ serve(async (req) => {
           ]
         };
         
-        // 📧 MODE DEBUG EMAIL - Envoi simplifié et verbeux
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log('📧 DEBUT ENVOI EMAIL DEBUG...');
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        
-        // Vérification STRICTE de la clé API
+        // 📧 DEBUG EMAIL - Envoi avec traces complètes
+        console.log("📧 DEBUT ENVOI EMAIL DEBUG...");
         const resendApiKey = Deno.env.get('RESEND_API_KEY');
-        console.log(`🔑 RESEND_API_KEY existe: ${!!resendApiKey}`);
-        console.log(`🔑 RESEND_API_KEY longueur: ${resendApiKey?.length || 0} caractères`);
         
         if (!resendApiKey) {
-          console.error("❌ FATAL: RESEND_API_KEY is missing in Deno.env");
-          console.error("📋 Variables d'environnement disponibles:", Object.keys(Deno.env.toObject()));
-          throw new Error("Configuration Error: RESEND_API_KEY is missing from Secrets.");
+          throw new Error("Configuration Error: RESEND_API_KEY is missing");
         }
         
-        // Payload email simplifié au maximum (hardcodé)
+        // Payload email simplifié (hardcodé pour test)
         const emailPayload = {
-          from: 'onboarding@resend.dev',
+          from: 'onboarding@resend.dev', 
           to: ['patrice.simion@gmail.com'],
           subject: `Rapport Audit Debug [${new Date().toLocaleTimeString()}]`,
           html: `<p>Ceci est un test de débogage. Si vous lisez ceci, le pipeline fonctionne.</p>`
         };
-        
-        console.log('📦 Payload email:', JSON.stringify(emailPayload, null, 2));
-        console.log('🚀 Envoi vers Resend API...');
-        
-        try {
-          const resendRes = await fetch('https://api.resend.com/emails', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${resendApiKey}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(emailPayload)
-          });
-          
-          console.log(`📊 Resend HTTP Status: ${resendRes.status} ${resendRes.statusText}`);
-          
-          const resendData = await resendRes.text();
-          console.log(`📧 Resend Response Body: ${resendData}`);
-          
-          if (!resendRes.ok) {
-            console.error(`❌ Resend API Failed (${resendRes.status}): ${resendData}`);
-            throw new Error(`Resend API Failed (${resendRes.status}): ${resendData}`);
-          }
-          
-          console.log('✅ EMAIL ENVOYÉ AVEC SUCCÈS!');
-          console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        } catch (emailError) {
-          console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-          console.error('❌ ERREUR EMAIL CRITIQUE:');
-          if (emailError instanceof Error) {
-            console.error(`   Type: ${emailError.name}`);
-            console.error(`   Message: ${emailError.message}`);
-            console.error(`   Stack: ${emailError.stack}`);
-          } else {
-            console.error(`   Erreur inconnue: ${JSON.stringify(emailError)}`);
-          }
-          console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-          // Ne pas bloquer l'audit si l'email échoue
-          console.warn('⚠️ Continuing audit completion despite email failure');
-        }
 
+        const resendRes = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${resendApiKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(emailPayload)
+        });
+
+        const resendData = await resendRes.text(); 
+        console.log(`📧 Resend Status: ${resendRes.status}`);
+        console.log(`📧 Resend Body: ${resendData}`);
+
+        if (!resendRes.ok) {
+          throw new Error(`Resend API Failed (${resendRes.status}): ${resendData}`);
+        }
         
-        responsePayload = { message: "Audit Completed (Turbo Mode)", report: mockReport };
+        responsePayload = { 
+          message: "Audit Completed (Turbo Mode)", 
+          report: mockReport,
+          email_debug: { status: resendRes.status, body: resendData }
+        };
     } else {
         responsePayload = { message: "Already running", phase: audit.current_phase };
     }
