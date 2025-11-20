@@ -46,6 +46,22 @@ export const AuditProgress = ({ auditId }: AuditProgressProps) => {
     // Initial fetch
     fetchAuditData();
 
+    // CORRECTION: Polling automatique toutes les 5 secondes
+    const pollingInterval = setInterval(() => {
+      if (status !== 'completed' && status !== 'failed') {
+        console.log('🔄 Polling audit status...');
+        fetchAuditData();
+      }
+    }, 5000); // 5 secondes
+
+    // CORRECTION: Timeout de sécurité (5 minutes)
+    const timeoutId = setTimeout(() => {
+      if (status !== 'completed' && status !== 'failed') {
+        console.error('⏱️ Timeout: Audit took too long');
+        setStatus('error');
+      }
+    }, 300000); // 5 minutes
+
     // Subscribe to realtime changes
     const channel = supabase
       .channel(`audit-${auditId}`)
@@ -84,6 +100,8 @@ export const AuditProgress = ({ auditId }: AuditProgressProps) => {
 
     return () => {
       supabase.removeChannel(channel);
+      clearInterval(pollingInterval);
+      clearTimeout(timeoutId);
     };
   }, [auditId]);
 
@@ -217,12 +235,15 @@ export const AuditProgress = ({ auditId }: AuditProgressProps) => {
       </div>
 
       {/* Status Footer */}
-      {status === 'error' && (
+      {(status === 'error' || status === 'failed') && (
         <div className="flex items-center gap-3 text-destructive p-4 rounded-lg bg-destructive/10 border border-destructive/30">
           <AlertCircle className="h-6 w-6" />
           <div>
-            <h4 className="font-semibold">Erreur détectée</h4>
-            <p className="text-sm">Un problème est survenu lors de l'audit.</p>
+            <h4 className="font-semibold">❌ Erreur détectée</h4>
+            <p className="text-sm">Un problème est survenu lors de l'audit. Veuillez réessayer ou contacter le support.</p>
+            {logs.length > 0 && logs[logs.length - 1].message && (
+              <p className="text-xs mt-2 font-mono">{logs[logs.length - 1].message}</p>
+            )}
           </div>
         </div>
       )}

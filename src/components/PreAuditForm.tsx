@@ -178,14 +178,31 @@ export const PreAuditForm = () => {
           description: "Les agents IA vont analyser votre entreprise en profondeur",
         });
 
-        const { data: orchData, error: orchError } = await supabase.functions.invoke('orchestrate-multi-agent', {
+        // CORRECTION: Ajouter un timeout de 30 secondes
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout: L\'audit prend trop de temps à démarrer')), 30000)
+        );
+
+        const orchPromise = supabase.functions.invoke('orchestrate-multi-agent', {
           body: {
             audit_id: preAuditId,
             action: 'start'
           }
         });
 
-        if (orchError) throw orchError;
+        try {
+          const { data: orchData, error: orchError } = await Promise.race([orchPromise, timeoutPromise]) as any;
+          
+          if (orchError) throw orchError;
+        } catch (timeoutError: any) {
+          // Si timeout, afficher un message mais continuer (l'audit peut se terminer en background)
+          console.warn('⚠️ Timeout lors du lancement:', timeoutError.message);
+          toast({
+            title: "⚠️ Audit lancé en arrière-plan",
+            description: "L'audit prend plus de temps que prévu. Vous recevrez un email quand il sera terminé.",
+            variant: "default"
+          });
+        }
 
         setAuditId(preAuditId);
         setShowProgress(true);

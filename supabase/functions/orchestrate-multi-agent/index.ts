@@ -276,6 +276,38 @@ serve(async (req) => {
     console.error("❌ ========== ORCHESTRATE-MULTI-AGENT ERROR ==========");
     console.error("❌ ERROR:", error.message);
     console.error("❌ Stack:", error.stack);
+    
+    // CORRECTION: Mettre à jour l'audit avec status='failed'
+    try {
+      const { audit_id } = await req.json().catch(() => ({ audit_id: null }));
+      if (audit_id) {
+        const supabase = createClient(
+          Deno.env.get("SUPABASE_URL")!,
+          Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+        );
+        
+        await supabase
+          .from('pre_audits')
+          .update({
+            status: 'failed',
+            audit_logs: [
+              {
+                agent: 'orchestrate-multi-agent',
+                message: `Erreur: ${error.message}`,
+                timestamp: new Date().toISOString(),
+                status: 'failed'
+              }
+            ],
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', audit_id);
+        
+        console.log(`✅ Audit ${audit_id} marked as failed`);
+      }
+    } catch (updateError) {
+      console.error("❌ Failed to update audit status:", updateError);
+    }
+    
     return new Response(
       JSON.stringify({ 
         error: error.message,
