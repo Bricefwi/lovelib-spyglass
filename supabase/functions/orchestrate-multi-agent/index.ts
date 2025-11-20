@@ -11,11 +11,44 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    // 🔒 SECURITY: Verify authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      console.error('❌ Missing Authorization header');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: Missing authentication' }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Create authenticated Supabase client to verify user
+    const supabaseUser = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      {
+        global: {
+          headers: { Authorization: authHeader }
+        }
+      }
+    );
+
+    // Verify user authentication
+    const { data: { user }, error: authError } = await supabaseUser.auth.getUser();
+    if (authError || !user) {
+      console.error('❌ Authentication failed:', authError);
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: Invalid authentication' }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    console.log(`✅ Authenticated user: ${user.id}`);
+
     const body = await req.json();
     const { audit_id, action } = body;
-    console.log(`🤖 ORCHESTRATOR HIT - ID: ${audit_id}`);
+    console.log(`🤖 ORCHESTRATOR HIT - ID: ${audit_id}, User: ${user.id}`);
 
-    // Init Supabase
+    // Init Supabase with service role for privileged operations
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -32,6 +65,17 @@ serve(async (req) => {
       console.error("❌ Audit fetch error:", fetchError);
       throw new Error("Impossible de trouver l'audit ou erreur DB");
     }
+
+    // 🔒 SECURITY: Verify audit ownership
+    if (audit.created_by !== user.id) {
+      console.error(`❌ Unauthorized: User ${user.id} attempted to access audit ${audit_id} owned by ${audit.created_by}`);
+      return new Response(
+        JSON.stringify({ error: 'Forbidden: You do not own this audit' }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    console.log(`✅ Ownership verified: User ${user.id} owns audit ${audit_id}`);
 
     // Logic
     let updates = {};
