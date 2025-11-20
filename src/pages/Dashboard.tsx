@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { AuditTrigger } from '@/components/AuditTrigger';
+import { AuditReportView } from '@/components/AuditReportView';
 
 interface ProfileData {
   company_legal_name: string;
@@ -26,6 +27,7 @@ const Dashboard = () => {
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [totalAudits, setTotalAudits] = useState(0);
+  const [latestCompletedAudit, setLatestCompletedAudit] = useState<any>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -53,6 +55,20 @@ const Dashboard = () => {
 
         if (countError) throw countError;
         setTotalAudits(count || 0);
+
+        // Récupérer le dernier audit completed
+        const { data: completedAudit, error: auditError } = await supabase
+          .from('pre_audits')
+          .select('id, url, consolidated, status, created_at')
+          .eq('created_by', user.id)
+          .eq('status', 'completed')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+
+        if (!auditError && completedAudit) {
+          setLatestCompletedAudit(completedAudit);
+        }
 
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
@@ -231,43 +247,78 @@ const Dashboard = () => {
               </CardContent>
             </Card>
 
-            {/* Actions Rapides */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Sparkles className="h-5 w-5" />
-                  Actions Rapides
-                </CardTitle>
-                <CardDescription>
-                  Démarrez un nouvel audit ou consultez vos rapports
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Button 
-                  className="w-full" 
-                  size="lg"
-                  onClick={() => navigate('/audit-gratuit')}
-                  disabled={!canStartAudit}
-                >
-                  <Sparkles className="mr-2 h-4 w-4" />
-                  Démarrer un nouvel audit
-                </Button>
-                {!canStartAudit && (
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    Vous avez utilisé vos 3 audits gratuits
-                  </p>
-                )}
-                <Button 
-                  variant="outline" 
-                  className="w-full"
-                  onClick={() => navigate('/client/audits')}
-                >
-                  <FileText className="mr-2 h-4 w-4" />
-                  Voir mes rapports
-                </Button>
-              </CardContent>
-            </Card>
+            {/* Afficher le rapport si disponible, sinon les actions rapides */}
+            {latestCompletedAudit && latestCompletedAudit.consolidated ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-primary" />
+                    Votre dernier rapport d'audit
+                  </CardTitle>
+                  <CardDescription>
+                    Audit réalisé le {new Date(latestCompletedAudit.created_at).toLocaleDateString('fr-FR')} • {latestCompletedAudit.url}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <AuditReportView report={latestCompletedAudit.consolidated} />
+                  <div className="mt-6 flex gap-3">
+                    <Button 
+                      className="flex-1" 
+                      onClick={() => navigate('/audit-gratuit')}
+                      disabled={!canStartAudit}
+                    >
+                      <Sparkles className="mr-2 h-4 w-4" />
+                      Nouvel audit
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="flex-1"
+                      onClick={() => navigate('/client/audits')}
+                    >
+                      <FileText className="mr-2 h-4 w-4" />
+                      Tous mes rapports
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Sparkles className="h-5 w-5" />
+                    Actions Rapides
+                  </CardTitle>
+                  <CardDescription>
+                    Démarrez un nouvel audit ou consultez vos rapports
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <Button 
+                    className="w-full" 
+                    size="lg"
+                    onClick={() => navigate('/audit-gratuit')}
+                    disabled={!canStartAudit}
+                  >
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    Démarrer un nouvel audit
+                  </Button>
+                  {!canStartAudit && (
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      Vous avez utilisé vos 3 audits gratuits
+                    </p>
+                  )}
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => navigate('/client/audits')}
+                  >
+                    <FileText className="mr-2 h-4 w-4" />
+                    Voir mes rapports
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </main>
