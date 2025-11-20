@@ -40,6 +40,7 @@ serve(async (req) => {
       .from('pre_audits')
       .select('*')
       .eq('id', audit_id)
+      .eq('created_by', user.id)
       .single();
 
     if (fetchError || !audit) {
@@ -308,10 +309,11 @@ serve(async (req) => {
       console.error("❌ Failed to update audit status:", updateError);
     }
     
+    // SECURITY: Return generic error to client, log details server-side only
     return new Response(
       JSON.stringify({ 
-        error: error.message,
-        stack: error.stack 
+        error: "An error occurred while processing the audit",
+        request_id: audit_id || 'unknown'
       }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
