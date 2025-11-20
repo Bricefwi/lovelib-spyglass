@@ -58,19 +58,31 @@ export const PreAuditForm = () => {
     setStep("collecting");
     
     try {
-      // Étape 1: Collecte multi-sources
+      // Étape 1: Créer le pre-audit et lancer l'orchestration
       toast({
-        title: "🔍 Collecte des données...",
-        description: "Analyse de votre site et recherche d'informations publiques",
+        title: "🔍 Initialisation...",
+        description: "Création de l'audit et préparation des agents",
       });
 
-      const { data: preAuditData, error: preAuditError } = await supabase.functions.invoke('preaudit', {
-        body: { url: website }
-      });
+      // Récupérer l'utilisateur actuel
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Non authentifié');
 
-      if (preAuditError) throw preAuditError;
+      // Créer le pre_audit
+      const { data: preAudit, error: insertError } = await supabase
+        .from('pre_audits')
+        .insert({
+          url: website.trim(),
+          status: 'pending',
+          created_by: user.id,
+          current_phase: 'PHASE_0_INIT'
+        })
+        .select()
+        .single();
 
-      const preAuditId = preAuditData?.pre_audit_id;
+      if (insertError) throw insertError;
+
+      const preAuditId = preAudit.id;
       if (!preAuditId) {
         throw new Error("Pre-audit ID not returned");
       }
@@ -159,18 +171,17 @@ export const PreAuditForm = () => {
           variant: "default"
         });
 
-        // Launch multi-agent orchestration
+        // Lancer l'orchestration multi-agent
         setStep("generating");
         toast({
           title: "🚀 Lancement de l'analyse multi-agent...",
-          description: "12+ agents IA vont analyser votre entreprise en profondeur",
+          description: "Les agents IA vont analyser votre entreprise en profondeur",
         });
 
         const { data: orchData, error: orchError } = await supabase.functions.invoke('orchestrate-multi-agent', {
           body: {
-            preAuditId,
-            url: website,
-            companyInfo: preAuditData.company_info
+            audit_id: preAuditId,
+            action: 'start'
           }
         });
 
