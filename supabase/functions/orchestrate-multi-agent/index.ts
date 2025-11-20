@@ -37,7 +37,7 @@ serve(async (req) => {
     let updates = {};
     let responsePayload = {};
 
-    // Simple State Machine for Phase 0 -> 1
+    // Simple State Machine for Phase 0 -> 1 -> Completed (Turbo Mode)
     if (audit.current_phase === 'PHASE_0_INIT' || !audit.current_phase) {
         console.log("🚀 Triggering Phase 1");
         updates = {
@@ -48,6 +48,88 @@ serve(async (req) => {
           ]
         };
         responsePayload = { message: "Phase 1 Started", active_agents: ["A02", "A03"] };
+    } else if (audit.current_phase === 'PHASE_1_MARKET_STUDY') {
+        console.log("⚡ TURBO MODE: Completing Phase 1");
+        
+        // Simuler une attente de 2 secondes
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Générer un rapport mockup
+        const mockReport = {
+          executive_summary: "Audit Stratégique réalisé avec succès.",
+          scores: { market: 85, tech: 92 },
+          recommendations: [
+            "Optimiser la présence digitale",
+            "Renforcer la stratégie SEO",
+            "Développer l'approche multi-canal"
+          ],
+          generated_at: new Date().toISOString()
+        };
+        
+        updates = {
+          status: 'completed',
+          current_phase: 'PHASE_4_SYNTHESIS',
+          consolidated: mockReport,
+          audit_logs: [
+            ...(audit.audit_logs || []),
+            { agent: 'A02', message: 'Market analysis completed', timestamp: new Date().toISOString() },
+            { agent: 'A03', message: 'PESTEL analysis completed', timestamp: new Date().toISOString() },
+            { agent: 'A04', message: 'Synthesis generated', timestamp: new Date().toISOString(), status: 'completed' }
+          ]
+        };
+        
+        // Récupérer l'email de l'utilisateur
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('email, firstname')
+          .eq('user_id', audit.created_by)
+          .single();
+        
+        if (profile?.email) {
+          // Envoyer l'email via Resend
+          const resendApiKey = Deno.env.get('RESEND_API_KEY');
+          
+          if (resendApiKey) {
+            try {
+              const emailHtml = `
+                <h1>Bonjour ${profile.firstname || 'cher utilisateur'},</h1>
+                <p>Votre <strong>Audit Stratégique</strong> est prêt ! 🎉</p>
+                <p><strong>Résumé:</strong> ${mockReport.executive_summary}</p>
+                <p><strong>Scores:</strong></p>
+                <ul>
+                  <li>Market: ${mockReport.scores.market}/100</li>
+                  <li>Tech: ${mockReport.scores.tech}/100</li>
+                </ul>
+                <p>Consultez votre dashboard pour voir le rapport complet.</p>
+                <p><em>Ceci est un email de test en mode Turbo.</em></p>
+              `;
+              
+              const emailResponse = await fetch('https://api.resend.com/emails', {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${resendApiKey}`,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  from: 'IMOTION Audit <onboarding@resend.dev>',
+                  to: [profile.email],
+                  subject: 'Votre Audit Stratégique est prêt [TEST]',
+                  html: emailHtml,
+                }),
+              });
+              
+              const emailResult = await emailResponse.json();
+              console.log('✅ Email sent:', emailResult);
+            } catch (emailError) {
+              console.error('❌ Email error:', emailError);
+              // Ne pas bloquer l'audit si l'email échoue
+            }
+          } else {
+            console.warn('⚠️ RESEND_API_KEY not configured, skipping email');
+          }
+        }
+        
+        responsePayload = { message: "Audit Completed (Turbo Mode)", report: mockReport };
     } else {
         responsePayload = { message: "Already running", phase: audit.current_phase };
     }
