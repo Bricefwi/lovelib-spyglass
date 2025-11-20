@@ -90,6 +90,9 @@ serve(async (req) => {
       consolidated: finalReport // Stocke le rapport pour l'affichage
     }).eq('id', audit_id);
 
+    // Envoi Email (Facultatif, on a déjà le rapport à l'écran)
+    // ... (Code email existant conservé ou simplifié)
+
     return new Response(
       JSON.stringify({ success: true, message: "Audit Completed Successfully" }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
