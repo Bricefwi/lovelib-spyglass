@@ -32,7 +32,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'sonar-pro', // Plus stable que llama-3.1
+        model: 'llama-3.1-sonar-large-128k-online',
         messages: [{
           role: 'system',
           content: 'Tu es un expert en veille technologique IA. Sois précis et factuel.'
@@ -40,7 +40,7 @@ serve(async (req) => {
           role: 'user',
           content: 'Quelles sont les 5 actualités majeures de l\'IA ces dernières 24h ? Focus sur: Modèles, Business, Régulation. Retourne les sources.'
         }],
-        temperature: 0.1, // Plus bas pour éviter les erreurs de format
+        temperature: 0.1,
         max_tokens: 1000
       }),
     });
