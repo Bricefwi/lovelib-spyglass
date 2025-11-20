@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { CheckCircle2, Loader2, AlertCircle, Terminal } from "lucide-react";
+import { AuditReportView } from "./AuditReportView";
 
 interface AuditLog {
   agent: string;
@@ -36,6 +37,7 @@ export const AuditProgress = ({ auditId }: AuditProgressProps) => {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState<string>("pending");
+  const [reportData, setReportData] = useState<any>(null);
   const terminalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -70,6 +72,11 @@ export const AuditProgress = ({ auditId }: AuditProgressProps) => {
           
           if (newData.status) {
             setStatus(newData.status);
+            
+            // Si le statut passe à completed, charger le rapport
+            if (newData.status === 'completed' && newData.consolidated) {
+              setReportData(newData.consolidated);
+            }
           }
         }
       )
@@ -90,7 +97,7 @@ export const AuditProgress = ({ auditId }: AuditProgressProps) => {
   const fetchAuditData = async () => {
     const { data, error } = await supabase
       .from('pre_audits')
-      .select('current_phase, audit_logs, status')
+      .select('current_phase, audit_logs, status, consolidated')
       .eq('id', auditId)
       .single();
 
@@ -104,6 +111,11 @@ export const AuditProgress = ({ auditId }: AuditProgressProps) => {
       setProgress(PHASE_MAP[data.current_phase || 'PHASE_0_INIT'] || 0);
       setLogs(Array.isArray(data.audit_logs) ? (data.audit_logs as unknown as AuditLog[]) : []);
       setStatus(data.status || 'pending');
+      
+      // Si statut completed et qu'on a des données consolidées, on les charge
+      if (data.status === 'completed' && data.consolidated) {
+        setReportData(data.consolidated);
+      }
     }
   };
 
@@ -114,6 +126,25 @@ export const AuditProgress = ({ auditId }: AuditProgressProps) => {
     if (agentLog.status === 'completed') return 'completed';
     return 'pending';
   };
+
+  // Si le rapport est disponible, afficher le composant AuditReportView
+  if (status === 'completed' && reportData) {
+    return (
+      <div className="space-y-6">
+        <Card className="p-6 bg-gradient-to-br from-primary/5 to-background border-primary/20">
+          <div className="flex items-center gap-3 text-primary">
+            <CheckCircle2 className="h-8 w-8" />
+            <div>
+              <h3 className="text-xl font-bold">✅ Audit Terminé avec Succès!</h3>
+              <p className="text-sm text-muted-foreground">Votre rapport détaillé est maintenant disponible ci-dessous.</p>
+            </div>
+          </div>
+        </Card>
+        
+        <AuditReportView report={reportData} />
+      </div>
+    );
+  }
 
   return (
     <Card className="p-6 space-y-6 bg-gradient-to-br from-background to-muted/20">
@@ -186,22 +217,12 @@ export const AuditProgress = ({ auditId }: AuditProgressProps) => {
       </div>
 
       {/* Status Footer */}
-      {status === 'completed' && (
-        <div className="flex items-center gap-3 text-green-600 p-4 rounded-lg bg-green-500/10 border border-green-500/30">
-          <CheckCircle2 className="h-6 w-6" />
-          <div>
-            <h4 className="font-semibold">Mission Accomplished!</h4>
-            <p className="text-sm">Votre rapport est prêt.</p>
-          </div>
-        </div>
-      )}
-
       {status === 'error' && (
         <div className="flex items-center gap-3 text-destructive p-4 rounded-lg bg-destructive/10 border border-destructive/30">
           <AlertCircle className="h-6 w-6" />
           <div>
             <h4 className="font-semibold">Erreur détectée</h4>
-            <p className="text-sm">Une erreur s'est produite pendant l'analyse.</p>
+            <p className="text-sm">Un problème est survenu lors de l'audit.</p>
           </div>
         </div>
       )}
