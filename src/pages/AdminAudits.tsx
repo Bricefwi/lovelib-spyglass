@@ -142,8 +142,11 @@ export default function AdminAudits() {
   const regenerateAudit = async (audit: any) => {
     try {
       setRegenerating(audit.id);
-      const { data, error } = await supabase.functions.invoke("preaudit", {
-        body: { url: audit.url },
+      const { data, error } = await supabase.functions.invoke("orchestrate-multi-agent", {
+        body: { 
+          audit_id: audit.id,
+          action: 'start'
+        },
       });
 
       if (error) throw error;
