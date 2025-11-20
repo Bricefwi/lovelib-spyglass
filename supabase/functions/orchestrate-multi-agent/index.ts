@@ -7,67 +7,58 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  // Handle CORS
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { audit_id, action } = await req.json();
-    console.log(`🤖 MANUS IA ORCHESTRATOR - Audit: ${audit_id} | Action: ${action}`);
+    const body = await req.json();
+    const { audit_id, action } = body;
+    console.log(`🤖 ORCHESTRATOR HIT - ID: ${audit_id}`);
 
+    // Init Supabase
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    // Fetch Audit
     const { data: audit, error: fetchError } = await supabase
       .from('pre_audits')
       .select('*')
       .eq('id', audit_id)
       .single();
 
-    if (fetchError || !audit) throw new Error("Audit introuvable");
+    if (fetchError || !audit) {
+      console.error("❌ Audit fetch error:", fetchError);
+      throw new Error("Impossible de trouver l'audit ou erreur DB");
+    }
 
+    // Logic
     let updates = {};
     let responsePayload = {};
 
-    switch (audit.current_phase) {
-      case 'PHASE_0_INIT':
-        console.log("🚀 Starting Phase 1: Market Study Initialization");
-        
-        const initialReportStructure = {
-          meta: { started_at: new Date().toISOString() },
-          facts: [], hypotheses: [], recommendations: []
-        };
-
-        const newLogs = [
-          { agent: 'A01_ORCHESTRATOR', message: 'Triggering Market Agents.', timestamp: new Date().toISOString() },
-          { agent: 'A02_SCRAPER', status: 'pending', target: audit.target_url || "URL missing" },
-          { agent: 'A03_PESTEL', status: 'pending' },
-          { agent: 'A04_PORTER', status: 'pending' }
-        ];
-
+    // Simple State Machine for Phase 0 -> 1
+    if (audit.current_phase === 'PHASE_0_INIT' || !audit.current_phase) {
+        console.log("🚀 Triggering Phase 1");
         updates = {
           status: 'running',
           current_phase: 'PHASE_1_MARKET_STUDY',
-          consolidated_report: initialReportStructure,
-          audit_logs: newLogs
+          audit_logs: [
+             { agent: 'A01', message: 'Starting Market Analysis', timestamp: new Date().toISOString() }
+          ]
         };
-
-        responsePayload = {
-          message: "Phase 1 Initiated",
-          active_agents: ["A02", "A03", "A04"]
-        };
-        break;
-
-      case 'PHASE_1_MARKET_STUDY':
-        responsePayload = { message: "Phase 1 in progress", progress: "33%" };
-        break;
-
-      default:
-        responsePayload = { message: "Phase unknown", phase: audit.current_phase };
+        responsePayload = { message: "Phase 1 Started", active_agents: ["A02", "A03"] };
+    } else {
+        responsePayload = { message: "Already running", phase: audit.current_phase };
     }
 
+    // Update DB
     if (Object.keys(updates).length > 0) {
-      await supabase.from('pre_audits').update(updates).eq('id', audit_id);
+      const { error: updateError } = await supabase
+        .from('pre_audits')
+        .update(updates)
+        .eq('id', audit_id);
+      if (updateError) throw updateError;
     }
 
     return new Response(
@@ -76,9 +67,9 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error("❌ Error:", error);
+    console.error("❌ CRITICAL ERROR:", error);
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : String(error) }),
+      JSON.stringify({ error: error instanceof Error ? error.message : String(error), details: String(error) }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
