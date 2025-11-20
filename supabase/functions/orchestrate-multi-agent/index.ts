@@ -1,10 +1,16 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// ✅ SECURITY: Input validation schema
+const orchestrationSchema = z.object({
+  audit_id: z.string().uuid({ message: "Invalid audit ID format" })
+});
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -32,20 +38,42 @@ serve(async (req) => {
     }
     console.log(`✅ User authenticated: ${user.email}`);
 
-    const { audit_id } = await req.json();
+    // ✅ SECURITY: Validate input with Zod
+    const body = await req.json();
+    const validation = orchestrationSchema.safeParse(body);
+    
+    if (!validation.success) {
+      console.error("❌ Validation error:", validation.error.errors);
+      return new Response(
+        JSON.stringify({ 
+          error: "Invalid input", 
+          details: validation.error.errors[0].message 
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
+    const { audit_id } = validation.data;
     console.log(`📋 Audit ID: ${audit_id}`);
 
-    // 2. Fetch Audit
+    // 2. Fetch Audit with ownership verification (IDOR protection)
+    // ✅ SECURITY: Verify that the authenticated user owns this audit
     const { data: audit, error: fetchError } = await supabase
       .from('pre_audits')
       .select('*')
       .eq('id', audit_id)
-      .eq('created_by', user.id)
+      .eq('created_by', user.id) // ✅ CRITICAL: Ownership check prevents IDOR
       .single();
 
     if (fetchError || !audit) {
-      console.error("❌ Audit not found:", fetchError);
-      throw new Error("Audit not found");
+      console.error("❌ Audit not found or access denied");
+      return new Response(
+        JSON.stringify({ 
+          error: "Audit not found or access denied",
+          request_id: audit_id 
+        }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
     console.log(`✅ Audit fetched: ${audit.url}`);
 
@@ -276,12 +304,18 @@ serve(async (req) => {
   } catch (error: any) {
     console.error("❌ ========== ORCHESTRATE-MULTI-AGENT ERROR ==========");
     console.error("❌ ERROR:", error.message);
-    console.error("❌ Stack:", error.stack);
+    // ✅ SECURITY: Stack trace logged server-side only, never sent to client
+    console.error("❌ Stack (server-side only):", error.stack);
+    
+    // Declare audit_id variable for use in final response
+    let auditId: string | null = null;
     
     // CORRECTION: Mettre à jour l'audit avec status='failed'
     try {
-      const { audit_id } = await req.json().catch(() => ({ audit_id: null }));
-      if (audit_id) {
+      const body = await req.json().catch(() => ({ audit_id: null }));
+      auditId = body?.audit_id;
+      
+      if (auditId) {
         const supabase = createClient(
           Deno.env.get("SUPABASE_URL")!,
           Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -301,19 +335,21 @@ serve(async (req) => {
             ],
             updated_at: new Date().toISOString()
           })
-          .eq('id', audit_id);
+          .eq('id', auditId);
         
-        console.log(`✅ Audit ${audit_id} marked as failed`);
+        console.log(`✅ Audit ${auditId} marked as failed`);
       }
     } catch (updateError) {
       console.error("❌ Failed to update audit status:", updateError);
     }
     
-    // SECURITY: Return generic error to client, log details server-side only
+    // ✅ SECURITY: Return generic error to client, log details server-side only
+    // Never expose stack traces, internal paths, or sensitive error details
     return new Response(
       JSON.stringify({ 
-        error: "An error occurred while processing the audit",
-        request_id: audit_id || 'unknown'
+        error: "An error occurred while processing the audit. Please contact support if the issue persists.",
+        request_id: auditId || 'unknown',
+        timestamp: new Date().toISOString()
       }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
