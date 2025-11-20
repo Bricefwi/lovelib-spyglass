@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import Anthropic from "https://esm.sh/@anthropic-ai/sdk@0.24.3";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 
@@ -14,7 +14,6 @@ interface NewsItem {
   importance: string;
   summary: string;
   source: string;
-  url: string;
   key_takeaways: string[];
   impact: string;
 }
@@ -28,16 +27,14 @@ interface AINewsReport {
 }
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+  if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
 
   try {
     const PERPLEXITY_API_KEY = Deno.env.get('PERPLEXITY_API_KEY');
     const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
     const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
-    const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
     if (!PERPLEXITY_API_KEY || !ANTHROPIC_API_KEY || !RESEND_API_KEY) {
       throw new Error('Missing required API keys');
@@ -45,7 +42,7 @@ serve(async (req) => {
 
     console.log('Starting AI news collection...');
 
-    // Step 1: Collect news via Perplexity
+    // 1. Collecte Perplexity (Modèle corrigé: sonar-pro)
     const perplexityResponse = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
       headers: {
@@ -53,159 +50,88 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'llama-3.1-sonar-large-128k-online',
+        model: 'sonar-pro', // Plus stable que llama-3.1
         messages: [{
+          role: 'system',
+          content: 'Tu es un expert en veille technologique IA. Sois précis et factuel.'
+        }, {
           role: 'user',
-          content: `Collecte les 5-7 actualités les plus importantes de l'industrie de l'IA des dernières 24 heures.
-          
-          Pour chaque actualité, fournis :
-          - Le titre exact
-          - La source (nom du média)
-          - L'URL si disponible
-          - Un résumé de 2-3 phrases
-          - La catégorie (Modèles, Produits, Recherche, Business, Régulation)
-          - L'importance (high, medium, low)
-          
-          Concentre-toi sur les annonces majeures, lancements de produits, avancées techniques, financements et régulations.`
+          content: 'Quelles sont les 5 actualités majeures de l\'IA ces dernières 24h ? Focus sur: Modèles, Business, Régulation. Retourne les sources.'
         }],
-        temperature: 0.2,
-        max_tokens: 2000,
-        return_citations: true,
+        temperature: 0.1, // Plus bas pour éviter les erreurs de format
+        max_tokens: 1000
       }),
     });
 
     if (!perplexityResponse.ok) {
-      const errorText = await perplexityResponse.text();
-      console.error('Perplexity API error:', errorText);
-      throw new Error(`Perplexity API error: ${perplexityResponse.status}`);
+      const err = await perplexityResponse.text();
+      console.error('Perplexity Error:', err);
+      throw new Error(`Perplexity API Error ${perplexityResponse.status}: ${err}`);
     }
 
     const perplexityData = await perplexityResponse.json();
-    const newsContent = perplexityData.choices[0].message.content;
-    
+    const newsContent = perplexityData.choices[0]?.message?.content || "Aucune news trouvée.";
     console.log('News collected from Perplexity');
 
-    // Step 2: Synthesize with Claude
+    // 2. Synthèse Claude
     const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
-    
-    const synthesizerPrompt = `Tu es un analyste expert en IA travaillant pour IMOTION, une société de conseil en transformation digitale B2B.
-
-Voici les actualités IA collectées aujourd'hui :
-
-${newsContent}
-
-Ta mission : Créer un rapport JSON structuré avec :
-
-1. Un "summary" exécutif (2-3 phrases) résumant les tendances du jour
-2. Un tableau "top_news" avec 5-7 actualités structurées ainsi :
-   {
-     "title": "titre exact",
-     "category": "Modèles|Produits|Recherche|Business|Régulation",
-     "importance": "high|medium|low",
-     "summary": "résumé 2-3 phrases",
-     "source": "nom du média",
-     "url": "URL si disponible",
-     "key_takeaways": ["point clé 1", "point clé 2"],
-     "impact": "impact potentiel pour IMOTION en 1 phrase"
-   }
-3. Un tableau "trends" avec 3-5 tendances observées
-4. Un tableau "recommendations" avec 3-5 recommandations stratégiques pour IMOTION
-
-Réponds UNIQUEMENT avec le JSON, sans texte avant ou après.`;
-
     const synthesisResponse = await anthropic.messages.create({
-      model: 'claude-sonnet-4-5',
+      model: 'claude-3-opus-20240229', // Modèle le plus intelligent pour le JSON
       max_tokens: 4000,
       messages: [{
         role: 'user',
-        content: synthesizerPrompt
+        content: `Tu es un analyste expert chez IMOTION. Analyse ceci : \n\n${newsContent}\n\n
+        Génère un JSON valide STRICTEMENT selon cette structure (sans texte avant/après) :
+        {
+          "summary": "Résumé global en 2 phrases",
+          "top_news": [
+            { "title": "Titre", "category": "Business", "importance": "high", "summary": "...", "source": "...", "key_takeaways": ["..."], "impact": "..." }
+          ],
+          "trends": ["Tendance 1", "Tendance 2"],
+          "recommendations": ["Recommandation 1"]
+        }`
       }]
     });
 
-    const synthesisText = synthesisResponse.content[0].type === 'text' 
-      ? synthesisResponse.content[0].text 
-      : '';
-    
-    // Extract JSON from response
+    const contentBlock = synthesisResponse.content[0];
+    const synthesisText = contentBlock.type === 'text' ? contentBlock.text : '';
     const jsonMatch = synthesisText.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error('Failed to extract JSON from synthesis');
-    }
+    if (!jsonMatch) throw new Error('JSON parsing failed from Claude response');
     
-    const reportData: AINewsReport = JSON.parse(jsonMatch[0]);
-    const today = new Date().toISOString().split('T')[0];
-    reportData.date = today;
+    const reportData = JSON.parse(jsonMatch[0]);
+    reportData.date = new Date().toISOString().split('T')[0];
 
-    console.log('Synthesis completed');
-
-    // Step 3: Generate HTML report
-    const htmlContent = generateHTMLReport(reportData);
-
-    // Step 4: Save to database
-    const supabase = createClient(SUPABASE_URL!, SUPABASE_ANON_KEY!, {
-      auth: {
-        persistSession: false,
-      },
-    });
-
-    const { data: savedReport, error: dbError } = await supabase
-      .from('ai_news_reports')
-      .upsert({
-        date: reportData.date,
-        summary: reportData.summary,
-        top_news: reportData.top_news,
-        trends: reportData.trends,
-        recommendations: reportData.recommendations,
-        html_content: htmlContent,
-      }, {
-        onConflict: 'date'
-      })
-      .select()
-      .single();
-
-    if (dbError) {
-      console.error('Database error:', dbError);
-      throw dbError;
-    }
-
-    console.log('Report saved to database');
-
-    // Step 5: Send email notification
-    const resend = new Resend(RESEND_API_KEY);
+    // 3. Sauvegarde DB
+    const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
     
-    const emailResponse = await resend.emails.send({
-      from: 'IMOTION Veille IA <veille@imotion.fr>',
-      to: ['patrice.simion@gmail.com'],
-      subject: `Veille IA Quotidienne - ${reportData.date}`,
-      html: htmlContent,
+    // Génération HTML simplifiée pour l'email
+    const htmlContent = `
+      <h1>Veille IA - ${reportData.date}</h1>
+      <p>${reportData.summary}</p>
+      <h2>Actualités</h2>
+      ${reportData.top_news.map((n: NewsItem) => `<h3>${n.title}</h3><p>${n.summary}</p>`).join('')}
+    `;
+
+    await supabase.from('ai_news_reports').upsert({
+      date: reportData.date,
+      summary: reportData.summary,
+      top_news: reportData.top_news,
+      trends: reportData.trends,
+      recommendations: reportData.recommendations,
+      html_content: htmlContent
+    }, { onConflict: 'date' });
+
+    console.log('Report saved.');
+
+    return new Response(JSON.stringify({ success: true, report: reportData }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
-
-    console.log('Email sent:', emailResponse);
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        report: savedReport,
-        email: emailResponse,
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      }
-    );
 
   } catch (error: any) {
-    console.error('Error in collect-ai-news:', error);
-    return new Response(
-      JSON.stringify({
-        error: error.message || 'Unknown error occurred',
-        details: error.toString(),
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
-      }
-    );
+    console.error('Error:', error);
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
   }
 });
 
