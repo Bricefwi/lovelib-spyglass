@@ -14,7 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, CheckCircle2, XCircle, Clock, ExternalLink, FileText, AlertTriangle } from "lucide-react";
+import { Loader2, CheckCircle2, XCircle, Clock, ExternalLink, FileText, AlertTriangle, Terminal } from "lucide-react";
 import { toast } from "sonner";
 import { AdminFooter } from "@/components/Navigation/AdminFooter";
 
@@ -32,6 +32,7 @@ interface Orchestration {
   pre_audits?: {
     url: string;
     company_guess: string | null;
+    audit_logs: any[] | null;
   };
   audit_reports?: Array<{
     id: string;
@@ -78,7 +79,8 @@ export default function OrchestrationMonitor() {
           *,
           pre_audits (
             url,
-            company_guess
+            company_guess,
+            audit_logs
           )
         `)
         .order('created_at', { ascending: false })
@@ -213,6 +215,33 @@ export default function OrchestrationMonitor() {
                           <div className="font-medium text-sm">Phase actuelle</div>
                           <div className="text-sm text-muted-foreground capitalize">
                             {orch.current_phase.replace(/_/g, ' ')}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 📊 REAL-TIME LOGS DISPLAY */}
+                      {orch.pre_audits?.audit_logs && Array.isArray(orch.pre_audits.audit_logs) && orch.pre_audits.audit_logs.length > 0 && (
+                        <div className="bg-muted/50 p-4 rounded-lg space-y-2">
+                          <div className="font-medium text-sm flex items-center gap-2">
+                            <Terminal className="w-4 h-4" />
+                            Logs en temps réel
+                          </div>
+                          <div className="space-y-1 max-h-48 overflow-y-auto">
+                            {orch.pre_audits.audit_logs.map((log: any, idx: number) => (
+                              <div key={idx} className="text-xs font-mono flex items-start gap-2 py-1">
+                                <span className="text-muted-foreground">
+                                  [{log.timestamp ? new Date(log.timestamp).toLocaleTimeString('fr-FR') : '--:--:--'}]
+                                </span>
+                                <span className="font-semibold text-primary">{log.agent || 'SYS'}:</span>
+                                <span className={
+                                  log.status === 'running' ? 'text-blue-500' : 
+                                  log.status === 'completed' ? 'text-green-500' : 
+                                  log.status === 'error' ? 'text-red-500' : ''
+                                }>
+                                  {log.message}
+                                </span>
+                              </div>
+                            ))}
                           </div>
                         </div>
                       )}

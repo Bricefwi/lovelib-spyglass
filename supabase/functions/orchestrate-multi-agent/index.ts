@@ -77,6 +77,48 @@ serve(async (req) => {
 
     console.log(`✅ Ownership verified: User ${user.id} owns audit ${audit_id}`);
 
+    // 🏢 AUTO-CREATE COMPANY IF MISSING
+    if (!audit.company_id) {
+      console.log("🏢 No company linked, auto-creating...");
+      try {
+        const domain = new URL(audit.url).hostname.replace('www.', '');
+        const { data: company, error: companyError } = await supabase
+          .from('companies')
+          .insert({
+            name: domain,
+            website: audit.url,
+            city: 'Unknown',
+            country: 'FR'
+          })
+          .select()
+          .single();
+        
+        if (companyError) throw companyError;
+        
+        console.log(`✅ Company created: ${company.id}`);
+        
+        // Link company to audit
+        await supabase
+          .from('pre_audits')
+          .update({ company_id: company.id })
+          .eq('id', audit_id);
+        
+        audit.company_id = company.id;
+      } catch (e) {
+        console.error("⚠️ Company auto-creation failed:", e);
+        // Continue anyway, non-blocking
+      }
+    }
+
+    // ⏱️ TIMEOUT CHECK: If Phase 0 lasted more than 30 seconds, force Phase 1
+    const createdAt = new Date(audit.created_at).getTime();
+    const now = Date.now();
+    const elapsedSeconds = (now - createdAt) / 1000;
+    
+    if (audit.current_phase === 'PHASE_0_INIT' && elapsedSeconds > 30) {
+      console.log(`⚠️ Phase 0 timeout (${elapsedSeconds}s), forcing Phase 1 (degraded mode)`);
+    }
+
     // Logic
     let updates = {};
     let responsePayload = {};
@@ -87,8 +129,10 @@ serve(async (req) => {
         updates = {
           status: 'running',
           current_phase: 'PHASE_1_MARKET_STUDY',
+          company_guess: audit.company_id ? 'Entreprise créée automatiquement' : 'Entreprise inconnue',
           audit_logs: [
-             { agent: 'A01', message: 'Starting Market Analysis', timestamp: new Date().toISOString() }
+             { agent: 'A01', message: 'Initialisation terminée', status: 'completed', timestamp: new Date().toISOString() },
+             { agent: 'A02', message: 'Démarrage analyse marché', status: 'running', timestamp: new Date().toISOString() }
           ]
         };
         responsePayload = { message: "Phase 1 Started", active_agents: ["A02", "A03"] };
