@@ -15,7 +15,7 @@ export const PreAuditForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState<"idle" | "collecting" | "generating" | "done" | "error">("idle");
   const [auditType, setAuditType] = useState<"standard" | "advanced">("standard");
-  const [orchestrationId, setOrchestrationId] = useState<string>("");
+  const [auditId, setAuditId] = useState<string>("");
   const [showProgress, setShowProgress] = useState(false);
   const [auditsRemaining, setAuditsRemaining] = useState<number | null>(null);
   const { toast } = useToast();
@@ -176,7 +176,7 @@ export const PreAuditForm = () => {
 
         if (orchError) throw orchError;
 
-        setOrchestrationId(orchData.orchestrationId);
+        setAuditId(preAuditId);
         setShowProgress(true);
         setIsLoading(false);
 
@@ -239,28 +239,8 @@ export const PreAuditForm = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {showProgress && orchestrationId ? (
-              <AuditProgress
-                orchestrationId={orchestrationId}
-                onComplete={() => {
-                  toast({
-                    title: "✅ Analyse terminée !",
-                    description: "Votre rapport ultra-détaillé est prêt. Consultez votre email.",
-                  });
-                  setShowProgress(false);
-                  setWebsite("");
-                  setStep("idle");
-                }}
-                onError={(error) => {
-                  toast({
-                    title: "Erreur",
-                    description: error,
-                    variant: "destructive",
-                  });
-                  setShowProgress(false);
-                  setStep("idle");
-                }}
-              />
+            {showProgress && auditId ? (
+              <AuditProgress auditId={auditId} />
             ) : (
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Badge Audits Restants */}

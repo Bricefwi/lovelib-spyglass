@@ -1,231 +1,207 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
-import { CheckCircle2, Loader2, AlertCircle } from "lucide-react";
+import { CheckCircle2, Loader2, AlertCircle, Terminal } from "lucide-react";
 
-interface Phase {
-  name: string;
-  order: number;
-  status: 'pending' | 'running' | 'completed' | 'error';
-  label: string;
-  description: string;
-  agents?: string[];
+interface AuditLog {
+  agent: string;
+  message?: string;
+  status?: string;
+  timestamp: string;
+  target?: string;
 }
 
 interface AuditProgressProps {
-  orchestrationId: string;
-  onComplete?: () => void;
-  onError?: (error: string) => void;
+  auditId: string;
 }
 
-const PHASE_CONFIG: Record<string, { label: string; description: string; icon: string }> = {
-  market_research: {
-    label: "📊 Étude de Marché",
-    description: "Analyse du marché, concurrence et tendances",
-    icon: "📊"
-  },
-  conversational_audits: {
-    label: "💬 Audits Conversationnels",
-    description: "Audit marketing, commercial, technique et stratégique",
-    icon: "💬"
-  },
-  specialized_analysis: {
-    label: "🎯 Analyses Spécialisées",
-    description: "SEO, contenu, UX et optimisation de conversion",
-    icon: "🎯"
-  },
-  synthesis: {
-    label: "📑 Synthèse & Vérification",
-    description: "Consolidation des résultats et génération du rapport",
-    icon: "📑"
-  }
+const AGENT_CONFIG: Record<string, { name: string; color: string }> = {
+  A01: { name: "Orchestrator", color: "hsl(var(--primary))" },
+  A02: { name: "Web Scraper", color: "hsl(var(--accent))" },
+  A03: { name: "PESTEL Analysis", color: "hsl(142 76% 36%)" },
+  A04: { name: "Porter Analysis", color: "hsl(262 83% 58%)" },
 };
 
-export const AuditProgress = ({ orchestrationId, onComplete, onError }: AuditProgressProps) => {
-  const [phases, setPhases] = useState<Phase[]>([]);
-  const [currentPhase, setCurrentPhase] = useState<string>('');
+const PHASE_MAP: Record<string, number> = {
+  PHASE_0_INIT: 0,
+  PHASE_1_MARKET_STUDY: 25,
+  PHASE_2_AUDITS: 50,
+  PHASE_3_ANALYSIS: 75,
+  PHASE_4_SYNTHESIS: 100,
+};
+
+export const AuditProgress = ({ auditId }: AuditProgressProps) => {
+  const [currentPhase, setCurrentPhase] = useState<string>("PHASE_0_INIT");
+  const [logs, setLogs] = useState<AuditLog[]>([]);
   const [progress, setProgress] = useState(0);
-  const [status, setStatus] = useState<'running' | 'completed' | 'error'>('running');
-  const [error, setError] = useState<string>('');
+  const [status, setStatus] = useState<string>("pending");
+  const terminalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!orchestrationId) return;
+    if (!auditId) return;
 
     // Initial fetch
-    fetchOrchestrationStatus();
+    fetchAuditData();
 
-    // Polling toutes les 5 secondes
-    const pollingInterval = setInterval(() => {
-      fetchOrchestrationStatus();
-    }, 5000);
+    // Subscribe to realtime changes
+    const channel = supabase
+      .channel(`audit-${auditId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'pre_audits',
+          filter: `id=eq.${auditId}`
+        },
+        (payload) => {
+          console.log('🔄 Realtime update:', payload);
+          const newData = payload.new as any;
+          
+          if (newData.current_phase) {
+            setCurrentPhase(newData.current_phase);
+            setProgress(PHASE_MAP[newData.current_phase] || 0);
+          }
+          
+          if (newData.audit_logs) {
+            setLogs(newData.audit_logs as AuditLog[]);
+          }
+          
+          if (newData.status) {
+            setStatus(newData.status);
+          }
+        }
+      )
+      .subscribe();
 
     return () => {
-      clearInterval(pollingInterval);
+      supabase.removeChannel(channel);
     };
-  }, [orchestrationId]);
+  }, [auditId]);
 
-  const fetchOrchestrationStatus = async () => {
-    try {
-      const { data: orchestration, error: orchError } = await supabase
-        .from('agent_orchestrations')
-        .select('*')
-        .eq('id', orchestrationId)
-        .single();
+  useEffect(() => {
+    // Auto-scroll terminal to bottom
+    if (terminalRef.current) {
+      terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
+    }
+  }, [logs]);
 
-      if (orchError) throw orchError;
+  const fetchAuditData = async () => {
+    const { data, error } = await supabase
+      .from('pre_audits')
+      .select('current_phase, audit_logs, status')
+      .eq('id', auditId)
+      .single();
 
-      if (!orchestration) return;
+    if (error) {
+      console.error('Error fetching audit:', error);
+      return;
+    }
 
-      setCurrentPhase(orchestration.current_phase || '');
-      
-      // Calcul de la progression basée sur les phases
-      let calculatedProgress = orchestration.progress || 0;
-      const currentPhaseStr = orchestration.current_phase || '';
-      
-      // Mapping des phases vers leur progression
-      const phaseProgressMap: Record<string, number> = {
-        'market_research': 25,
-        'conversational_audits': 50,
-        'specialized_analysis': 75,
-        'synthesis': 100
-      };
-
-      // Si on a une phase en cours, utiliser sa progression
-      if (currentPhaseStr && phaseProgressMap[currentPhaseStr]) {
-        calculatedProgress = phaseProgressMap[currentPhaseStr];
-      }
-
-      // Si le statut est completed, forcer 100%
-      if (orchestration.status === 'completed') {
-        calculatedProgress = 100;
-      }
-
-      setProgress(calculatedProgress);
-      setStatus(orchestration.status as 'running' | 'completed' | 'error');
-
-      if (orchestration.error) {
-        setError(orchestration.error);
-        onError?.(orchestration.error);
-      }
-
-      if (orchestration.status === 'completed') {
-        onComplete?.();
-      }
-
-      // Fetch phases
-      const { data: phasesData, error: phasesError } = await supabase
-        .from('agent_phases')
-        .select('*')
-        .eq('orchestration_id', orchestrationId)
-        .order('phase_order', { ascending: true });
-
-      if (phasesError) throw phasesError;
-
-      if (phasesData && phasesData.length > 0) {
-        const formattedPhases = phasesData.map(phase => ({
-          name: phase.phase_name,
-          order: phase.phase_order,
-          status: phase.status as 'pending' | 'running' | 'completed' | 'error',
-          label: PHASE_CONFIG[phase.phase_name]?.label || phase.phase_name,
-          description: PHASE_CONFIG[phase.phase_name]?.description || '',
-          agents: phase.agents as string[] || []
-        }));
-        setPhases(formattedPhases);
-      } else {
-        // Use default phases from orchestration
-        const defaultPhases = (orchestration.phases as any[] || []).map((p: any) => ({
-          name: p.name,
-          order: p.order,
-          status: p.status || 'pending',
-          label: PHASE_CONFIG[p.name]?.label || p.name,
-          description: PHASE_CONFIG[p.name]?.description || '',
-          agents: []
-        }));
-        setPhases(defaultPhases);
-      }
-
-    } catch (err) {
-      console.error('Error fetching orchestration status:', err);
-      setError(err instanceof Error ? err.message : 'Unknown error');
-      onError?.(err instanceof Error ? err.message : 'Unknown error');
+    if (data) {
+      setCurrentPhase(data.current_phase || 'PHASE_0_INIT');
+      setProgress(PHASE_MAP[data.current_phase || 'PHASE_0_INIT'] || 0);
+      setLogs(Array.isArray(data.audit_logs) ? (data.audit_logs as unknown as AuditLog[]) : []);
+      setStatus(data.status || 'pending');
     }
   };
 
-  const getPhaseIcon = (phase: Phase) => {
-    if (phase.status === 'completed') {
-      return <CheckCircle2 className="h-6 w-6 text-green-500" />;
-    } else if (phase.status === 'running') {
-      return <Loader2 className="h-6 w-6 text-primary animate-spin" />;
-    } else if (phase.status === 'error') {
-      return <AlertCircle className="h-6 w-6 text-destructive" />;
-    }
-    return <div className="h-6 w-6 rounded-full border-2 border-muted" />;
+  const getAgentStatus = (agentId: string): 'running' | 'pending' | 'completed' => {
+    const agentLog = logs.find(log => log.agent === agentId);
+    if (!agentLog) return 'pending';
+    if (agentLog.status === 'running') return 'running';
+    if (agentLog.status === 'completed') return 'completed';
+    return 'pending';
   };
-
-  if (status === 'error') {
-    return (
-      <Card className="p-6">
-        <div className="flex items-center gap-3 text-destructive">
-          <AlertCircle className="h-6 w-6" />
-          <div>
-            <h3 className="font-semibold">Erreur lors de l'analyse</h3>
-            <p className="text-sm opacity-90">{error}</p>
-          </div>
-        </div>
-      </Card>
-    );
-  }
 
   return (
-    <Card className="p-6 space-y-6">
+    <Card className="p-6 space-y-6 bg-gradient-to-br from-background to-muted/20">
+      {/* Header with Progress */}
       <div>
-        <h3 className="text-lg font-semibold mb-2">Analyse Multi-Agent en cours</h3>
-        <Progress value={progress} className="h-2" />
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-lg font-semibold text-foreground">🚀 Mission Control</h3>
+          <span className="text-sm text-muted-foreground">
+            {currentPhase.replace('PHASE_', 'Phase ').replace('_', ' ')}
+          </span>
+        </div>
+        <Progress value={progress} className="h-3 bg-muted" />
         <p className="text-sm text-muted-foreground mt-2">{progress}% complété</p>
       </div>
 
-      <div className="space-y-4">
-        {phases.map((phase) => (
-          <div
-            key={phase.name}
-            className={`p-4 rounded-lg border ${
-              phase.status === 'running' 
-                ? 'border-primary bg-primary/5' 
-                : phase.status === 'completed'
-                ? 'border-green-500/30 bg-green-500/5'
-                : 'border-muted'
-            }`}
-          >
-            <div className="flex items-start gap-3">
-              {getPhaseIcon(phase)}
-              <div className="flex-1">
-                <h4 className="font-medium">{phase.label}</h4>
-                <p className="text-sm text-muted-foreground">{phase.description}</p>
-                {phase.agents && phase.agents.length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-1">
-                    {phase.agents.map((agent, idx) => (
-                      <span
-                        key={idx}
-                        className="text-xs px-2 py-1 rounded-full bg-muted"
-                      >
-                        {agent}
-                      </span>
-                    ))}
-                  </div>
-                )}
+      {/* Agent Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {Object.entries(AGENT_CONFIG).map(([id, config]) => {
+          const agentStatus = getAgentStatus(id);
+          return (
+            <div
+              key={id}
+              className={`p-4 rounded-lg border-2 transition-all ${
+                agentStatus === 'running'
+                  ? 'border-primary bg-primary/10 animate-pulse'
+                  : agentStatus === 'completed'
+                  ? 'border-green-500 bg-green-500/10'
+                  : 'border-muted bg-muted/5 opacity-60'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-mono font-bold" style={{ color: config.color }}>
+                  {id}
+                </span>
+                {agentStatus === 'running' && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
+                {agentStatus === 'completed' && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+                {agentStatus === 'pending' && <div className="h-4 w-4 rounded-full border-2 border-muted" />}
               </div>
+              <p className="text-xs text-muted-foreground">{config.name}</p>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
+      {/* Terminal Log */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Terminal className="h-4 w-4" />
+          <span>System Logs</span>
+        </div>
+        <div
+          ref={terminalRef}
+          className="bg-black/95 rounded-lg p-4 h-64 overflow-y-auto font-mono text-xs text-green-400 space-y-1"
+        >
+          {logs.length === 0 ? (
+            <div className="text-muted-foreground/50">Waiting for agents...</div>
+          ) : (
+            logs.map((log, idx) => (
+              <div key={idx} className="flex gap-2">
+                <span className="text-muted-foreground/70">[{new Date(log.timestamp).toLocaleTimeString()}]</span>
+                <span className="text-primary font-bold">{log.agent}:</span>
+                <span className="text-green-400">
+                  {log.message || log.status || 'Processing...'}
+                  {log.target && ` → ${log.target}`}
+                </span>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Status Footer */}
       {status === 'completed' && (
-        <div className="flex items-center gap-3 text-green-600 p-4 rounded-lg bg-green-50 border border-green-200">
+        <div className="flex items-center gap-3 text-green-600 p-4 rounded-lg bg-green-500/10 border border-green-500/30">
           <CheckCircle2 className="h-6 w-6" />
           <div>
-            <h4 className="font-semibold">Analyse terminée !</h4>
-            <p className="text-sm">Votre rapport complet est prêt.</p>
+            <h4 className="font-semibold">Mission Accomplished!</h4>
+            <p className="text-sm">Votre rapport est prêt.</p>
+          </div>
+        </div>
+      )}
+
+      {status === 'error' && (
+        <div className="flex items-center gap-3 text-destructive p-4 rounded-lg bg-destructive/10 border border-destructive/30">
+          <AlertCircle className="h-6 w-6" />
+          <div>
+            <h4 className="font-semibold">Erreur détectée</h4>
+            <p className="text-sm">Une erreur s'est produite pendant l'analyse.</p>
           </div>
         </div>
       )}
