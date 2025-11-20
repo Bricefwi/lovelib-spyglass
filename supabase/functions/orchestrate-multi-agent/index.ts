@@ -122,89 +122,70 @@ serve(async (req) => {
           ]
         };
         
-        // Récupérer l'email de l'utilisateur
-        console.log('📧 Starting email notification process...');
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('email, firstname')
-          .eq('user_id', audit.created_by)
-          .single();
+        // 📧 MODE DEBUG EMAIL - Envoi simplifié et verbeux
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.log('📧 DEBUT ENVOI EMAIL DEBUG...');
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
         
-        if (profileError) {
-          console.error('❌ Profile fetch error:', profileError);
-        } else {
-          console.log(`✅ Profile found: ${profile.email} (${profile.firstname || 'No name'})`);
+        // Vérification STRICTE de la clé API
+        const resendApiKey = Deno.env.get('RESEND_API_KEY');
+        console.log(`🔑 RESEND_API_KEY existe: ${!!resendApiKey}`);
+        console.log(`🔑 RESEND_API_KEY longueur: ${resendApiKey?.length || 0} caractères`);
+        
+        if (!resendApiKey) {
+          console.error("❌ FATAL: RESEND_API_KEY is missing in Deno.env");
+          console.error("📋 Variables d'environnement disponibles:", Object.keys(Deno.env.toObject()));
+          throw new Error("Configuration Error: RESEND_API_KEY is missing from Secrets.");
         }
         
-        if (profile?.email) {
-          // Vérification STRICTE de la clé API
-          const resendApiKey = Deno.env.get('RESEND_API_KEY');
-          if (!resendApiKey) {
-            console.error("❌ FATAL: RESEND_API_KEY is missing in Deno.env");
-            console.error("Available env keys:", Object.keys(Deno.env.toObject()));
-            throw new Error("Configuration Error: RESEND_API_KEY is missing from Secrets.");
+        // Payload email simplifié au maximum (hardcodé)
+        const emailPayload = {
+          from: 'onboarding@resend.dev',
+          to: ['patrice.simion@gmail.com'],
+          subject: `Rapport Audit Debug [${new Date().toLocaleTimeString()}]`,
+          html: `<p>Ceci est un test de débogage. Si vous lisez ceci, le pipeline fonctionne.</p>`
+        };
+        
+        console.log('📦 Payload email:', JSON.stringify(emailPayload, null, 2));
+        console.log('🚀 Envoi vers Resend API...');
+        
+        try {
+          const resendRes = await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${resendApiKey}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(emailPayload)
+          });
+          
+          console.log(`📊 Resend HTTP Status: ${resendRes.status} ${resendRes.statusText}`);
+          
+          const resendData = await resendRes.text();
+          console.log(`📧 Resend Response Body: ${resendData}`);
+          
+          if (!resendRes.ok) {
+            console.error(`❌ Resend API Failed (${resendRes.status}): ${resendData}`);
+            throw new Error(`Resend API Failed (${resendRes.status}): ${resendData}`);
           }
           
-          console.log('✅ RESEND_API_KEY found, length:', resendApiKey.length);
-          
-          try {
-            const emailHtml = `
-              <h1>Bonjour ${profile.firstname || 'cher utilisateur'},</h1>
-              <p>Votre <strong>Audit Stratégique</strong> est prêt ! 🎉</p>
-              <p><strong>Résumé:</strong> ${mockReport.executive_summary}</p>
-              <p><strong>Scores:</strong></p>
-              <ul>
-                <li>Market: ${mockReport.scores.market}/100</li>
-                <li>Tech: ${mockReport.scores.tech}/100</li>
-              </ul>
-              <p>Consultez votre dashboard pour voir le rapport complet.</p>
-              <p><em>Ceci est un email de test en mode Turbo.</em></p>
-            `;
-            
-            const emailPayload = {
-              from: 'IMOTION Audit <onboarding@resend.dev>',
-              to: ['patrice.simion@gmail.com'],
-              subject: `Rapport Audit (REDIRECTION TEST) : ${profile.firstname || 'Client'} ${audit.company_guess || ''}`,
-              html: emailHtml,
-            };
-            
-            console.log('📤 Sending email to Resend API...');
-            console.log('Email payload:', { ...emailPayload, html: '[HTML CONTENT]' });
-            
-            const emailResponse = await fetch('https://api.resend.com/emails', {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${resendApiKey}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify(emailPayload),
-            });
-            
-            console.log('📬 Resend API response status:', emailResponse.status, emailResponse.statusText);
-            
-            const emailResult = await emailResponse.json();
-            
-            if (!emailResponse.ok) {
-              console.error('❌ Resend API error response:', emailResult);
-              throw new Error(`Resend API failed: ${emailResponse.status} - ${JSON.stringify(emailResult)}`);
-            }
-            
-            console.log('✅ Email sent successfully! Resend response:', emailResult);
-          } catch (emailError) {
-            console.error('❌ Email sending failed with error:', emailError);
-            if (emailError instanceof Error) {
-              console.error('Error details:', {
-                name: emailError.name,
-                message: emailError.message,
-                stack: emailError.stack,
-              });
-            }
-            // Ne pas bloquer l'audit si l'email échoue
-            console.warn('⚠️ Continuing audit completion despite email failure');
+          console.log('✅ EMAIL ENVOYÉ AVEC SUCCÈS!');
+          console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        } catch (emailError) {
+          console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+          console.error('❌ ERREUR EMAIL CRITIQUE:');
+          if (emailError instanceof Error) {
+            console.error(`   Type: ${emailError.name}`);
+            console.error(`   Message: ${emailError.message}`);
+            console.error(`   Stack: ${emailError.stack}`);
+          } else {
+            console.error(`   Erreur inconnue: ${JSON.stringify(emailError)}`);
           }
-        } else {
-          console.warn('⚠️ No profile email found, skipping email notification');
+          console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+          // Ne pas bloquer l'audit si l'email échoue
+          console.warn('⚠️ Continuing audit completion despite email failure');
         }
+
         
         responsePayload = { message: "Audit Completed (Turbo Mode)", report: mockReport };
     } else {
