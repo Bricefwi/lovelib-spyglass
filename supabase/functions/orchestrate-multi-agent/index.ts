@@ -1,128 +1,85 @@
-/**
- * Supabase Edge Function: orchestrate-multi-agent
- * Router pour orchestrer les 17 agents IA du système MANUS IA 2.0
- */
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Validation du payload d'entrée
-const orchestrationSchema = z.object({
-  audit_id: z.string().uuid({ message: "audit_id must be a valid UUID" }),
-  action: z.enum(['start', 'continue', 'retry', 'cancel']).optional().default('start'),
-});
-
 serve(async (req) => {
-  // Handle CORS preflight
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    console.log("=== MANUS IA 2.0 Orchestrator ===");
-    
-    // Parse et valide le body
-    const body = await req.json();
-    const validation = orchestrationSchema.safeParse(body);
-    
-    if (!validation.success) {
-      console.error("Validation error:", validation.error);
-      return new Response(
-        JSON.stringify({ 
-          error: "Invalid request", 
-          details: validation.error.errors 
-        }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, "Content-Type": "application/json" } 
-        }
-      );
-    }
+    const { audit_id, action } = await req.json();
+    console.log(`🤖 MANUS IA ORCHESTRATOR - Audit: ${audit_id} | Action: ${action}`);
 
-    const { audit_id, action } = validation.data;
-    console.log(`Orchestration request - Audit: ${audit_id}, Action: ${action}`);
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
 
-    // Initialise le client Supabase (Service Role pour bypass RLS)
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: { persistSession: false }
-    });
-
-    // Récupère l'audit depuis la base
-    const { data: audit, error: auditError } = await supabase
+    const { data: audit, error: fetchError } = await supabase
       .from('pre_audits')
       .select('*')
       .eq('id', audit_id)
-      .maybeSingle();
+      .single();
 
-    if (auditError || !audit) {
-      console.error("Audit not found:", auditError);
-      return new Response(
-        JSON.stringify({ error: "Audit not found" }),
-        { 
-          status: 404, 
-          headers: { ...corsHeaders, "Content-Type": "application/json" } 
-        }
-      );
+    if (fetchError || !audit) throw new Error("Audit introuvable");
+
+    let updates = {};
+    let responsePayload = {};
+
+    switch (audit.current_phase) {
+      case 'PHASE_0_INIT':
+        console.log("🚀 Starting Phase 1: Market Study Initialization");
+        
+        const initialReportStructure = {
+          meta: { started_at: new Date().toISOString() },
+          facts: [], hypotheses: [], recommendations: []
+        };
+
+        const newLogs = [
+          { agent: 'A01_ORCHESTRATOR', message: 'Triggering Market Agents.', timestamp: new Date().toISOString() },
+          { agent: 'A02_SCRAPER', status: 'pending', target: audit.target_url || "URL missing" },
+          { agent: 'A03_PESTEL', status: 'pending' },
+          { agent: 'A04_PORTER', status: 'pending' }
+        ];
+
+        updates = {
+          status: 'running',
+          current_phase: 'PHASE_1_MARKET_STUDY',
+          consolidated_report: initialReportStructure,
+          audit_logs: newLogs
+        };
+
+        responsePayload = {
+          message: "Phase 1 Initiated",
+          active_agents: ["A02", "A03", "A04"]
+        };
+        break;
+
+      case 'PHASE_1_MARKET_STUDY':
+        responsePayload = { message: "Phase 1 in progress", progress: "33%" };
+        break;
+
+      default:
+        responsePayload = { message: "Phase unknown", phase: audit.current_phase };
     }
 
-    console.log(`Audit found: ${audit.url} - Status: ${audit.status}`);
-
-    // Pour l'instant, router factice qui retourne un succès
-    // Dans une version complète, ici on appellerait les 17 agents via MANUS IA
-    
-    const orchestrationResult = {
-      status: "Orchestrator ready",
-      audit_id: audit_id,
-      current_phase: audit.current_phase || "PHASE_0_INIT",
-      next_phase: "PHASE_1",
-      action_requested: action,
-      timestamp: new Date().toISOString(),
-      message: "MANUS IA 2.0 orchestration system initialized. Ready to route to 17 specialized agents.",
-    };
-
-    // Met à jour le statut de l'audit
-    const { error: updateError } = await supabase
-      .from('pre_audits')
-      .update({
-        status: 'running',
-        current_phase: 'PHASE_1',
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', audit_id);
-
-    if (updateError) {
-      console.error("Error updating audit status:", updateError);
-    } else {
-      console.log("Audit status updated to 'running'");
+    if (Object.keys(updates).length > 0) {
+      await supabase.from('pre_audits').update(updates).eq('id', audit_id);
     }
 
     return new Response(
-      JSON.stringify(orchestrationResult),
-      {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      JSON.stringify({ success: true, data: responsePayload }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
   } catch (error) {
-    console.error("Orchestration error:", error);
+    console.error("❌ Error:", error);
     return new Response(
-      JSON.stringify({ 
-        error: "Internal server error", 
-        details: error instanceof Error ? error.message : String(error)
-      }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      JSON.stringify({ error: error instanceof Error ? error.message : String(error) }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
