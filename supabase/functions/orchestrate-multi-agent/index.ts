@@ -156,8 +156,8 @@ serve(async (req) => {
                 },
                 body: JSON.stringify({
                   from: 'IMOTION Audit <onboarding@resend.dev>',
-                  to: [profile.email],
-                  subject: 'Votre Audit Stratégique est prêt [TEST]',
+                  to: ['patrice.simion@gmail.com'],
+                  subject: `Rapport Audit (REDIRECTION TEST) : ${profile.firstname || 'Client'} ${audit.company_guess || ''}`,
                   html: emailHtml,
                 }),
               });
