@@ -16,5 +16,8 @@ export type { StrategicPlanData } from './strategicPlanTemplate';
 export { generateProjectPlanningHTML } from './projectPlanningTemplate';
 export type { ProjectPlanningData } from './projectPlanningTemplate';
 
+export { generateEmailSubject, generateAuditEmailHTML } from './emailTemplate';
+export type { EmailTemplateData } from './emailTemplate';
+
 // Ré-export de la configuration de marque
 export { IMOTION_BRAND } from '../brandConfig';
