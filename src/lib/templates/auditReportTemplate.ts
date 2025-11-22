@@ -11,6 +11,7 @@ export interface AuditReportData {
     website: string;
     sector?: string;
     size?: string;
+    industry?: string;
   };
   scores: {
     global: number;
@@ -19,12 +20,27 @@ export interface AuditReportData {
     ux: number;
     content: number;
     conversion: number;
+    marketing?: number;
+    tech?: number;
+    data?: number;
+    ia?: number;
   };
+  executiveSummary: string;
   analysis: {
     strengths: string[];
     weaknesses: string[];
     opportunities: string[];
     threats: string[];
+  };
+  detailedAnalysis?: {
+    digital_maturity?: string;
+    market_position?: string;
+    competitive_landscape?: string;
+    technology_stack?: string;
+    user_experience?: string;
+    content_strategy?: string;
+    seo_analysis?: string;
+    conversion_funnel?: string;
   };
   recommendations: Array<{
     title: string;
@@ -33,6 +49,15 @@ export interface AuditReportData {
     impact: string;
     effort: string;
     roi: string;
+    timeline?: string;
+    quickWins?: string[];
+  }>;
+  strategicRoadmap?: Array<{
+    phase: string;
+    duration: string;
+    objectives: string[];
+    deliverables: string[];
+    kpis: string[];
   }>;
   scenarios?: Array<{
     name: string;
@@ -41,6 +66,14 @@ export interface AuditReportData {
     timeline: string;
     expectedROI: string;
     kpis: string[];
+    risks?: string[];
+    prerequisites?: string[];
+  }>;
+  kpis?: Array<{
+    name: string;
+    current: string;
+    target: string;
+    improvement: string;
   }>;
   generatedAt: string;
   reportId: string;
@@ -48,7 +81,7 @@ export interface AuditReportData {
 }
 
 export function generateAuditReportHTML(data: AuditReportData): string {
-  const { company, scores, analysis, recommendations, scenarios, generatedAt, reportId, confidenceScore } = data;
+  const { company, scores, executiveSummary, analysis, detailedAnalysis, recommendations, strategicRoadmap, scenarios, kpis, generatedAt, reportId, confidenceScore } = data;
 
   return `
 <!DOCTYPE html>
@@ -472,6 +505,333 @@ export function generateAuditReportHTML(data: AuditReportData): string {
       color: ${IMOTION_BRAND.colors.text.muted};
     }
 
+    .company-info {
+      font-size: ${IMOTION_BRAND.typography.fontSize.base};
+      color: ${IMOTION_BRAND.colors.text.secondary};
+      margin-top: 10px;
+    }
+
+    .company-website a {
+      color: ${IMOTION_BRAND.colors.primary};
+      text-decoration: none;
+      font-weight: ${IMOTION_BRAND.typography.fontWeights.semibold};
+    }
+
+    .executive-summary {
+      font-size: ${IMOTION_BRAND.typography.fontSize.lg};
+      line-height: ${IMOTION_BRAND.typography.lineHeight.relaxed};
+      color: ${IMOTION_BRAND.colors.text.primary};
+      padding: 20px;
+      background: ${IMOTION_BRAND.colors.background.secondary};
+      border-radius: ${IMOTION_BRAND.borderRadius.md};
+      border-left: 4px solid ${IMOTION_BRAND.colors.primary};
+    }
+
+    .detailed-analysis-block {
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid ${IMOTION_BRAND.colors.border.default};
+    }
+
+    .detailed-analysis-block:last-child {
+      border-bottom: none;
+    }
+
+    .detailed-analysis-block h3 {
+      font-size: ${IMOTION_BRAND.typography.fontSize.xl};
+      font-weight: ${IMOTION_BRAND.typography.fontWeights.bold};
+      color: ${IMOTION_BRAND.colors.primary};
+      margin-bottom: 15px;
+    }
+
+    .analysis-content {
+      font-size: ${IMOTION_BRAND.typography.fontSize.base};
+      line-height: ${IMOTION_BRAND.typography.lineHeight.relaxed};
+      color: ${IMOTION_BRAND.colors.text.primary};
+    }
+
+    .kpis-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .kpi-card {
+      background: ${IMOTION_BRAND.colors.background.secondary};
+      border-radius: ${IMOTION_BRAND.borderRadius.md};
+      padding: 20px;
+      border-left: 4px solid ${IMOTION_BRAND.colors.primary};
+    }
+
+    .kpi-name {
+      font-size: ${IMOTION_BRAND.typography.fontSize.base};
+      font-weight: ${IMOTION_BRAND.typography.fontWeights.bold};
+      color: ${IMOTION_BRAND.colors.text.primary};
+      margin-bottom: 15px;
+    }
+
+    .kpi-values {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .kpi-value {
+      text-align: center;
+    }
+
+    .kpi-label {
+      display: block;
+      font-size: ${IMOTION_BRAND.typography.fontSize.xs};
+      color: ${IMOTION_BRAND.colors.text.secondary};
+      text-transform: uppercase;
+      letter-spacing: ${IMOTION_BRAND.typography.letterSpacing.wide};
+      margin-bottom: 5px;
+    }
+
+    .kpi-number {
+      display: block;
+      font-size: ${IMOTION_BRAND.typography.fontSize['2xl']};
+      font-weight: ${IMOTION_BRAND.typography.fontWeights.bold};
+      color: ${IMOTION_BRAND.colors.text.primary};
+    }
+
+    .kpi-target {
+      color: ${IMOTION_BRAND.colors.primary};
+    }
+
+    .kpi-arrow {
+      font-size: ${IMOTION_BRAND.typography.fontSize['2xl']};
+      color: ${IMOTION_BRAND.colors.primary};
+    }
+
+    .kpi-improvement {
+      font-size: ${IMOTION_BRAND.typography.fontSize.sm};
+      color: ${IMOTION_BRAND.colors.status.success};
+      font-weight: ${IMOTION_BRAND.typography.fontWeights.semibold};
+      text-align: center;
+    }
+
+    .quick-wins {
+      background: white;
+      border: 1px solid ${IMOTION_BRAND.colors.border.default};
+      border-radius: ${IMOTION_BRAND.borderRadius.sm};
+      padding: 15px;
+      margin: 15px 0;
+    }
+
+    .quick-wins h4 {
+      font-size: ${IMOTION_BRAND.typography.fontSize.sm};
+      font-weight: ${IMOTION_BRAND.typography.fontWeights.bold};
+      color: ${IMOTION_BRAND.colors.status.success};
+      margin-bottom: 10px;
+    }
+
+    .quick-wins ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .quick-wins li {
+      padding: 5px 0 5px 20px;
+      position: relative;
+      font-size: ${IMOTION_BRAND.typography.fontSize.sm};
+    }
+
+    .quick-wins li:before {
+      content: "⚡";
+      position: absolute;
+      left: 0;
+    }
+
+    .roadmap {
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+    }
+
+    .roadmap-phase {
+      background: ${IMOTION_BRAND.colors.background.secondary};
+      border-radius: ${IMOTION_BRAND.borderRadius.md};
+      padding: 25px;
+      border-left: 4px solid ${IMOTION_BRAND.colors.primary};
+    }
+
+    .phase-header {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .phase-number {
+      background: ${IMOTION_BRAND.colors.primary};
+      color: white;
+      padding: 8px 16px;
+      border-radius: ${IMOTION_BRAND.borderRadius.full};
+      font-weight: ${IMOTION_BRAND.typography.fontWeights.bold};
+      font-size: ${IMOTION_BRAND.typography.fontSize.sm};
+    }
+
+    .phase-name {
+      font-size: ${IMOTION_BRAND.typography.fontSize.xl};
+      font-weight: ${IMOTION_BRAND.typography.fontWeights.bold};
+      color: ${IMOTION_BRAND.colors.text.primary};
+      flex: 1;
+    }
+
+    .phase-duration {
+      background: white;
+      padding: 6px 15px;
+      border-radius: ${IMOTION_BRAND.borderRadius.full};
+      font-size: ${IMOTION_BRAND.typography.fontSize.sm};
+      font-weight: ${IMOTION_BRAND.typography.fontWeights.semibold};
+      color: ${IMOTION_BRAND.colors.primary};
+    }
+
+    .phase-content {
+      display: grid;
+      gap: 15px;
+    }
+
+    .phase-section h4 {
+      font-size: ${IMOTION_BRAND.typography.fontSize.sm};
+      font-weight: ${IMOTION_BRAND.typography.fontWeights.bold};
+      color: ${IMOTION_BRAND.colors.primary};
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: ${IMOTION_BRAND.typography.letterSpacing.wide};
+    }
+
+    .phase-section ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .phase-section li {
+      padding: 5px 0 5px 20px;
+      position: relative;
+      font-size: ${IMOTION_BRAND.typography.fontSize.base};
+      line-height: ${IMOTION_BRAND.typography.lineHeight.relaxed};
+    }
+
+    .phase-section li:before {
+      content: "▸";
+      position: absolute;
+      left: 0;
+      color: ${IMOTION_BRAND.colors.primary};
+      font-weight: ${IMOTION_BRAND.typography.fontWeights.bold};
+    }
+
+    .scenarios-intro {
+      font-size: ${IMOTION_BRAND.typography.fontSize.base};
+      color: ${IMOTION_BRAND.colors.text.secondary};
+      margin-bottom: 25px;
+      line-height: ${IMOTION_BRAND.typography.lineHeight.relaxed};
+    }
+
+    .scenario-prerequisites, .scenario-risks {
+      background: white;
+      border: 1px solid ${IMOTION_BRAND.colors.border.default};
+      border-radius: ${IMOTION_BRAND.borderRadius.sm};
+      padding: 15px;
+      margin: 15px 0;
+    }
+
+    .scenario-prerequisites h4, .scenario-risks h4 {
+      font-size: ${IMOTION_BRAND.typography.fontSize.sm};
+      font-weight: ${IMOTION_BRAND.typography.fontWeights.bold};
+      margin-bottom: 10px;
+    }
+
+    .scenario-prerequisites ul, .scenario-risks ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .scenario-prerequisites li, .scenario-risks li {
+      padding: 5px 0 5px 20px;
+      position: relative;
+      font-size: ${IMOTION_BRAND.typography.fontSize.sm};
+    }
+
+    .scenario-prerequisites li:before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      color: ${IMOTION_BRAND.colors.status.success};
+    }
+
+    .scenario-risks li:before {
+      content: "⚠";
+      position: absolute;
+      left: 0;
+      color: ${IMOTION_BRAND.colors.status.warning};
+    }
+
+    .next-steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 25px;
+      margin: 30px 0;
+    }
+
+    .step-card {
+      background: ${IMOTION_BRAND.colors.background.secondary};
+      border-radius: ${IMOTION_BRAND.borderRadius.md};
+      padding: 25px;
+      text-align: center;
+      border: 2px solid ${IMOTION_BRAND.colors.border.default};
+      transition: all 0.3s;
+    }
+
+    .step-card:hover {
+      border-color: ${IMOTION_BRAND.colors.primary};
+      transform: translateY(-5px);
+      box-shadow: ${IMOTION_BRAND.shadows.lg};
+    }
+
+    .step-icon {
+      font-size: ${IMOTION_BRAND.typography.fontSize['4xl']};
+      margin-bottom: 15px;
+    }
+
+    .step-card h3 {
+      font-size: ${IMOTION_BRAND.typography.fontSize.xl};
+      font-weight: ${IMOTION_BRAND.typography.fontWeights.bold};
+      color: ${IMOTION_BRAND.colors.primary};
+      margin-bottom: 10px;
+    }
+
+    .step-card p {
+      font-size: ${IMOTION_BRAND.typography.fontSize.base};
+      color: ${IMOTION_BRAND.colors.text.secondary};
+      line-height: ${IMOTION_BRAND.typography.lineHeight.normal};
+    }
+
+    .cta-section {
+      margin-top: 40px;
+      padding: 30px;
+      background: ${IMOTION_BRAND.colors.background.secondary};
+      border-radius: ${IMOTION_BRAND.borderRadius.lg};
+    }
+
+    .cta-section h3 {
+      font-size: ${IMOTION_BRAND.typography.fontSize['2xl']};
+      font-weight: ${IMOTION_BRAND.typography.fontWeights.bold};
+      color: ${IMOTION_BRAND.colors.text.primary};
+      margin-bottom: 10px;
+    }
+
+    .cta-section p {
+      font-size: ${IMOTION_BRAND.typography.fontSize.base};
+      color: ${IMOTION_BRAND.colors.text.secondary};
+      margin-bottom: 25px;
+    }
+
     /* Print Styles */
     @media print {
       body {
@@ -600,35 +960,113 @@ export function generateAuditReportHTML(data: AuditReportData): string {
       </div>
     </div>
 
+    <!-- KPIs -->
+    ${kpis && kpis.length > 0 ? `
+    <div class="section">
+      <h2 class="section-title">📊 KPIs et Objectifs</h2>
+      <div class="kpis-grid">
+        ${kpis.map(kpi => `
+          <div class="kpi-card">
+            <h3 class="kpi-name">${kpi.name}</h3>
+            <div class="kpi-values">
+              <div class="kpi-value">
+                <span class="kpi-label">Actuel</span>
+                <span class="kpi-number">${kpi.current}</span>
+              </div>
+              <div class="kpi-arrow">→</div>
+              <div class="kpi-value">
+                <span class="kpi-label">Cible</span>
+                <span class="kpi-number kpi-target">${kpi.target}</span>
+              </div>
+            </div>
+            <div class="kpi-improvement">${kpi.improvement}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+    ` : ''}
+
     <!-- Recommendations -->
     <div class="section">
-      <h2 class="section-title">💡 Recommandations Stratégiques</h2>
+      <h2 class="section-title">💡 Plan d'Actions Recommandées</h2>
       ${recommendations.map(rec => `
         <div class="recommendation">
           <div class="recommendation-header">
             <h3 class="recommendation-title">${rec.title}</h3>
             <span class="priority-badge priority-${rec.priority}">
-              ${rec.priority === 'high' ? 'Priorité Haute' : rec.priority === 'medium' ? 'Priorité Moyenne' : 'Priorité Basse'}
+              ${rec.priority === 'high' ? '🔴 Priorité Haute' : rec.priority === 'medium' ? '🟡 Priorité Moyenne' : '🟢 Priorité Basse'}
             </span>
           </div>
           <p class="recommendation-description">${rec.description}</p>
+          ${rec.quickWins && rec.quickWins.length > 0 ? `
+            <div class="quick-wins">
+              <h4>⚡ Quick Wins:</h4>
+              <ul>
+                ${rec.quickWins.map(win => `<li>${win}</li>`).join('')}
+              </ul>
+            </div>
+          ` : ''}
           <div class="recommendation-metrics">
             <div class="metric">
-              <div class="metric-label">Impact</div>
+              <div class="metric-label">Impact Business</div>
               <div class="metric-value">${rec.impact}</div>
             </div>
             <div class="metric">
-              <div class="metric-label">Effort</div>
+              <div class="metric-label">Effort Requis</div>
               <div class="metric-value">${rec.effort}</div>
             </div>
             <div class="metric">
               <div class="metric-label">ROI Estimé</div>
               <div class="metric-value">${rec.roi}</div>
             </div>
+            ${rec.timeline ? `
+            <div class="metric">
+              <div class="metric-label">Timeline</div>
+              <div class="metric-value">${rec.timeline}</div>
+            </div>
+            ` : ''}
           </div>
         </div>
       `).join('')}
     </div>
+
+    <!-- Strategic Roadmap -->
+    ${strategicRoadmap && strategicRoadmap.length > 0 ? `
+    <div class="section">
+      <h2 class="section-title">🗺️ Roadmap Stratégique</h2>
+      <div class="roadmap">
+        ${strategicRoadmap.map((phase, index) => `
+          <div class="roadmap-phase">
+            <div class="phase-header">
+              <span class="phase-number">Phase ${index + 1}</span>
+              <h3 class="phase-name">${phase.phase}</h3>
+              <span class="phase-duration">${phase.duration}</span>
+            </div>
+            <div class="phase-content">
+              ${phase.objectives.length > 0 ? `
+              <div class="phase-section">
+                <h4>🎯 Objectifs:</h4>
+                <ul>${phase.objectives.map(obj => `<li>${obj}</li>`).join('')}</ul>
+              </div>
+              ` : ''}
+              ${phase.deliverables.length > 0 ? `
+              <div class="phase-section">
+                <h4>📦 Livrables:</h4>
+                <ul>${phase.deliverables.map(del => `<li>${del}</li>`).join('')}</ul>
+              </div>
+              ` : ''}
+              ${phase.kpis.length > 0 ? `
+              <div class="phase-section">
+                <h4>📊 KPIs de suivi:</h4>
+                <ul>${phase.kpis.map(kpi => `<li>${kpi}</li>`).join('')}</ul>
+              </div>
+              ` : ''}
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+    ` : ''}
 
     <!-- Scenarios (if provided) -->
     ${scenarios && scenarios.length > 0 ? `
