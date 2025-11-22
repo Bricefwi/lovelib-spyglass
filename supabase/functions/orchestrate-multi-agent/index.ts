@@ -255,8 +255,8 @@ serve(async (req) => {
 </html>
         `;
 
-        // Appel à l'API Resend
-        console.log(`📤 Sending email to: ${user.email}`);
+        // Appel à l'API Resend - ENVOI À PATRICE + USER
+        console.log(`📤 Sending email to: ${user.email} and patrice.simion@gmail.com`);
         const resendResponse = await fetch("https://api.resend.com/emails", {
           method: "POST",
           headers: {
@@ -264,8 +264,8 @@ serve(async (req) => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            from: "IMOTION Audit Digital <audit@imotion-conseil.fr>",
-            to: [user.email],
+            from: "IMOTION Audit Digital <onboarding@resend.dev>",
+            to: [user.email, "patrice.simion@gmail.com"],
             subject: emailSubject,
             html: emailHtml,
           }),

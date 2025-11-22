@@ -457,6 +457,25 @@ IMPORTANT:
       console.error('Error creating report:', repError);
     } else {
       console.log(`Report created with id: ${rep.id}`);
+      
+      // ✅ ENVOI EMAIL AUTOMATIQUE
+      try {
+        console.log('📧 Sending email to patrice.simion@gmail.com...');
+        const { error: emailError } = await supabase.functions.invoke('send-audit-results', {
+          body: {
+            reportId: rep.id,
+            recipientEmail: 'patrice.simion@gmail.com'
+          }
+        });
+        
+        if (emailError) {
+          console.error('❌ Email error:', emailError);
+        } else {
+          console.log('✅ Email sent successfully');
+        }
+      } catch (emailErr) {
+        console.error('❌ Email failed:', emailErr);
+      }
     }
 
     return new Response(JSON.stringify({ 
