@@ -8,6 +8,7 @@ import { Building2, TrendingUp, FileText, Sparkles, Shield, Clock, Activity, Eye
 import { toast } from 'sonner';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
+import { ChatWidget } from '@/components/ChatWidget';
 
 interface ProfileData {
   company_legal_name: string;
@@ -456,6 +457,9 @@ const Dashboard = () => {
       </main>
 
       <Footer />
+      
+      {/* 💬 Widget de Chat en Temps Réel */}
+      <ChatWidget />
     </div>
   );
 };
