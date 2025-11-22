@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { ChatWidget } from '@/components/ChatWidget';
+import { useUserRole } from '@/hooks/useUserRole';
 
 interface ProfileData {
   company_legal_name: string;
@@ -45,6 +46,14 @@ const Dashboard = () => {
     pending: 0
   });
   const navigate = useNavigate();
+  const { isAdmin } = useUserRole();
+
+  // Redirection automatique des admins vers leur tableau de bord dédié
+  useEffect(() => {
+    if (isAdmin) {
+      navigate("/admin/dashboard", { replace: true });
+    }
+  }, [isAdmin, navigate]);
 
   useEffect(() => {
     fetchDashboardData();
