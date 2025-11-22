@@ -1031,9 +1031,14 @@ export type Database = {
           audit_id: string | null
           company_id: string | null
           content: string
+          conversation_id: string | null
           created_at: string | null
           id: string
-          sender_email: string
+          message_type: string | null
+          read_at: string | null
+          recipient_id: string | null
+          sender_email: string | null
+          sender_id: string | null
           status: string | null
           subject: string | null
         }
@@ -1041,9 +1046,14 @@ export type Database = {
           audit_id?: string | null
           company_id?: string | null
           content: string
+          conversation_id?: string | null
           created_at?: string | null
           id?: string
-          sender_email: string
+          message_type?: string | null
+          read_at?: string | null
+          recipient_id?: string | null
+          sender_email?: string | null
+          sender_id?: string | null
           status?: string | null
           subject?: string | null
         }
@@ -1051,21 +1061,18 @@ export type Database = {
           audit_id?: string | null
           company_id?: string | null
           content?: string
+          conversation_id?: string | null
           created_at?: string | null
           id?: string
-          sender_email?: string
+          message_type?: string | null
+          read_at?: string | null
+          recipient_id?: string | null
+          sender_email?: string | null
+          sender_id?: string | null
           status?: string | null
           subject?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "messages_audit_id_fkey"
-            columns: ["audit_id"]
-            isOneToOne: false
-            referencedRelation: "audit_results"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       missions: {
         Row: {
