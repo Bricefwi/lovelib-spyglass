@@ -19,12 +19,22 @@ export default function ClientAudits() {
   const fetchAudits = async () => {
     try {
       setLoading(true);
+      
+      // ✅ CRITIQUE: Récupérer l'utilisateur connecté
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Vous devez être connecté");
+        return;
+      }
+
+      // ✅ CRITIQUE: Filtrer UNIQUEMENT les audits de cet utilisateur
       const { data, error } = await supabase
         .from("pre_audits")
         .select(`
           *,
           company:companies(domain, name)
         `)
+        .eq("created_by", user.id)  // 🔒 FILTRE PAR UTILISATEUR
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -39,6 +49,26 @@ export default function ClientAudits() {
 
   const viewReport = async (preAuditId: string) => {
     try {
+      // ✅ CRITIQUE: Vérifier que l'utilisateur possède cet audit
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Vous devez être connecté");
+        return;
+      }
+
+      // Vérifier que l'audit appartient à l'utilisateur
+      const { data: auditCheck } = await supabase
+        .from("pre_audits")
+        .select("created_by")
+        .eq("id", preAuditId)
+        .single();
+
+      if (!auditCheck || auditCheck.created_by !== user.id) {
+        toast.error("Accès non autorisé à ce rapport");
+        return;
+      }
+
+      // Récupérer le rapport
       const { data, error } = await supabase
         .from("audit_reports")
         .select("id")
