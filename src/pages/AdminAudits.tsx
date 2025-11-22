@@ -82,6 +82,10 @@ export default function AdminAudits() {
   const fetchAudits = async () => {
     try {
       setLoading(true);
+      
+      // ✅ CORRECTION: Les admins peuvent voir TOUS les audits
+      // Pas besoin de filtrer par user.id pour les admins
+      // Les politiques RLS permettent déjà l'accès admin via has_role('admin')
       const { data, error } = await supabase
         .from("pre_audits")
         .select(`
@@ -172,25 +176,25 @@ export default function AdminAudits() {
       setSendingEmail(audit.id);
       
       // Récupérer le rapport pour cet audit
-      const { data: report } = await supabase
+      const { data: report, error: reportError } = await supabase
         .from('audit_reports')
         .select('id')
         .eq('pre_audit_id', audit.id)
         .single();
 
-      if (!report) {
+      if (reportError || !report) {
+        console.error('Error fetching report:', reportError);
         toast.error("Aucun rapport trouvé pour cet audit");
         return;
       }
 
-      // Envoyer l'email
-      const { error } = await supabase.functions.invoke('send-audit-results', {
+      console.log(`Sending email for report ${report.id} to patrice.simion@gmail.com`);
+
+      // ✅ CORRECTION CRITIQUE: Utiliser le bon paramètre attendu par send-audit-results
+      const { data, error } = await supabase.functions.invoke('send-audit-results', {
         body: {
-          auditResultId: audit.id,
-          website: audit.url,
-          reportMarkdown: '',
-          scores: null,
-          reportId: report.id
+          reportId: report.id,
+          recipientEmail: 'patrice.simion@gmail.com'
         }
       });
 

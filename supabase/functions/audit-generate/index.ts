@@ -217,13 +217,15 @@ ${(data.sources||[]).map((s:any)=>`- [${s.label||s.url}](${s.url}) • fiabilit�
     try {
       console.log("Calling send-audit-results function...");
       
+      // ✅ CORRECTION CRITIQUE: Vérifier que reportId existe avant envoi
+      if (!reportData?.id) {
+        console.error("No report ID found, skipping email");
+        throw new Error("Report ID is required for email sending");
+      }
+      
       const { data: emailData, error: emailError } = await supabase.functions.invoke('send-audit-results', {
         body: {
-          auditResultId: saved.id,
-          website: targetUrl,
-          reportMarkdown: md,
-          scores: data.scores,
-          reportId: reportData?.id
+          reportId: reportData.id // ✅ CORRECTION: Utiliser le bon nom de paramètre
         }
       });
 
