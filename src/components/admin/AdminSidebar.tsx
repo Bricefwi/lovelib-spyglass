@@ -34,6 +34,12 @@ export function AdminSidebar({ pendingCount = 0, unreadMessages = 0 }: AdminSide
       badge: pendingCount > 0 ? pendingCount : null,
     },
     {
+      name: "Messages Clients",
+      href: "/admin/messages",
+      icon: MessageSquare,
+      badge: unreadMessages > 0 ? unreadMessages : null,
+    },
+    {
       name: "Orchestrations",
       href: "/admin/orchestrations",
       icon: Network,
@@ -44,12 +50,6 @@ export function AdminSidebar({ pendingCount = 0, unreadMessages = 0 }: AdminSide
       href: "/admin/veille-ia",
       icon: Sparkles,
       badge: null,
-    },
-    {
-      name: "Messages Clients",
-      href: "/admin/messages",
-      icon: MessageSquare,
-      badge: unreadMessages > 0 ? unreadMessages : null,
     },
     {
       name: "Utilisateurs",

@@ -24,6 +24,7 @@ import RGPD from "./pages/RGPD";
 import CGU from "./pages/CGU";
 import AdminAudits from "./pages/AdminAudits";
 import AdminDashboard from "./pages/AdminDashboard";
+import AdminMessages from "./pages/AdminMessages";
 import AdminBlog from "./pages/AdminBlog";
 import AdminUsers from "./pages/AdminUsers";
 import ClientAudits from "./pages/ClientAudits";
@@ -87,6 +88,11 @@ const App = () => {
             <Route path="/admin/users" element={
               <ProtectedRoute requireAuth requireAdmin>
                 <AdminUsers />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/messages" element={
+              <ProtectedRoute requireAuth requireAdmin>
+                <AdminMessages />
               </ProtectedRoute>
             } />
             <Route path="/admin/orchestrations" element={
