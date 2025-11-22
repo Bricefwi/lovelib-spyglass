@@ -219,24 +219,33 @@ export const PreAuditForm = () => {
         });
 
       } else {
-        // Standard audit
+        // ✅ AUDIT STANDARD - Utiliser preaudit edge function
         setStep("generating");
         toast({
-          title: "🤖 Génération du rapport...",
-          description: "L'IA analyse les données et rédige votre pré-audit personnalisé",
+          title: "🤖 Analyse en cours...",
+          description: "L'IA collecte et analyse les données de votre site",
         });
 
-        const { data: auditData, error: auditError } = await supabase.functions.invoke('audit-generate', {
-          body: { pre_audit_id: preAuditId }
+        // ✅ APPEL DIRECT À preaudit (pas audit-generate)
+        const { data: auditData, error: auditError } = await supabase.functions.invoke('preaudit', {
+          body: { url: website.trim() }
         });
 
         if (auditError) throw auditError;
 
-        // Succès
+        if (!auditData?.ok) {
+          throw new Error(auditData?.error || "Échec de l'analyse");
+        }
+
+        // Succès - Supprimer le pre_audit créé manuellement car preaudit en crée un
+        if (preAuditId) {
+          await supabase.from('pre_audits').delete().eq('id', preAuditId);
+        }
+
         setStep("done");
         toast({
-          title: "✅ Pré-audit terminé !",
-          description: `Votre rapport complet pour ${website} est prêt. Consultez votre email.`,
+          title: "✅ Audit terminé !",
+          description: `Votre rapport pour ${website} a été envoyé par email.`,
         });
         setWebsite("");
         setIsLoading(false);
