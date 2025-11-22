@@ -25,6 +25,7 @@ import CGU from "./pages/CGU";
 import AdminAudits from "./pages/AdminAudits";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminMessages from "./pages/AdminMessages";
+import TestDataSender from "./pages/TestDataSender";
 import AdminBlog from "./pages/AdminBlog";
 import AdminUsers from "./pages/AdminUsers";
 import ClientAudits from "./pages/ClientAudits";
@@ -114,6 +115,11 @@ const App = () => {
             <Route path="/veille-ia" element={
               <ProtectedRoute requireAuth requireAdmin>
                 <VeilleIA />
+              </ProtectedRoute>
+            } />
+            <Route path="/test-data-sender" element={
+              <ProtectedRoute requireAuth>
+                <TestDataSender />
               </ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
