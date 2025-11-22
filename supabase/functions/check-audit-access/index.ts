@@ -187,7 +187,7 @@ serve(async (req) => {
     const { data: profile, error: profileError } = await supabaseClient
       .from('profiles')
       .select('*')
-      .eq('id', user.id)
+      .eq('user_id', user.id)
       .single();
 
     if (profileError || !profile) {
@@ -327,7 +327,7 @@ serve(async (req) => {
         await supabaseAdmin
           .from('profiles')
           .update({ trust_score: newTrustScore })
-          .eq('id', user.id);
+          .eq('user_id', user.id);
 
         // Logger le warning
         await supabaseAdmin
