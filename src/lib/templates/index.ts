@@ -7,6 +7,9 @@
 export { generateAuditReportHTML } from './auditReportTemplate';
 export type { AuditReportData } from './auditReportTemplate';
 
+export { generatePremiumAuditHTML } from './premiumAuditTemplate';
+export type { PremiumAuditData } from './premiumAuditTemplate';
+
 export { generateStrategicPlanHTML } from './strategicPlanTemplate';
 export type { StrategicPlanData } from './strategicPlanTemplate';
 
