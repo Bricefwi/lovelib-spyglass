@@ -25,22 +25,25 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { Shield, Ban, CheckCircle, TrendingUp, RefreshCw, UserCog } from 'lucide-react';
+import { Shield, Ban, CheckCircle, TrendingUp, RefreshCw, UserCog, Users } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface UserProfile {
   user_id: string;
   email: string;
-  firstname: string;
-  lastname: string;
+  email_confirmed_at: string | null;
+  firstname: string | null;
+  lastname: string | null;
   company_legal_name: string | null;
   company_siret: string | null;
-  account_status: string;
-  trust_score: number;
-  free_audits_used: number;
+  account_status: string | null;
+  trust_score: number | null;
+  free_audits_used: number | null;
   created_at: string;
   last_audit_at: string | null;
   blocked_until: string | null;
   block_reason: string | null;
+  role: 'admin' | 'consultant' | 'client' | null;
 }
 
 const AdminUsers = () => {
@@ -48,20 +51,58 @@ const AdminUsers = () => {
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [actionDialogOpen, setActionDialogOpen] = useState(false);
-  const [actionType, setActionType] = useState<'approve' | 'reject' | 'block' | 'unblock' | 'trust' | 'reset'>('approve');
+  const [actionType, setActionType] = useState<'approve' | 'reject' | 'block' | 'unblock' | 'trust' | 'reset' | 'role'>('approve');
   const [actionReason, setActionReason] = useState('');
   const [trustScoreValue, setTrustScoreValue] = useState(50);
   const [blockUntilDate, setBlockUntilDate] = useState('');
+  const [selectedRole, setSelectedRole] = useState<'admin' | 'consultant' | 'client'>('client');
 
   const fetchUsers = async () => {
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('user_id, email, firstname, lastname, company_legal_name, company_siret, account_status, trust_score, free_audits_used, created_at, last_audit_at, blocked_until, block_reason')
-        .order('created_at', { ascending: false });
+      // Récupérer tous les utilisateurs depuis auth.users avec leurs profils et rôles
+      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+      
+      if (authError) throw authError;
 
-      if (error) throw error;
-      setUsers(data || []);
+      // Récupérer les profils
+      const { data: profiles, error: profileError } = await supabase
+        .from('profiles')
+        .select('*');
+      
+      if (profileError) throw profileError;
+
+      // Récupérer les rôles
+      const { data: roles, error: roleError } = await supabase
+        .from('user_roles')
+        .select('*');
+      
+      if (roleError) throw roleError;
+
+      // Combiner les données
+      const combinedUsers = authUsers.users.map(user => {
+        const profile = profiles?.find(p => p.user_id === user.id);
+        const userRole = roles?.find(r => r.user_id === user.id);
+        
+        return {
+          user_id: user.id,
+          email: user.email || '',
+          email_confirmed_at: user.email_confirmed_at,
+          firstname: profile?.firstname || null,
+          lastname: profile?.lastname || null,
+          company_legal_name: profile?.company_legal_name || null,
+          company_siret: profile?.company_siret || null,
+          account_status: profile?.account_status || null,
+          trust_score: profile?.trust_score || null,
+          free_audits_used: profile?.free_audits_used || null,
+          created_at: user.created_at,
+          last_audit_at: profile?.last_audit_at || null,
+          blocked_until: profile?.blocked_until || null,
+          block_reason: profile?.block_reason || null,
+          role: userRole?.role || null,
+        };
+      });
+
+      setUsers(combinedUsers);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast.error('Erreur lors du chargement des utilisateurs');
@@ -151,6 +192,15 @@ const AdminUsers = () => {
           });
           toast.success('Audits gratuits réinitialisés');
           break;
+
+        case 'role':
+          await supabase.rpc('admin_change_user_role', {
+            p_user_id: selectedUser.user_id,
+            p_admin_id: user.id,
+            p_new_role: selectedRole
+          });
+          toast.success('Rôle mis à jour avec succès');
+          break;
       }
 
       setActionDialogOpen(false);
@@ -167,17 +217,27 @@ const AdminUsers = () => {
   const openActionDialog = (user: UserProfile, type: typeof actionType) => {
     setSelectedUser(user);
     setActionType(type);
-    setTrustScoreValue(user.trust_score);
+    setTrustScoreValue(user.trust_score || 50);
+    setSelectedRole(user.role || 'client');
     setActionDialogOpen(true);
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string | null) => {
     const config = {
       active: { label: 'Actif', variant: 'default' as const },
       pending: { label: 'En attente', variant: 'secondary' as const },
       rejected: { label: 'Rejeté', variant: 'destructive' as const },
     };
     return config[status as keyof typeof config] || config.pending;
+  };
+
+  const getRoleBadge = (role: string | null) => {
+    const config = {
+      admin: { label: 'Admin', variant: 'default' as const },
+      consultant: { label: 'Consultant', variant: 'secondary' as const },
+      client: { label: 'Client', variant: 'outline' as const },
+    };
+    return config[role as keyof typeof config] || { label: 'Aucun', variant: 'outline' as const };
   };
 
   const getTrustColor = (score: number) => {
@@ -225,6 +285,7 @@ const AdminUsers = () => {
                     <TableHead>Entreprise</TableHead>
                     <TableHead>SIRET</TableHead>
                     <TableHead>Statut</TableHead>
+                    <TableHead>Rôle</TableHead>
                     <TableHead>Trust Score</TableHead>
                     <TableHead>Audits</TableHead>
                     <TableHead>Inscription</TableHead>
@@ -238,8 +299,16 @@ const AdminUsers = () => {
                       <TableRow key={user.user_id}>
                         <TableCell>
                           <div>
-                            <div className="font-medium">{user.firstname} {user.lastname}</div>
+                            <div className="font-medium">
+                              {user.firstname && user.lastname 
+                                ? `${user.firstname} ${user.lastname}` 
+                                : <span className="text-muted-foreground">Profil incomplet</span>
+                              }
+                            </div>
                             <div className="text-sm text-muted-foreground">{user.email}</div>
+                            {!user.email_confirmed_at && (
+                              <Badge variant="outline" className="mt-1 text-xs">Email non confirmé</Badge>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell>
@@ -255,12 +324,18 @@ const AdminUsers = () => {
                           )}
                         </TableCell>
                         <TableCell>
-                          <span className={`font-semibold ${getTrustColor(user.trust_score)}`}>
-                            {user.trust_score}
+                          {(() => {
+                            const roleBadge = getRoleBadge(user.role);
+                            return <Badge variant={roleBadge.variant}>{roleBadge.label}</Badge>;
+                          })()}
+                        </TableCell>
+                        <TableCell>
+                          <span className={`font-semibold ${getTrustColor(user.trust_score || 0)}`}>
+                            {user.trust_score ?? '-'}
                           </span>
                         </TableCell>
                         <TableCell>
-                          <span className="text-sm">{user.free_audits_used} / 3</span>
+                          <span className="text-sm">{user.free_audits_used ?? 0} / 3</span>
                         </TableCell>
                         <TableCell>
                           <span className="text-sm text-muted-foreground">
@@ -268,12 +343,22 @@ const AdminUsers = () => {
                           </span>
                         </TableCell>
                         <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
+                          <div className="flex justify-end gap-2 flex-wrap">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => openActionDialog(user, 'role')}
+                              title="Changer le rôle"
+                            >
+                              <Users className="h-4 w-4" />
+                            </Button>
+
                             {user.account_status === 'pending' && (
                               <Button
                                 size="sm"
                                 variant="outline"
                                 onClick={() => openActionDialog(user, 'approve')}
+                                title="Approuver"
                               >
                                 <CheckCircle className="h-4 w-4" />
                               </Button>
@@ -283,6 +368,7 @@ const AdminUsers = () => {
                               size="sm"
                               variant="outline"
                               onClick={() => openActionDialog(user, 'trust')}
+                              title="Ajuster Trust Score"
                             >
                               <TrendingUp className="h-4 w-4" />
                             </Button>
@@ -292,6 +378,7 @@ const AdminUsers = () => {
                                 size="sm"
                                 variant="outline"
                                 onClick={() => openActionDialog(user, 'unblock')}
+                                title="Débloquer"
                               >
                                 <Shield className="h-4 w-4" />
                               </Button>
@@ -300,6 +387,7 @@ const AdminUsers = () => {
                                 size="sm"
                                 variant="destructive"
                                 onClick={() => openActionDialog(user, 'block')}
+                                title="Bloquer"
                               >
                                 <Ban className="h-4 w-4" />
                               </Button>
@@ -309,6 +397,7 @@ const AdminUsers = () => {
                               size="sm"
                               variant="outline"
                               onClick={() => openActionDialog(user, 'reset')}
+                              title="Réinitialiser audits"
                             >
                               <RefreshCw className="h-4 w-4" />
                             </Button>
@@ -336,13 +425,35 @@ const AdminUsers = () => {
               {actionType === 'unblock' && 'Débloquer l\'utilisateur'}
               {actionType === 'trust' && 'Ajuster le Trust Score'}
               {actionType === 'reset' && 'Réinitialiser les audits gratuits'}
+              {actionType === 'role' && 'Modifier le rôle utilisateur'}
             </DialogTitle>
             <DialogDescription>
-              {selectedUser && `${selectedUser.firstname} ${selectedUser.lastname} (${selectedUser.email})`}
+              {selectedUser && `${selectedUser.firstname || 'Utilisateur'} ${selectedUser.lastname || ''} (${selectedUser.email})`}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
+            {actionType === 'role' && (
+              <div>
+                <Label htmlFor="role">Nouveau Rôle</Label>
+                <Select value={selectedRole} onValueChange={(value: 'admin' | 'consultant' | 'client') => setSelectedRole(value)}>
+                  <SelectTrigger id="role">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="client">Client</SelectItem>
+                    <SelectItem value="consultant">Consultant</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-sm text-muted-foreground mt-2">
+                  <strong>Client :</strong> Accès standard aux audits<br />
+                  <strong>Consultant :</strong> Accès étendu<br />
+                  <strong>Admin :</strong> Accès complet à toutes les fonctionnalités
+                </p>
+              </div>
+            )}
+
             {actionType === 'trust' && (
               <div>
                 <Label htmlFor="trustScore">Nouveau Trust Score (0-100)</Label>
@@ -369,7 +480,7 @@ const AdminUsers = () => {
               </div>
             )}
 
-            {actionType !== 'approve' && actionType !== 'unblock' && (
+            {actionType !== 'approve' && actionType !== 'unblock' && actionType !== 'role' && (
               <div>
                 <Label htmlFor="reason">
                   Raison {actionType !== 'trust' && actionType !== 'reset' && '(obligatoire)'}

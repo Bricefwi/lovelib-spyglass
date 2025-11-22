@@ -1487,6 +1487,14 @@ export type Database = {
         }
         Returns: undefined
       }
+      admin_change_user_role: {
+        Args: {
+          p_admin_id: string
+          p_new_role: Database["public"]["Enums"]["app_role"]
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       admin_reject_user: {
         Args: { p_admin_id: string; p_reason: string; p_user_id: string }
         Returns: undefined
