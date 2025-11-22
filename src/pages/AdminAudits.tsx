@@ -65,6 +65,7 @@ export default function AdminAudits() {
   const [expandedAudit, setExpandedAudit] = useState<string | null>(null);
   const [auditSteps, setAuditSteps] = useState<Record<string, AuditStep[]>>({});
   const [auditsWithReports, setAuditsWithReports] = useState<Set<string>>(new Set());
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const navigate = useNavigate();
   const { isAdmin, loading: roleLoading } = useUserRole();
 
@@ -240,8 +241,16 @@ export default function AdminAudits() {
     );
   }
 
+  const filteredAudits = statusFilter === "all" 
+    ? audits 
+    : audits.filter(a => a.status === statusFilter);
+
   const readyAudits = audits.filter((a: any) => 
     a.status === "consolidated"
+  );
+
+  const pendingAudits = audits.filter((a: any) => 
+    a.status === "new" || a.status === "collecting" || a.status === "ai_running"
   );
 
   return (
@@ -252,17 +261,31 @@ export default function AdminAudits() {
           <div>
             <h1 className="text-3xl font-bold">Pilotage des Audits</h1>
             <p className="text-muted-foreground mt-2">
-              {audits.length} audits • {readyAudits.length} prêts
+              {audits.length} total • {pendingAudits.length} en attente • {readyAudits.length} terminés
             </p>
           </div>
-          <Button onClick={fetchAudits} variant="outline">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Actualiser
-          </Button>
+          <div className="flex gap-2">
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-4 py-2 border rounded-lg"
+            >
+              <option value="all">Tous les statuts</option>
+              <option value="new">Nouveau</option>
+              <option value="collecting">En collecte</option>
+              <option value="ai_running">Analyse IA</option>
+              <option value="consolidated">Terminés</option>
+              <option value="error">Erreurs</option>
+            </select>
+            <Button onClick={fetchAudits} variant="outline">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Actualiser
+            </Button>
+          </div>
         </div>
 
         <div className="space-y-4">
-          {audits.map((audit) => (
+          {filteredAudits.map((audit) => (
             <Card key={audit.id} className="p-6">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
@@ -371,9 +394,13 @@ export default function AdminAudits() {
             </Card>
           ))}
 
-          {audits.length === 0 && (
+          {filteredAudits.length === 0 && (
             <Card className="p-12 text-center">
-              <p className="text-muted-foreground">Aucun audit pour le moment</p>
+              <p className="text-muted-foreground">
+                {statusFilter === "all" 
+                  ? "Aucun audit pour le moment" 
+                  : "Aucun audit avec ce statut"}
+              </p>
             </Card>
           )}
         </div>
