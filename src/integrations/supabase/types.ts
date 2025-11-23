@@ -1480,6 +1480,57 @@ export type Database = {
         }
         Relationships: []
       }
+      strategic_choices: {
+        Row: {
+          audit_id: string | null
+          context_summary: string | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          options: Json
+          phase: string
+          selected_at: string | null
+          selected_option: string | null
+        }
+        Insert: {
+          audit_id?: string | null
+          context_summary?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          options: Json
+          phase: string
+          selected_at?: string | null
+          selected_option?: string | null
+        }
+        Update: {
+          audit_id?: string | null
+          context_summary?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          options?: Json
+          phase?: string
+          selected_at?: string | null
+          selected_option?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "strategic_choices_audit_id_fkey"
+            columns: ["audit_id"]
+            isOneToOne: false
+            referencedRelation: "pre_audits"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "strategic_choices_audit_id_fkey"
+            columns: ["audit_id"]
+            isOneToOne: false
+            referencedRelation: "v_admin_audits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
