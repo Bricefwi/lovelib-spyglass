@@ -549,41 +549,6 @@ export type Database = {
           },
         ]
       }
-      audits: {
-        Row: {
-          commercial: Json | null
-          completeness_score: number | null
-          created_at: string
-          id: string
-          marketing: Json | null
-          mission_id: string
-        }
-        Insert: {
-          commercial?: Json | null
-          completeness_score?: number | null
-          created_at?: string
-          id?: string
-          marketing?: Json | null
-          mission_id: string
-        }
-        Update: {
-          commercial?: Json | null
-          completeness_score?: number | null
-          created_at?: string
-          id?: string
-          marketing?: Json | null
-          mission_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "audits_mission_id_fkey"
-            columns: ["mission_id"]
-            isOneToOne: false
-            referencedRelation: "missions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       blog_article_tags: {
         Row: {
           article_id: string
