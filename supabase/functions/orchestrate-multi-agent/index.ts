@@ -8,6 +8,25 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// ✅ Fonction utilitaire pour extraire le JSON robustement
+function extractJSON(text: string) {
+  try {
+    // Enlever les blocs markdown ```json ... ```
+    const cleanText = text.replace(/```json\n?|\n?```/g, '').trim();
+    return JSON.parse(cleanText);
+  } catch (e) {
+    console.error("JSON Parse Error raw:", text.substring(0, 200));
+    // Tentative de réparation simple (chercher { et })
+    const firstBrace = text.indexOf('{');
+    const lastBrace = text.lastIndexOf('}');
+    if (firstBrace >= 0 && lastBrace > firstBrace) {
+      const extracted = text.substring(firstBrace, lastBrace + 1);
+      return JSON.parse(extracted);
+    }
+    throw e;
+  }
+}
+
 // ✅ SECURITY: Input validation schema
 const orchestrationSchema = z.object({
   audit_id: z.string().uuid({ message: "Invalid audit ID format" })
@@ -214,10 +233,10 @@ Retourne UNIQUEMENT le JSON, sans texte avant ou après.`;
     const aiContent = openaiData.choices[0].message.content;
     console.log("✅ Rapport IA généré, longueur:", aiContent.length);
 
-    // Parser le JSON retourné par l'IA
+    // Parser le JSON retourné par l'IA avec fonction robuste
     let aiReport;
     try {
-      aiReport = JSON.parse(aiContent);
+      aiReport = extractJSON(aiContent);
       console.log("✅ JSON parsé avec succès");
     } catch (parseError) {
       console.error("❌ JSON parsing error:", parseError);
