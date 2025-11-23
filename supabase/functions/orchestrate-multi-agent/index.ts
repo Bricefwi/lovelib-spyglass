@@ -85,31 +85,65 @@ serve(async (req) => {
     }
     console.log(`✅ Audit fetched: ${audit.url}`);
 
-    // 2.5. AI MODEL SELECTION BASED ON SUBSCRIPTION TIER 🚀
+    // ============================================================
+    // 🌟 AGENT ROSTER - ALL-STAR CONFIGURATION
+    // ============================================================
+    const AGENT_ROSTER = {
+      // 1. Le Chef d'Orchestre (Planification & Logique pure) -> OpenAI O1
+      COORDINATOR: "o1-preview",
+      
+      // 2. Le Chercheur (Web & Actu) -> Perplexity
+      RESEARCHER: "perplexity/sonar-pro",
+      
+      // 3. Le Rédacteur (Style & Nuance) -> Claude 3.5 Sonnet
+      WRITER: "claude-3-5-sonnet-20241022",
+      
+      // 4. L'Analyste Data (Gros contexte) -> Gemini 1.5 Pro
+      ANALYST: "gemini-1.5-pro"
+    };
+
+    // ✅ INTERDICTION DES MODÈLES INFÉRIEURS (gpt-4o-mini, gemini-flash)
+    const FORBIDDEN_MODELS = ["gpt-4o-mini", "gemini-2.5-flash", "gemini-flash", "gpt-3.5-turbo"];
+
+    // 2.5. AI MODEL SELECTION BASED ON PHASE & SUBSCRIPTION
     const plan = audit.organizations?.subscription_plan || 'freemium';
-    let selectedModel = "google/gemini-2.5-flash"; // Default: Fast & Free
-    let aiTier = "standard";
-    let aiProvider = "lovable"; // lovable | openai
+    let selectedModel = AGENT_ROSTER.ANALYST; // Default: Gemini 1.5 Pro pour analyses
+    let aiTier = "premium"; // Tous les audits sont Premium maintenant
+    let aiProvider = "openai";
+    let currentPhase = "PHASE_1_MARKET"; // Déterminé dynamiquement dans votre logique
 
     console.log(`📊 Subscription Plan: ${plan}`);
+    console.log(`🎯 Current Phase: ${currentPhase}`);
 
-    if (plan === 'agency' || plan === 'enterprise') {
-      aiTier = "premium";
+    // Attribution du modèle selon la phase
+    if (currentPhase === 'PHASE_1_MARKET' || currentPhase === 'PHASE_RESEARCH') {
+      selectedModel = AGENT_ROSTER.RESEARCHER; // Perplexity pour recherche web
+      aiProvider = "perplexity";
+      console.log("🔍 RESEARCHER MODE (Perplexity Sonar Pro)");
+    } else if (currentPhase === 'PHASE_4_SYNTHESIS' || currentPhase === 'PHASE_WRITING') {
+      selectedModel = AGENT_ROSTER.WRITER; // Claude pour rédaction
+      aiProvider = "anthropic";
+      console.log("✍️ WRITER MODE (Claude 3.5 Sonnet)");
+    } else if (currentPhase === 'PHASE_STRATEGY' || currentPhase === 'PHASE_PLANNING') {
+      selectedModel = AGENT_ROSTER.COORDINATOR; // O1 pour stratégie
       aiProvider = "openai";
-      selectedModel = "gpt-4o"; // Premium default
-      
-      // DeepThink Mode with O1
-      if (audit.organizations?.ai_model_preference === 'premium_o1') {
-        selectedModel = "o1-preview";
-        console.log("🧠 DEEPTHINK MODE ACTIVATED (O1-Preview)");
-      } else {
-        console.log("🚀 PREMIUM MODE ACTIVATED (GPT-4o)");
-      }
+      console.log("🧠 COORDINATOR MODE (OpenAI O1-Preview)");
     } else {
-      console.log("⚡ STANDARD MODE (Gemini 2.5 Flash)");
+      // Par défaut: Analyst (Gemini Pro)
+      selectedModel = AGENT_ROSTER.ANALYST;
+      aiProvider = "google";
+      console.log("📊 ANALYST MODE (Gemini 1.5 Pro)");
     }
 
-    console.log(`🤖 Selected AI: ${selectedModel} (${aiTier} tier)`)
+    // ✅ SÉCURITÉ: Vérifier qu'on n'utilise pas un modèle interdit
+    if (FORBIDDEN_MODELS.some(forbidden => selectedModel.toLowerCase().includes(forbidden))) {
+      console.error(`❌ FORBIDDEN MODEL DETECTED: ${selectedModel}`);
+      console.log("🔄 Switching to safe default: Gemini 1.5 Pro");
+      selectedModel = AGENT_ROSTER.ANALYST;
+      aiProvider = "google";
+    }
+
+    console.log(`🤖 Selected AI: ${selectedModel} (${aiTier} tier, Provider: ${aiProvider})`)
 
     // 3. AUTO-FIX: Créer l'entreprise si manquante
     if (!audit.company_id) {

@@ -258,12 +258,7 @@ export default function AdminAudits() {
       <Header />
       <main className="flex-1 container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold">Pilotage des Audits</h1>
-            <p className="text-muted-foreground mt-2">
-              {audits.length} total • {pendingAudits.length} en attente • {readyAudits.length} terminés
-            </p>
-          </div>
+          <h1 className="text-3xl font-bold">Pilotage des Audits</h1>
           <div className="flex gap-2">
             <select
               value={statusFilter}
