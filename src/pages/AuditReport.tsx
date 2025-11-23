@@ -11,6 +11,7 @@ export default function AuditReport() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [html, setHtml] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
 
   useEffect(() => {
@@ -20,6 +21,7 @@ export default function AuditReport() {
         const { data: { session } } = await supabase.auth.getSession();
         const token = session?.access_token;
 
+        console.log('🔍 Fetching report with ID:', id);
         const response = await fetch(
           `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/audit-html?report_id=${id}`,
           {
@@ -29,11 +31,19 @@ export default function AuditReport() {
           }
         );
         
-        if (!response.ok) throw new Error('Rapport introuvable');
+        console.log('📡 Response status:', response.status);
         const htmlContent = await response.text();
-        setHtml(htmlContent);
-      } catch (error) {
-        console.error('Error:', error);
+        console.log('📄 HTML content length:', htmlContent.length);
+        console.log('📄 First 200 chars:', htmlContent.substring(0, 200));
+        
+        if (!response.ok || htmlContent.includes('Erreur')) {
+          setError(htmlContent);
+        } else {
+          setHtml(htmlContent);
+        }
+      } catch (error: any) {
+        console.error('❌ Error:', error);
+        setError(`Exception: ${error.message}`);
         toast({ title: "Erreur", description: "Impossible de charger le rapport", variant: "destructive" });
       } finally {
         setLoading(false);
@@ -58,6 +68,25 @@ export default function AuditReport() {
   };
 
   if (loading) return <div className="h-screen flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-red-600" /></div>;
+
+  // Affichage d'erreur VISIBLE
+  if (error) {
+    return (
+      <div className="h-screen flex items-center justify-center p-8 bg-gray-100">
+        <div className="max-w-3xl w-full bg-red-50 border-2 border-red-600 rounded-lg p-8">
+          <h1 className="text-2xl font-bold text-red-900 mb-4">🔴 Erreur de Génération du Rapport</h1>
+          <div className="bg-white p-6 rounded border border-red-300 font-mono text-sm overflow-auto max-h-96">
+            <pre className="whitespace-pre-wrap text-red-800">{error}</pre>
+          </div>
+          <div className="mt-6">
+            <Button onClick={() => navigate(-1)} variant="outline" className="gap-2">
+              <ArrowLeft className="h-4 w-4" /> Retour aux Audits
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-screen bg-gray-100">
