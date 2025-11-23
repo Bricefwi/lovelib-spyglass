@@ -117,7 +117,7 @@ export default function ClientAudits() {
                     </Badge>
                     {audit.confidence !== null && audit.confidence > 0 && (
                       <Badge variant="outline">
-                        Confiance: {Math.round(audit.confidence)}%
+                        Confiance: {audit.confidence > 1 ? Math.round(audit.confidence) : Math.round(audit.confidence * 100)}%
                       </Badge>
                     )}
                   </div>
