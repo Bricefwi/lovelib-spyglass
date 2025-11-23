@@ -177,11 +177,13 @@ export default function AdminAudits() {
     try {
       setSendingEmail(audit.id);
       
-      // Récupérer le rapport pour cet audit
+      // Récupérer le dernier rapport pour cet audit
       const { data: report, error: reportError } = await supabase
         .from('audit_reports')
         .select('id')
         .eq('pre_audit_id', audit.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
         .single();
 
       if (reportError || !report) {
