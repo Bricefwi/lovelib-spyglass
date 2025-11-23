@@ -27,10 +27,10 @@ serve(async (req) => {
       );
     }
 
-    // SÉCURITÉ: Utiliser ANON_KEY au lieu de SERVICE_ROLE_KEY
+    // ✅ CORRECTION SÉCURITÉ: Utiliser SERVICE_ROLE_KEY pour contourner les RLS strictes
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!, 
-      Deno.env.get("SUPABASE_ANON_KEY")!
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
     
     const { data, error } = await supabase
