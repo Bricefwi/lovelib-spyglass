@@ -17,21 +17,8 @@ export default function AuditReport() {
       if (!id) return;
 
       try {
-        // First, get the audit_report id from the pre_audit_id
-        const { data: reportData, error: reportError } = await supabase
-          .from('audit_reports')
-          .select('id')
-          .eq('pre_audit_id', id)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .single();
-
-        if (reportError || !reportData) {
-          throw new Error('Rapport non trouvé');
-        }
-
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-        const response = await fetch(`${supabaseUrl}/functions/v1/audit-html?report_id=${reportData.id}`);
+        const response = await fetch(`${supabaseUrl}/functions/v1/audit-html?report_id=${id}`);
         
         if (!response.ok) {
           throw new Error('Rapport non trouvé');
