@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Loader2, RefreshCw, Eye, ChevronDown, ChevronUp, Mail, Home } from "lucide-react";
 import { useUserRole } from "@/hooks/useUserRole";
+import { ConfidenceBadge } from "@/components/ConfidenceBadge";
 
 type AuditStatus = 
   | "new"
@@ -302,9 +303,7 @@ export default function AdminAudits() {
                       {getStatusConfig(audit.status).label}
                     </Badge>
                     {audit.confidence !== null && audit.confidence > 0 && (
-                      <Badge variant="outline">
-                        Confiance: {audit.confidence > 1 ? Math.round(audit.confidence) : Math.round(audit.confidence * 100)}%
-                      </Badge>
+                      <ConfidenceBadge score={audit.confidence > 1 ? Math.round(audit.confidence) : Math.round(audit.confidence * 100)} />
                     )}
                   </div>
                   <p className="text-sm text-muted-foreground mb-2">{audit.url}</p>
