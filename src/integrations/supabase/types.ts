@@ -1450,6 +1450,42 @@ export type Database = {
           },
         ]
       }
+      security_audit_logs: {
+        Row: {
+          action: string
+          details: Json | null
+          event_time: string | null
+          id: string
+          ip_address: string | null
+          resource_id: string | null
+          severity: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          details?: Json | null
+          event_time?: string | null
+          id?: string
+          ip_address?: string | null
+          resource_id?: string | null
+          severity?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          details?: Json | null
+          event_time?: string | null
+          id?: string
+          ip_address?: string | null
+          resource_id?: string | null
+          severity?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       seo_index: {
         Row: {
           id: string
