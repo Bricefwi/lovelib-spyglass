@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
 import logoImotion from "@/assets/logo-imotion.png";
@@ -11,7 +11,15 @@ export const Header = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAdmin, isClient } = useUserRole();
+
+  // Cacher le Header sur les pages admin/client/dashboard
+  if (location.pathname.startsWith('/admin') || 
+      location.pathname.startsWith('/client') || 
+      location.pathname.startsWith('/dashboard')) {
+    return null;
+  }
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
