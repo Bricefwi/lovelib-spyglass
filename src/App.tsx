@@ -29,6 +29,7 @@ import TestDataSender from "./pages/TestDataSender";
 import AdminBlog from "./pages/AdminBlog";
 import AdminUsers from "./pages/AdminUsers";
 import ClientAudits from "./pages/ClientAudits";
+import ClientNewProject from "./pages/ClientNewProject";
 import AuditReport from "./pages/AuditReport";
 import OrchestrationMonitor from "./pages/OrchestrationMonitor";
 import VeilleIA from "./pages/VeilleIA";
@@ -109,6 +110,11 @@ const App = () => {
             <Route path="/client/audits" element={
               <ProtectedRoute requireAuth requireClient>
                 <ClientAudits />
+              </ProtectedRoute>
+            } />
+            <Route path="/client/new-project" element={
+              <ProtectedRoute requireAuth requireClient>
+                <ClientNewProject />
               </ProtectedRoute>
             } />
             <Route path="/audit-report/:id" element={<AuditReport />} />
