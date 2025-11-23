@@ -180,8 +180,8 @@ const handler = async (req: Request): Promise<Response> => {
     const website = preAudit?.url || 'votre site';
     const companyName = preAudit?.companies?.name || preAudit?.company_guess;
     
-    // Construire l'URL du rapport
-    const reportUrl = `${Deno.env.get("SUPABASE_URL")?.replace('//', '//gzfrcshvrktpejctlgta.')}/audit-report/${reportId}`;
+    // Construire l'URL du rapport - Utiliser l'application Lovable
+    const reportUrl = `https://7c6553ec-011c-44ef-a323-d4dbfc5215db.lovableproject.com/audit-report/${reportId}`;
     
     console.log('Report URL:', reportUrl);
 
