@@ -41,3 +41,9 @@ verify_jwt = true
 
 [functions.send-audit-limit-warning]
 verify_jwt = false
+
+[functions.fetch-authoritative-data]
+verify_jwt = true
+
+[functions.generate-strategic-options]
+verify_jwt = true
