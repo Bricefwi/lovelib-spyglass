@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Loader2, RefreshCw, Eye, ChevronDown, ChevronUp, Mail } from "lucide-react";
+import { Loader2, RefreshCw, Eye, ChevronDown, ChevronUp, Mail, Home } from "lucide-react";
 import { useUserRole } from "@/hooks/useUserRole";
 
 type AuditStatus = 
@@ -258,7 +258,17 @@ export default function AdminAudits() {
       <Header />
       <main className="flex-1 container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold">Pilotage des Audits</h1>
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate("/admin/dashboard")}
+            >
+              <Home className="h-4 w-4 mr-2" />
+              Tableau de bord
+            </Button>
+            <h1 className="text-3xl font-bold">Pilotage des Audits</h1>
+          </div>
           <div className="flex gap-2">
             <select
               value={statusFilter}
