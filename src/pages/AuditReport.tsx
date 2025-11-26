@@ -21,6 +21,45 @@ export default function AuditReport() {
         const { data: { session } } = await supabase.auth.getSession();
         const token = session?.access_token;
 
+        // ✅ SECURITY: Verify user has access to this audit
+        if (!session?.user) {
+          toast({
+            title: "Accès refusé",
+            description: "Vous devez être connecté pour accéder à ce rapport",
+            variant: "destructive"
+          });
+          navigate('/auth');
+          return;
+        }
+
+        // Check if user owns this audit or is admin
+        const { data: audit, error: auditError } = await supabase
+          .from('pre_audits')
+          .select('created_by, user_roles!inner(role)')
+          .eq('id', id)
+          .single();
+
+        if (auditError) {
+          console.error('❌ Error checking audit access:', auditError);
+          setError('Audit introuvable ou accès non autorisé');
+          setLoading(false);
+          return;
+        }
+
+        // Allow access if user owns the audit or is admin
+        const isOwner = audit.created_by === session.user.id;
+        const isAdmin = audit.user_roles?.role === 'admin';
+
+        if (!isOwner && !isAdmin) {
+          toast({
+            title: "Accès refusé",
+            description: "Vous n'avez pas accès à ce rapport d'audit",
+            variant: "destructive"
+          });
+          navigate('/dashboard');
+          return;
+        }
+
         console.log('🔍 Fetching report with ID:', id);
         const response = await fetch(
           `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/audit-html?report_id=${id}`,
