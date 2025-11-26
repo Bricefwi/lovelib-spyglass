@@ -122,6 +122,25 @@ const DocumentDownload = () => {
             <li>• <strong>TEST_REPORT.md</strong> : Rapport de test complet avec résultats et recommandations</li>
           </ul>
         </div>
+
+        <div className="mt-6">
+          <Card className="bg-primary/5 border-primary/20">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <FileText className="h-8 w-8 text-primary" />
+                <div className="flex-1">
+                  <h3 className="font-semibold text-lg mb-1">Code Source Complet</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Téléchargez le code source complet de l'application dans un fichier TXT compilé
+                  </p>
+                </div>
+                <Button asChild variant="default">
+                  <a href="/code-source">Accéder</a>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
