@@ -31,6 +31,7 @@ import AdminUsers from "./pages/AdminUsers";
 import ClientAudits from "./pages/ClientAudits";
 import ClientNewProject from "./pages/ClientNewProject";
 import DocumentDownload from "./pages/DocumentDownload";
+import CodeSourceExport from "./pages/CodeSourceExport";
 import AuditReport from "./pages/AuditReport";
 import OrchestrationMonitor from "./pages/OrchestrationMonitor";
 import VeilleIA from "./pages/VeilleIA";
@@ -130,6 +131,7 @@ const App = () => {
               </ProtectedRoute>
             } />
             <Route path="/documents" element={<DocumentDownload />} />
+            <Route path="/code-source" element={<CodeSourceExport />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
