@@ -32,6 +32,7 @@ import ClientAudits from "./pages/ClientAudits";
 import ClientNewProject from "./pages/ClientNewProject";
 import DocumentDownload from "./pages/DocumentDownload";
 import CodeSourceExport from "./pages/CodeSourceExport";
+import AdminSyncSettings from "./pages/AdminSyncSettings";
 import AuditReport from "./pages/AuditReport";
 import OrchestrationMonitor from "./pages/OrchestrationMonitor";
 import VeilleIA from "./pages/VeilleIA";
@@ -97,6 +98,11 @@ const App = () => {
             <Route path="/admin/messages" element={
               <ProtectedRoute requireAuth requireAdmin>
                 <AdminMessages />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/sync" element={
+              <ProtectedRoute requireAuth requireAdmin>
+                <AdminSyncSettings />
               </ProtectedRoute>
             } />
             <Route path="/admin/orchestrations" element={

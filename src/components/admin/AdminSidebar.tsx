@@ -7,7 +7,8 @@ import {
   MessageSquare, 
   Users,
   Settings,
-  ChevronRight
+  ChevronRight,
+  GitBranch
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -55,6 +56,12 @@ export function AdminSidebar({ pendingCount = 0, unreadMessages = 0 }: AdminSide
       name: "Utilisateurs",
       href: "/admin/users",
       icon: Users,
+      badge: null,
+    },
+    {
+      name: "Synchronisation",
+      href: "/admin/sync",
+      icon: GitBranch,
       badge: null,
     },
   ];
