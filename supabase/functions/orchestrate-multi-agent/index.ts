@@ -8,6 +8,12 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+/**
+ * Plan-Aware Multi-Agent Orchestration
+ * Phase 1 - Adapté selon tier de subscription
+ * Utilise load-plan-profile pour configuration dynamique
+ */
+
 // ✅ Fonction utilitaire pour extraire le JSON robustement
 function extractJSON(text: string) {
   try {
@@ -29,8 +35,55 @@ function extractJSON(text: string) {
 
 // ✅ SECURITY: Input validation schema
 const orchestrationSchema = z.object({
-  audit_id: z.string().uuid({ message: "Invalid audit ID format" })
+  audit_id: z.string().uuid({ message: "Invalid audit ID format" }),
+  tier: z.enum(['starter', 'agency', 'enterprise', 'one_shot']).optional(),
+  organization_id: z.string().uuid().optional()
 });
+
+/**
+ * Load plan profile and branding configuration
+ */
+async function loadPlanProfile(tier: string, organization_id: string | null, authHeader: string) {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const supabaseFunctionUrl = `${supabaseUrl}/functions/v1/load-plan-profile`;
+
+  console.log(`📋 Loading plan profile for tier: ${tier}`);
+
+  const response = await fetch(supabaseFunctionUrl, {
+    method: 'POST',
+    headers: {
+      'Authorization': authHeader,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ tier, organization_id }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to load plan profile: ${response.status}`);
+  }
+
+  const data = await response.json();
+  console.log(`✅ Plan profile loaded: ${data.plan_profile.display_name}`);
+  return data;
+}
+
+/**
+ * Track LLM budget usage
+ */
+function calculateLLMCost(model: string, promptTokens: number, completionTokens: number): number {
+  // Coûts approximatifs par 1M tokens (en USD)
+  const pricing: Record<string, { input: number; output: number }> = {
+    'gpt-4o': { input: 2.50, output: 10.00 },
+    'gpt-4-turbo': { input: 10.00, output: 30.00 },
+    'gpt-5-2025-08-07': { input: 5.00, output: 15.00 },
+    'claude-3-5-sonnet-20241022': { input: 3.00, output: 15.00 },
+    'gemini-1.5-pro': { input: 1.25, output: 5.00 },
+    'perplexity/sonar-pro': { input: 3.00, output: 15.00 },
+  };
+
+  const rates = pricing[model] || { input: 2.00, output: 8.00 }; // fallback
+  return (promptTokens / 1_000_000 * rates.input) + (completionTokens / 1_000_000 * rates.output);
+}
 
 // ============================================================
 // 🌟 AGENT ROSTER - DREAM TEAM CONFIGURATION
@@ -85,7 +138,7 @@ serve(async (req) => {
       );
     }
     
-    const { audit_id } = validation.data;
+    const { audit_id, tier: requestedTier, organization_id } = validation.data;
     console.log(`📋 Audit ID: ${audit_id}`);
 
     // 2. Fetch Audit
@@ -115,6 +168,23 @@ serve(async (req) => {
     }
     console.log(`✅ Audit fetched: ${audit.url}`);
 
+    // 2.5. Load Plan Profile & Branding (Plan-Aware Orchestration)
+    const effectiveTier = requestedTier || audit.organizations?.subscription_plan || 'starter';
+    const effectiveOrgId = organization_id || audit.organization_id;
+
+    console.log(`📋 Loading plan profile for tier: ${effectiveTier}`);
+    const planData = await loadPlanProfile(effectiveTier, effectiveOrgId, authHeader);
+    const planProfile = planData.plan_profile;
+    const branding = planData.branding;
+    const orchestrationConfig = planData.orchestration_config;
+
+    console.log(`✅ Plan loaded: ${planProfile.display_name}`);
+    console.log(`🎨 Branding: ${branding.company_name}`);
+    console.log(`⚙️ Max agents: ${orchestrationConfig.max_agents}, Parallel: ${orchestrationConfig.parallel_execution}`);
+
+    // Initialize LLM budget tracker
+    let llmBudgetUsed = 0;
+
     // 3. AUTO-FIX: Créer l'entreprise si manquante
     if (!audit.company_id) {
       console.log("🔧 Auto-fixing missing company...");
@@ -141,15 +211,20 @@ serve(async (req) => {
       }
     }
 
-    // 4. GÉNÉRATION DU RAPPORT VIA IA (OpenAI GPT-5)
+    // 4. GÉNÉRATION DU RAPPORT VIA IA (Plan-Aware Model Selection)
     console.log(`🧠 Génération du rapport professionnel via IA...`);
-    
+    console.log(`📊 Using model: ${planProfile.redacteur_model || 'gpt-4o'}`);
+    console.log(`📊 Narrative style: ${planProfile.narrative_style}`);
+    console.log(`📊 Quality level: ${planProfile.quality_level}`);
+
     const openaiKey = Deno.env.get("OPENAI_API_KEY");
     if (!openaiKey) {
       throw new Error("OPENAI_API_KEY not configured");
     }
 
-    const systemPrompt = `Tu es un Directeur Associé chez IMOTION Consulting. Tu rédiges un audit stratégique pour un client B2B.
+    // Adapt system prompt based on plan tier and narrative style
+    const brandName = branding.company_name || 'IMOTION Consulting';
+    const systemPrompt = `Tu es un Directeur Associé chez ${brandName}. Tu rédiges un audit stratégique pour un client B2B.
 Ton style est : Direct, Analytique, Orienté ROI.
 Tu ne dois JAMAIS mentionner les 'agents IA' ou la technique. Parle business.
 
@@ -195,17 +270,36 @@ Génère ce contenu dynamiquement en te basant sur l'URL du client.`;
 Contexte :
 - URL analysée : ${audit.url}
 - Secteur probable : ${audit.company_guess || "À déterminer"}
+- Niveau de qualité demandé : ${planProfile.quality_level}
+- Style narratif : ${planProfile.narrative_style}
+- Nombre de scénarios à produire : ${planProfile.scenarios_count || 2}
+- Objectif de pages : ~${planProfile.report_pages || 30} pages
 
 Instructions :
 - Les scores doivent être réalistes (entre 60 et 95)
 - L'analyse de marché doit être spécifique au secteur de l'entreprise
-- Les scénarios stratégiques doivent être concrets et chiffrés
+- Produis exactement ${planProfile.scenarios_count || 2} scénarios stratégiques concrets et chiffrés
 - Le plan d'action doit être progressif (6 mois minimum)
 - Reste professionnel, directif et orienté ROI
+- Adapte la profondeur selon le niveau de qualité: ${planProfile.quality_level}
 
 Retourne UNIQUEMENT le JSON, sans texte avant ou après.`;
 
-    console.log("📡 Appel API OpenAI...");
+    // Use model from plan profile (fallback to gpt-4o if not specified)
+    const selectedModel = planProfile.redacteur_model || 'gpt-4o';
+
+    // Adjust max tokens based on quality level
+    const maxTokensByQuality: Record<string, number> = {
+      'essential': 2000,
+      'standard': 3000,
+      'premium': 5000,
+      'ultimate': 8000
+    };
+    const maxTokens = maxTokensByQuality[planProfile.quality_level] || 3000;
+
+    console.log(`📡 Appel API OpenAI avec ${selectedModel}...`);
+    console.log(`📊 Max tokens: ${maxTokens}`);
+
     const openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -213,12 +307,12 @@ Retourne UNIQUEMENT le JSON, sans texte avant ou après.`;
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "gpt-5-2025-08-07",
+        model: selectedModel,
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt }
         ],
-        max_completion_tokens: 3000,
+        max_completion_tokens: maxTokens,
         response_format: { type: "json_object" }  // ✅ FORCE un JSON valide
       })
     });
@@ -231,7 +325,22 @@ Retourne UNIQUEMENT le JSON, sans texte avant ou après.`;
 
     const openaiData = await openaiResponse.json();
     const aiContent = openaiData.choices[0].message.content;
-    console.log("✅ Rapport IA généré, longueur:", aiContent.length);
+
+    // Track token usage and calculate cost
+    const promptTokens = openaiData.usage?.prompt_tokens || 0;
+    const completionTokens = openaiData.usage?.completion_tokens || 0;
+    const totalTokens = openaiData.usage?.total_tokens || 0;
+    const aiCost = calculateLLMCost(selectedModel, promptTokens, completionTokens);
+    llmBudgetUsed += aiCost;
+
+    console.log("✅ Rapport IA généré");
+    console.log(`📊 Tokens: ${promptTokens} prompt + ${completionTokens} completion = ${totalTokens} total`);
+    console.log(`💰 Cost: $${aiCost.toFixed(4)} (Budget used: $${llmBudgetUsed.toFixed(4)} / $${planProfile.llm_budget_per_audit})`);
+
+    // Check budget
+    if (llmBudgetUsed > planProfile.llm_budget_per_audit) {
+      console.warn(`⚠️ WARNING: Budget exceeded! Used $${llmBudgetUsed.toFixed(2)} > Budget $${planProfile.llm_budget_per_audit}`);
+    }
 
     // Parser le JSON retourné par l'IA avec fonction robuste
     let aiReport;
@@ -298,20 +407,32 @@ Retourne UNIQUEMENT le JSON, sans texte avant ou après.`;
       confidence: confidenceScore * 100
     };
 
-    // 5. MISE À JOUR FINALE - STATUT CONSOLIDATED
+    // 5. MISE À JOUR FINALE - STATUT CONSOLIDATED (Plan-Aware)
     await supabase.from('pre_audits').update({
       status: 'consolidated',
       current_phase: 'COMPLETED',
       confidence: confidenceScore * 100,
       consolidated: finalReport,
-      ai_tier: 'premium'
+      ai_tier: 'premium',
+      plan_tier: effectiveTier,
+      quality_level: planProfile.quality_level,
+      llm_budget_used: llmBudgetUsed
     }).eq('id', audit_id);
 
     console.log("✅ Audit mis à jour avec le statut 'consolidated'");
 
-    // 6. GÉNÉRATION DU RAPPORT HTML
-    console.log("📄 Génération du rapport HTML...");
-    
+    // 6. GÉNÉRATION DU RAPPORT HTML (White-Label Branding)
+    console.log("📄 Génération du rapport HTML avec branding...");
+
+    // Apply white-label branding colors
+    const primaryColor = branding.primary_color || '#1e3a8a';
+    const accentColor = branding.accent_color || '#3b82f6';
+    const companyName = branding.company_name || 'IMOTION Consulting';
+    const logoUrl = branding.logo_url;
+    const footerText = branding.footer_text || `© ${new Date().getFullYear()} ${companyName}`;
+
+    console.log(`🎨 Applying branding: ${companyName}, Primary: ${primaryColor}, Accent: ${accentColor}`);
+
     const reportHtml = `<!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -322,50 +443,52 @@ Retourne UNIQUEMENT le JSON, sans texte avant ou après.`;
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.6; color: #1a1a1a; background: #f8f9fa; }
     .container { max-width: 1200px; margin: 0 auto; background: white; }
-    .header { background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); color: white; padding: 60px 40px; }
+    .header { background: linear-gradient(135deg, ${primaryColor} 0%, ${accentColor} 100%); color: white; padding: 60px 40px; }
     .header h1 { font-size: 2.8em; font-weight: 700; margin-bottom: 10px; }
     .header .subtitle { font-size: 1.2em; opacity: 0.9; margin-bottom: 20px; }
     .header .meta { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px; }
     .badge { background: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 20px; font-size: 0.9em; backdrop-filter: blur(10px); }
     .content { padding: 60px 40px; }
     .section { margin-bottom: 60px; }
-    .section-title { font-size: 2em; color: #1e3a8a; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 3px solid #3b82f6; }
-    .executive-summary { background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); padding: 40px; border-radius: 12px; border-left: 5px solid #3b82f6; font-size: 1.15em; line-height: 1.8; }
+    .section-title { font-size: 2em; color: ${primaryColor}; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 3px solid ${accentColor}; }
+    .executive-summary { background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); padding: 40px; border-radius: 12px; border-left: 5px solid ${accentColor}; font-size: 1.15em; line-height: 1.8; }
     .score-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 25px; margin: 30px 0; }
-    .score-card { background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); color: white; padding: 30px; border-radius: 12px; text-align: center; box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3); }
+    .score-card { background: linear-gradient(135deg, ${primaryColor} 0%, ${accentColor} 100%); color: white; padding: 30px; border-radius: 12px; text-align: center; box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3); }
     .score-card .label { font-size: 0.95em; opacity: 0.9; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
     .score-card .value { font-size: 3em; font-weight: 700; }
     .swot-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 25px; margin: 30px 0; }
     .swot-card { padding: 30px; border-radius: 12px; }
     .swot-card.strengths { background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); border-left: 5px solid #22c55e; }
     .swot-card.weaknesses { background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); border-left: 5px solid #ef4444; }
-    .swot-card.opportunities { background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-left: 5px solid #3b82f6; }
+    .swot-card.opportunities { background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-left: 5px solid ${accentColor}; }
     .swot-card.threats { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-left: 5px solid #f59e0b; }
     .swot-card h3 { font-size: 1.3em; margin-bottom: 15px; }
     .swot-card ul { list-style: none; }
     .swot-card li { padding: 8px 0; padding-left: 25px; position: relative; }
     .swot-card li::before { content: "•"; position: absolute; left: 0; font-size: 1.5em; }
-    .scenario { background: #f8f9fa; padding: 30px; margin: 20px 0; border-radius: 12px; border-left: 5px solid #3b82f6; }
-    .scenario h3 { color: #1e3a8a; font-size: 1.5em; margin-bottom: 15px; }
+    .scenario { background: #f8f9fa; padding: 30px; margin: 20px 0; border-radius: 12px; border-left: 5px solid ${accentColor}; }
+    .scenario h3 { color: ${primaryColor}; font-size: 1.5em; margin-bottom: 15px; }
     .scenario .metrics { display: flex; gap: 20px; margin-top: 15px; }
     .scenario .metric { background: white; padding: 12px 20px; border-radius: 8px; font-weight: 600; }
     .scenario .metric.roi { color: #22c55e; }
     .scenario .metric.risk { color: #ef4444; }
     .action-timeline { margin: 30px 0; }
     .action-step { display: flex; gap: 30px; margin-bottom: 25px; padding: 25px; background: #f8f9fa; border-radius: 12px; }
-    .action-step .step-number { background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5em; font-weight: 700; flex-shrink: 0; }
-    .action-step .step-content h4 { color: #1e3a8a; margin-bottom: 8px; font-size: 1.2em; }
+    .action-step .step-number { background: linear-gradient(135deg, ${primaryColor} 0%, ${accentColor} 100%); color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5em; font-weight: 700; flex-shrink: 0; }
+    .action-step .step-content h4 { color: ${primaryColor}; margin-bottom: 8px; font-size: 1.2em; }
     .action-step .step-budget { background: #22c55e; color: white; padding: 6px 14px; border-radius: 20px; display: inline-block; margin-top: 10px; font-weight: 600; }
     .market-analysis { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 30px; border-radius: 12px; border-left: 5px solid #f59e0b; }
     .competitors { display: flex; gap: 15px; margin-top: 15px; flex-wrap: wrap; }
-    .competitor { background: white; padding: 10px 18px; border-radius: 8px; font-weight: 600; color: #1e3a8a; }
-    .footer { background: #1e3a8a; color: white; padding: 40px; text-align: center; }
+    .competitor { background: white; padding: 10px 18px; border-radius: 8px; font-weight: 600; color: ${primaryColor}; }
+    .footer { background: ${primaryColor}; color: white; padding: 40px; text-align: center; }
     .footer p { opacity: 0.9; margin: 8px 0; }
+    .logo { max-height: 60px; margin-bottom: 20px; }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
+      ${logoUrl ? `<img src="${logoUrl}" alt="${companyName}" class="logo">` : ''}
       <h1>🎯 Rapport d'Audit Stratégique</h1>
       <div class="subtitle">Analyse approfondie de ${audit.url}</div>
       <div class="meta">
@@ -473,8 +596,10 @@ Retourne UNIQUEMENT le JSON, sans texte avant ou après.`;
     </div>
 
     <div class="footer">
-      <p style="font-size: 1.1em; font-weight: 600;">© 2025 IMOTION Consulting</p>
+      ${logoUrl ? `<img src="${logoUrl}" alt="${companyName}" class="logo">` : ''}
+      <p style="font-size: 1.1em; font-weight: 600;">${footerText}</p>
       <p style="margin-top: 15px;">Ce rapport a été généré par notre équipe d'analyse stratégique</p>
+      ${planProfile.white_label ? '' : '<p style="margin-top: 10px; font-size: 0.85em; opacity: 0.7;">Powered by IMOTION Platform</p>'}
     </div>
   </div>
 </body>
@@ -498,16 +623,23 @@ Retourne UNIQUEMENT le JSON, sans texte avant ou après.`;
     console.log("🚀 ========== ORCHESTRATION PREMIUM END ==========");
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         report_id: report?.id,
         audit_id: audit_id,
         confidence: Math.round(confidenceScore * 100),
-        status: 'consolidated'
+        status: 'consolidated',
+        plan_tier: effectiveTier,
+        quality_level: planProfile.quality_level,
+        llm_budget_used: llmBudgetUsed,
+        llm_budget_limit: planProfile.llm_budget_per_audit,
+        budget_remaining: planProfile.llm_budget_per_audit - llmBudgetUsed,
+        white_label: planProfile.white_label,
+        branding_applied: !!logoUrl || branding.company_name !== 'IMOTION Consulting'
       }),
-      { 
+      {
         status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
       }
     );
 
