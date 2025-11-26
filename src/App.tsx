@@ -117,7 +117,11 @@ const App = () => {
                 <ClientNewProject />
               </ProtectedRoute>
             } />
-            <Route path="/audit-report/:id" element={<AuditReport />} />
+            <Route path="/audit-report/:id" element={
+              <ProtectedRoute requireAuth>
+                <AuditReport />
+              </ProtectedRoute>
+            } />
             <Route path="/veille-ia" element={
               <ProtectedRoute requireAuth requireAdmin>
                 <VeilleIA />

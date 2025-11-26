@@ -5,6 +5,38 @@ import type { Database } from './types';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
+// ✅ SECURITY: Validate environment variables at startup
+if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+  throw new Error(
+    '❌ Configuration Error: Missing Supabase environment variables.\n\n' +
+    'Required variables:\n' +
+    '  - VITE_SUPABASE_URL\n' +
+    '  - VITE_SUPABASE_PUBLISHABLE_KEY\n\n' +
+    'Please check your .env file and ensure these variables are set.\n' +
+    'See .env.example for reference.'
+  );
+}
+
+// ✅ SECURITY: Validate URL format
+try {
+  new URL(SUPABASE_URL);
+} catch {
+  throw new Error(
+    '❌ Configuration Error: VITE_SUPABASE_URL is not a valid URL.\n' +
+    `Received: ${SUPABASE_URL}`
+  );
+}
+
+// Validate key format (should be a JWT-like string)
+if (SUPABASE_PUBLISHABLE_KEY.length < 20 || !SUPABASE_PUBLISHABLE_KEY.includes('.')) {
+  throw new Error(
+    '❌ Configuration Error: VITE_SUPABASE_PUBLISHABLE_KEY appears to be invalid.\n' +
+    'It should be a JWT-like string from your Supabase project settings.'
+  );
+}
+
+console.log('✅ Supabase configuration validated successfully');
+
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
