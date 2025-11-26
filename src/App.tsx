@@ -30,6 +30,7 @@ import AdminBlog from "./pages/AdminBlog";
 import AdminUsers from "./pages/AdminUsers";
 import ClientAudits from "./pages/ClientAudits";
 import ClientNewProject from "./pages/ClientNewProject";
+import DocumentDownload from "./pages/DocumentDownload";
 import AuditReport from "./pages/AuditReport";
 import OrchestrationMonitor from "./pages/OrchestrationMonitor";
 import VeilleIA from "./pages/VeilleIA";
@@ -128,6 +129,7 @@ const App = () => {
                 <TestDataSender />
               </ProtectedRoute>
             } />
+            <Route path="/documents" element={<DocumentDownload />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
