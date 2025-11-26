@@ -195,6 +195,47 @@ serve(async (req) => {
       );
     }
 
+    // Marketing agents (Phase 3)
+    if (modulesConfig.audit_seo?.enabled) {
+      agentsToRun.push({
+        name: 'agent-seo',
+        depth: modulesConfig.audit_seo.depth,
+        dependencies: ['agent-scraper']
+      });
+    }
+
+    if (modulesConfig.content_marketing?.enabled) {
+      agentsToRun.push({
+        name: 'agent-content',
+        depth: modulesConfig.content_marketing.depth,
+        dependencies: ['agent-scraper', 'agent-seo']
+      });
+    }
+
+    if (modulesConfig.social_media?.enabled) {
+      agentsToRun.push({
+        name: 'agent-social',
+        depth: modulesConfig.social_media.depth,
+        dependencies: ['agent-scraper']
+      });
+    }
+
+    if (modulesConfig.email_marketing?.enabled) {
+      agentsToRun.push({
+        name: 'agent-email',
+        depth: modulesConfig.email_marketing.depth,
+        dependencies: ['agent-scraper']
+      });
+    }
+
+    if (modulesConfig.data_analytics?.enabled) {
+      agentsToRun.push({
+        name: 'agent-data',
+        depth: modulesConfig.data_analytics.depth,
+        dependencies: ['agent-scraper']
+      });
+    }
+
     console.log(`📊 Agents to run: ${agentsToRun.length}`);
     agentsToRun.forEach(a => console.log(`  - ${a.name} (${a.depth})`));
 
@@ -244,6 +285,19 @@ serve(async (req) => {
               const porterResult = agentResults.find(r => r.agent === 'agent-porter');
               if (pestelResult) payload.pestel_data = pestelResult;
               if (porterResult) payload.porter_data = porterResult;
+            } else if (agent.name === 'agent-seo') {
+              payload.url = audit.url;
+              payload.competitors = [];  // Could be populated from scraper data
+            } else if (agent.name === 'agent-content') {
+              const seoResult = agentResults.find(r => r.agent === 'agent-seo');
+              if (seoResult) payload.seo_data = seoResult;
+              payload.current_content = { blog_frequency: "weekly" };  // Could be enriched
+            } else if (agent.name === 'agent-social') {
+              payload.social_accounts = {};  // Could be populated from scraper
+            } else if (agent.name === 'agent-email') {
+              payload.current_performance = {};  // Could be enriched
+            } else if (agent.name === 'agent-data') {
+              payload.tech_stack = {};  // Could be enriched
             }
 
             return callAgent(agent.name, payload, authHeader, Deno.env.get("SUPABASE_URL")!);
@@ -287,6 +341,18 @@ serve(async (req) => {
           payload.scraper_data = scraperResult;
           payload.pestel_data = previousResults['agent-pestel'];
           payload.porter_data = previousResults['agent-porter'];
+        } else if (agent.name === 'agent-seo') {
+          payload.url = audit.url;
+          payload.competitors = [];
+        } else if (agent.name === 'agent-content') {
+          payload.seo_data = previousResults['agent-seo'];
+          payload.current_content = { blog_frequency: "weekly" };
+        } else if (agent.name === 'agent-social') {
+          payload.social_accounts = {};
+        } else if (agent.name === 'agent-email') {
+          payload.current_performance = {};
+        } else if (agent.name === 'agent-data') {
+          payload.tech_stack = {};
         }
 
         const result = await callAgent(agent.name, payload, authHeader, Deno.env.get("SUPABASE_URL")!);
@@ -310,6 +376,11 @@ serve(async (req) => {
       pestel_analysis: agentResults.find(r => r.agent === 'agent-pestel')?.data || {},
       porter_analysis: agentResults.find(r => r.agent === 'agent-porter')?.data || {},
       swot_analysis: agentResults.find(r => r.agent === 'agent-swot')?.data || {},
+      seo_audit: agentResults.find(r => r.agent === 'agent-seo')?.data || null,
+      content_strategy: agentResults.find(r => r.agent === 'agent-content')?.data || null,
+      social_media_audit: agentResults.find(r => r.agent === 'agent-social')?.data || null,
+      email_marketing_audit: agentResults.find(r => r.agent === 'agent-email')?.data || null,
+      data_analytics_audit: agentResults.find(r => r.agent === 'agent-data')?.data || null,
       metadata: {
         plan_tier: effectiveTier,
         quality_level: planProfile.quality_level,
