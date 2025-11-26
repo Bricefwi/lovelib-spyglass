@@ -405,9 +405,57 @@ serve(async (req) => {
 
     console.log("✅ Audit updated");
 
-    // 8. Generate HTML report (simplified for now - will enhance with Senior Writer later)
+    // 7.5. Call Senior Writer for narrative synthesis (Phase 4)
+    console.log("✍️ Calling Senior Writer for narrative synthesis...");
+
+    let narrativeReport = null;
+    try {
+      const seniorWriterResult = await callAgent(
+        'agent-senior-writer',
+        {
+          agents_results: {
+            company_profile: consolidatedReport.company_profile,
+            pestel_analysis: consolidatedReport.pestel_analysis,
+            porter_analysis: consolidatedReport.porter_analysis,
+            swot_analysis: consolidatedReport.swot_analysis,
+            seo_audit: consolidatedReport.seo_audit,
+            content_strategy: consolidatedReport.content_strategy,
+            social_media_audit: consolidatedReport.social_media_audit,
+            email_marketing_audit: consolidatedReport.email_marketing_audit,
+            data_analytics_audit: consolidatedReport.data_analytics_audit,
+          },
+          plan_profile: {
+            report_pages: planProfile.report_pages || 50,
+            scenarios_count: planProfile.scenarios_count || 3,
+            narrative_style: planProfile.narrative_style || 'professionnel',
+            quality_level: planProfile.quality_level || 'standard',
+          },
+          company_data: {
+            name: consolidatedReport.company_profile?.company_profile?.name || audit.company_guess || 'Unknown',
+            url: audit.url,
+          }
+        },
+        authHeader,
+        Deno.env.get("SUPABASE_URL")!
+      );
+
+      if (seniorWriterResult.success) {
+        narrativeReport = seniorWriterResult.data;
+        totalCost += seniorWriterResult.cost_usd;
+        console.log(`✅ Senior Writer: OK ($${seniorWriterResult.cost_usd.toFixed(4)})`);
+        console.log(`📄 Narrative: ${narrativeReport.total_estimated_pages} pages, ${narrativeReport.sections?.length} sections`);
+      } else {
+        console.warn("⚠️ Senior Writer failed, using fallback");
+      }
+    } catch (error: any) {
+      console.warn(`⚠️ Senior Writer error: ${error.message}, using fallback`);
+    }
+
+    // 8. Generate HTML report (enhanced with Senior Writer narrative)
     const reportTitle = `Rapport Stratégique - ${audit.url}`;
-    const reportHtml = generateSimpleReport(consolidatedReport, branding, audit);
+    const reportHtml = narrativeReport
+      ? generateNarrativeReport(narrativeReport, consolidatedReport, branding, audit, planProfile)
+      : generateSimpleReport(consolidatedReport, branding, audit);
 
     const { data: report } = await supabase.from('audit_reports').insert({
       pre_audit_id: audit_id,
@@ -504,6 +552,585 @@ function generateSimpleReport(data: any, branding: any, audit: any): string {
   <p style="text-align: center; margin-top: 40px; color: #666;">
     © ${new Date().getFullYear()} ${companyName} - Powered by Multi-Agent Orchestration V2
   </p>
+</body>
+</html>`;
+}
+
+/**
+ * Simple Markdown to HTML converter
+ */
+function markdownToHtml(markdown: string): string {
+  if (!markdown) return '';
+
+  let html = markdown;
+
+  // Headers (###, ##, #)
+  html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+  html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+  html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+
+  // Bold
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+
+  // Italic
+  html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+
+  // Code blocks
+  html = html.replace(/```(\w+)?\n([\s\S]+?)```/g, '<pre><code>$2</code></pre>');
+
+  // Inline code
+  html = html.replace(/`(.+?)`/g, '<code>$1</code>');
+
+  // Links
+  html = html.replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" target="_blank">$1</a>');
+
+  // Unordered lists
+  html = html.replace(/^\s*[-*]\s+(.+)$/gm, '<li>$1</li>');
+  html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+
+  // Ordered lists
+  html = html.replace(/^\s*\d+\.\s+(.+)$/gm, '<li>$1</li>');
+
+  // Line breaks (double newlines become paragraphs)
+  html = html.split('\n\n').map(para => {
+    if (para.trim() && !para.startsWith('<')) {
+      return `<p>${para.trim()}</p>`;
+    }
+    return para;
+  }).join('\n');
+
+  return html;
+}
+
+/**
+ * Generate professional narrative HTML report from Senior Writer output
+ */
+function generateNarrativeReport(
+  narrativeData: any,
+  consolidatedData: any,
+  branding: any,
+  audit: any,
+  planProfile: any
+): string {
+  const primaryColor = branding.primary_color || '#1e3a8a';
+  const secondaryColor = branding.secondary_color || '#3b82f6';
+  const companyName = branding.company_name || 'IMOTION Consulting';
+  const logoUrl = branding.logo_url || '';
+
+  const sections = narrativeData.sections || [];
+  const execSummary = narrativeData.executive_summary_one_page || '';
+  const keyRecs = narrativeData.key_recommendations_summary || [];
+  const totalPages = narrativeData.total_estimated_pages || 50;
+  const qualityScore = narrativeData.narrative_quality_score || 0;
+  const clarityScore = narrativeData.strategic_clarity_score || 0;
+
+  // Generate Table of Contents
+  const tocHtml = sections.map((section: any, idx: number) => {
+    const anchor = `section-${idx}`;
+    return `<li><a href="#${anchor}" class="toc-link">${section.title}</a> <span class="toc-pages">(${section.estimated_pages || 0} pages)</span></li>`;
+  }).join('\n');
+
+  // Generate Sections HTML
+  const sectionsHtml = sections.map((section: any, idx: number) => {
+    const anchor = `section-${idx}`;
+    const contentHtml = markdownToHtml(section.content || '');
+    const insights = section.key_insights || [];
+
+    const insightsHtml = insights.length > 0 ? `
+      <div class="insights-box">
+        <h4>💡 Insights Clés</h4>
+        <ul>
+          ${insights.map((insight: string) => `<li>${insight}</li>`).join('\n')}
+        </ul>
+      </div>
+    ` : '';
+
+    return `
+      <section id="${anchor}" class="report-section">
+        <h2 class="section-title">${section.title}</h2>
+        <div class="section-content">
+          ${contentHtml}
+          ${insightsHtml}
+        </div>
+        <div class="section-footer">
+          <span>Estimation: ${section.estimated_pages || 0} pages</span>
+        </div>
+      </section>
+    `;
+  }).join('\n');
+
+  // Generate Key Recommendations HTML
+  const recsHtml = keyRecs.map((rec: any, idx: number) => {
+    return `
+      <div class="recommendation-card priority-${rec.priority || idx + 1}">
+        <div class="rec-header">
+          <span class="rec-priority">Priorité ${rec.priority || idx + 1}</span>
+          <span class="rec-timeline">${rec.timeline || 'N/A'}</span>
+        </div>
+        <h4>${rec.recommendation || 'Recommandation'}</h4>
+        <p class="rec-rationale"><strong>Rationale:</strong> ${rec.rationale || ''}</p>
+        <p class="rec-impact"><strong>Impact:</strong> ${rec.impact || ''}</p>
+        <p class="rec-budget"><strong>Budget:</strong> ${rec.budget || ''}</p>
+      </div>
+    `;
+  }).join('\n');
+
+  return `<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rapport Stratégique - ${audit.url}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.8;
+      color: #2d3748;
+      background: #f7fafc;
+      padding: 0;
+      margin: 0;
+    }
+
+    /* Header */
+    .report-header {
+      background: linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%);
+      color: white;
+      padding: 60px 40px;
+      text-align: center;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .report-header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+      font-weight: 700;
+    }
+
+    .report-header .subtitle {
+      font-size: 1.3rem;
+      opacity: 0.95;
+      margin-bottom: 5px;
+    }
+
+    .report-header .company {
+      font-size: 1rem;
+      opacity: 0.85;
+      margin-top: 20px;
+    }
+
+    .report-header .logo {
+      max-width: 200px;
+      margin-bottom: 20px;
+    }
+
+    .report-header .meta {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      margin-top: 30px;
+      flex-wrap: wrap;
+    }
+
+    .report-header .meta-item {
+      background: rgba(255,255,255,0.2);
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 0.95rem;
+    }
+
+    /* Container */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    /* Executive Summary Box */
+    .exec-summary-box {
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+      border-left: 6px solid #f59e0b;
+      padding: 30px;
+      border-radius: 12px;
+      margin-bottom: 50px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    .exec-summary-box h3 {
+      color: #92400e;
+      margin-bottom: 15px;
+      font-size: 1.5rem;
+    }
+
+    .exec-summary-box p {
+      color: #78350f;
+      font-size: 1.05rem;
+      line-height: 1.8;
+    }
+
+    /* Key Recommendations */
+    .recommendations-section {
+      background: white;
+      padding: 40px;
+      border-radius: 12px;
+      margin-bottom: 50px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    .recommendations-section h3 {
+      color: ${primaryColor};
+      margin-bottom: 25px;
+      font-size: 1.8rem;
+      border-bottom: 3px solid ${secondaryColor};
+      padding-bottom: 10px;
+    }
+
+    .recommendation-card {
+      background: #f8fafc;
+      border-left: 5px solid ${primaryColor};
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      transition: transform 0.2s;
+    }
+
+    .recommendation-card:hover {
+      transform: translateX(5px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .recommendation-card.priority-1 { border-left-color: #dc2626; }
+    .recommendation-card.priority-2 { border-left-color: #ea580c; }
+    .recommendation-card.priority-3 { border-left-color: #f59e0b; }
+
+    .rec-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 15px;
+      align-items: center;
+    }
+
+    .rec-priority {
+      background: ${primaryColor};
+      color: white;
+      padding: 5px 15px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .rec-timeline {
+      color: #64748b;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .recommendation-card h4 {
+      color: ${primaryColor};
+      font-size: 1.25rem;
+      margin-bottom: 12px;
+    }
+
+    .rec-rationale, .rec-impact, .rec-budget {
+      margin: 8px 0;
+      font-size: 0.95rem;
+      color: #475569;
+    }
+
+    /* Table of Contents */
+    .toc-section {
+      background: white;
+      padding: 40px;
+      border-radius: 12px;
+      margin-bottom: 50px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    .toc-section h3 {
+      color: ${primaryColor};
+      margin-bottom: 20px;
+      font-size: 1.8rem;
+      border-bottom: 3px solid ${secondaryColor};
+      padding-bottom: 10px;
+    }
+
+    .toc-section ul {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .toc-section li {
+      padding: 12px 0;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .toc-link {
+      color: ${secondaryColor};
+      text-decoration: none;
+      font-size: 1.05rem;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    .toc-link:hover {
+      color: ${primaryColor};
+      text-decoration: underline;
+    }
+
+    .toc-pages {
+      color: #94a3b8;
+      font-size: 0.9rem;
+    }
+
+    /* Report Sections */
+    .report-section {
+      background: white;
+      padding: 50px;
+      margin-bottom: 40px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      page-break-inside: avoid;
+    }
+
+    .section-title {
+      color: ${primaryColor};
+      font-size: 2rem;
+      margin-bottom: 30px;
+      padding-bottom: 15px;
+      border-bottom: 4px solid ${secondaryColor};
+    }
+
+    .section-content {
+      color: #334155;
+      font-size: 1.05rem;
+      line-height: 1.9;
+    }
+
+    .section-content h1 {
+      color: ${primaryColor};
+      font-size: 1.8rem;
+      margin: 30px 0 15px 0;
+    }
+
+    .section-content h2 {
+      color: ${secondaryColor};
+      font-size: 1.5rem;
+      margin: 25px 0 12px 0;
+    }
+
+    .section-content h3 {
+      color: #475569;
+      font-size: 1.3rem;
+      margin: 20px 0 10px 0;
+    }
+
+    .section-content p {
+      margin: 15px 0;
+    }
+
+    .section-content ul, .section-content ol {
+      margin: 15px 0 15px 30px;
+    }
+
+    .section-content li {
+      margin: 8px 0;
+    }
+
+    .section-content strong {
+      color: #1e293b;
+      font-weight: 600;
+    }
+
+    .section-content code {
+      background: #f1f5f9;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+      color: #dc2626;
+    }
+
+    .section-content pre {
+      background: #1e293b;
+      color: #e2e8f0;
+      padding: 20px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 20px 0;
+    }
+
+    .section-content pre code {
+      background: none;
+      color: inherit;
+      padding: 0;
+    }
+
+    .section-content a {
+      color: ${secondaryColor};
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .section-content a:hover {
+      text-decoration: underline;
+    }
+
+    /* Insights Box */
+    .insights-box {
+      background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+      border-left: 5px solid ${secondaryColor};
+      padding: 25px;
+      margin: 30px 0;
+      border-radius: 8px;
+    }
+
+    .insights-box h4 {
+      color: #1e40af;
+      margin-bottom: 15px;
+      font-size: 1.2rem;
+    }
+
+    .insights-box ul {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .insights-box li {
+      padding: 8px 0;
+      padding-left: 25px;
+      position: relative;
+      color: #1e3a8a;
+    }
+
+    .insights-box li:before {
+      content: "→";
+      position: absolute;
+      left: 0;
+      color: ${secondaryColor};
+      font-weight: bold;
+    }
+
+    .section-footer {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 2px solid #e2e8f0;
+      color: #94a3b8;
+      font-size: 0.9rem;
+      text-align: right;
+    }
+
+    /* Footer */
+    .report-footer {
+      background: ${primaryColor};
+      color: white;
+      padding: 40px;
+      text-align: center;
+      margin-top: 60px;
+    }
+
+    .report-footer .scores {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+    }
+
+    .report-footer .score-item {
+      background: rgba(255,255,255,0.2);
+      padding: 15px 30px;
+      border-radius: 10px;
+    }
+
+    .report-footer .score-value {
+      font-size: 2rem;
+      font-weight: 700;
+      display: block;
+    }
+
+    .report-footer .score-label {
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+
+    /* Print Styles */
+    @media print {
+      body { background: white; }
+      .report-section { page-break-inside: avoid; }
+      .report-header { page-break-after: always; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <div class="report-header">
+    ${logoUrl ? `<img src="${logoUrl}" alt="${companyName}" class="logo">` : ''}
+    <h1>📊 Rapport Stratégique Consolidé</h1>
+    <p class="subtitle">Analyse Multi-Agents Approfondie</p>
+    <p class="subtitle"><strong>${audit.url}</strong></p>
+    <p class="company">Généré par ${companyName}</p>
+    <div class="meta">
+      <div class="meta-item">📄 ${totalPages} pages estimées</div>
+      <div class="meta-item">📅 ${new Date().toLocaleDateString('fr-FR')}</div>
+      <div class="meta-item">🎯 Qualité: ${planProfile.quality_level}</div>
+      <div class="meta-item">🎨 Style: ${planProfile.narrative_style}</div>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Executive Summary -->
+    ${execSummary ? `
+    <div class="exec-summary-box">
+      <h3>📋 Executive Summary (1 page)</h3>
+      ${markdownToHtml(execSummary)}
+    </div>
+    ` : ''}
+
+    <!-- Key Recommendations -->
+    ${keyRecs.length > 0 ? `
+    <div class="recommendations-section">
+      <h3>🎯 Recommandations Stratégiques Prioritaires</h3>
+      ${recsHtml}
+    </div>
+    ` : ''}
+
+    <!-- Table of Contents -->
+    <div class="toc-section">
+      <h3>📑 Table des Matières</h3>
+      <ul>
+        ${tocHtml}
+      </ul>
+    </div>
+
+    <!-- Report Sections -->
+    ${sectionsHtml}
+  </div>
+
+  <!-- Footer -->
+  <div class="report-footer">
+    <div class="scores">
+      <div class="score-item">
+        <span class="score-value">${qualityScore.toFixed(1)}/10</span>
+        <span class="score-label">Qualité Narrative</span>
+      </div>
+      <div class="score-item">
+        <span class="score-value">${clarityScore.toFixed(1)}/10</span>
+        <span class="score-label">Clarté Stratégique</span>
+      </div>
+      <div class="score-item">
+        <span class="score-value">${sections.length}</span>
+        <span class="score-label">Sections</span>
+      </div>
+    </div>
+    <p style="opacity: 0.9; margin-top: 20px;">
+      © ${new Date().getFullYear()} ${companyName}<br>
+      Powered by Multi-Agent Orchestration V2 with Senior Writer AI
+    </p>
+  </div>
 </body>
 </html>`;
 }
