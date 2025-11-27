@@ -30,17 +30,14 @@ import AdminBlog from "./pages/AdminBlog";
 import AdminUsers from "./pages/AdminUsers";
 import ClientAudits from "./pages/ClientAudits";
 import ClientNewProject from "./pages/ClientNewProject";
-import DocumentDownload from "./pages/DocumentDownload";
-import CodeSourceExport from "./pages/CodeSourceExport";
-import AdminSyncSettings from "./pages/AdminSyncSettings";
 import AuditReport from "./pages/AuditReport";
 import OrchestrationMonitor from "./pages/OrchestrationMonitor";
 import VeilleIA from "./pages/VeilleIA";
 import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/Dashboard";
 import { HowItWorks } from "./pages/HowItWorks";
-import { ProtectedRoute } from "./components/ProtectedRoute";
 import Pricing from "./pages/Pricing";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -102,11 +99,6 @@ const App = () => {
                 <AdminMessages />
               </ProtectedRoute>
             } />
-            <Route path="/admin/sync" element={
-              <ProtectedRoute requireAuth requireAdmin>
-                <AdminSyncSettings />
-              </ProtectedRoute>
-            } />
             <Route path="/admin/orchestrations" element={
               <ProtectedRoute requireAuth requireAdmin>
                 <OrchestrationMonitor />
@@ -127,7 +119,11 @@ const App = () => {
                 <ClientNewProject />
               </ProtectedRoute>
             } />
-            <Route path="/audit-report/:id" element={<AuditReport />} />
+            <Route path="/audit-report/:id" element={
+              <ProtectedRoute requireAuth>
+                <AuditReport />
+              </ProtectedRoute>
+            } />
             <Route path="/veille-ia" element={
               <ProtectedRoute requireAuth requireAdmin>
                 <VeilleIA />
@@ -138,8 +134,6 @@ const App = () => {
                 <TestDataSender />
               </ProtectedRoute>
             } />
-            <Route path="/documents" element={<DocumentDownload />} />
-            <Route path="/code-source" element={<CodeSourceExport />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
