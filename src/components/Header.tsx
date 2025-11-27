@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Menu } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,11 +13,11 @@ export const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAdmin, isClient } = useUserRole();
+  const { isAdmin } = useUserRole();
 
   // Cacher le Header sur les pages admin/client/dashboard
-  if (location.pathname.startsWith('/admin') || 
-      location.pathname.startsWith('/client') || 
+  if (location.pathname.startsWith('/admin') ||
+      location.pathname.startsWith('/client') ||
       location.pathname.startsWith('/dashboard')) {
     return null;
   }
@@ -34,11 +34,6 @@ export const Header = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate("/");
-  };
-
   const handleStartProject = () => {
     if (session) {
       if (isAdmin) {
@@ -51,27 +46,21 @@ export const Header = () => {
     }
   };
 
+  // Navigation simplifiée - seulement les liens principaux
   const baseNavigation = [
-    { name: "Accueil", href: "/" },
-    { name: "Comment ça marche", href: "/how-it-works" },
     { name: "Solutions", href: "/solutions" },
+    { name: "Comment ça marche", href: "/how-it-works" },
     { name: "Tarifs", href: "/pricing" },
-    { name: "Blog", href: "/blog" },
-    { name: "FAQ", href: "/faq" },
     { name: "Contact", href: "/contact" },
   ];
 
   const adminNavigation = isAdmin ? [
-    { name: "Audits", href: "/admin/audits" },
-    { name: "Blog", href: "/admin/blog" },
-    { name: "Orchestrations", href: "/admin/orchestrations" },
-    { name: "Veille IA", href: "/veille-ia" }
+    { name: "Admin", href: "/admin/dashboard" },
   ] : [];
 
   const navigation = [
     ...baseNavigation,
     ...adminNavigation,
-    ...(isClient ? [{ name: "Mes Audits", href: "/client/audits" }] : []),
   ];
 
   return (
@@ -80,9 +69,9 @@ export const Header = () => {
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate("/")}>
-            <img 
-              src={logoImotion} 
-              alt="IMOTION Logo" 
+            <img
+              src={logoImotion}
+              alt="IMOTION Logo"
               className="h-24 w-auto"
             />
           </div>
@@ -101,7 +90,7 @@ export const Header = () => {
           </nav>
 
           {/* CTA Buttons */}
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-3">
             {session ? (
               <UserMenu session={session} />
             ) : (
@@ -110,7 +99,7 @@ export const Header = () => {
                   Se connecter
                 </Button>
                 <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={handleStartProject}>
-                  Démarrer un projet
+                  Démarrer
                 </Button>
               </>
             )}
@@ -118,17 +107,22 @@ export const Header = () => {
 
           {/* Mobile menu button */}
           <button
-            className="md:hidden p-2"
+            className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle menu"
           >
-            <Menu className="w-6 h-6" />
+            {mobileMenuOpen ? (
+              <X className="w-6 h-6" />
+            ) : (
+              <Menu className="w-6 h-6" />
+            )}
           </button>
         </div>
 
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
-          <div className="md:hidden py-4 border-t border-border">
-            <nav className="flex flex-col gap-4">
+          <div className="md:hidden py-4 border-t border-border animate-in slide-in-from-top-4 duration-300">
+            <nav className="flex flex-col gap-3">
               {navigation.map((item) => (
                 <button
                   key={item.name}
@@ -136,27 +130,43 @@ export const Header = () => {
                     navigate(item.href);
                     setMobileMenuOpen(false);
                   }}
-                  className="text-sm font-medium text-foreground hover:text-primary transition-colors text-left"
+                  className="text-sm font-medium text-foreground hover:text-primary hover:bg-gray-50 transition-colors text-left py-2 px-3 rounded-md"
                 >
                   {item.name}
                 </button>
               ))}
-              <div className="flex flex-col gap-2 pt-4">
-                {session ? (
-                  <div className="px-2">
-                    <UserMenu session={session} />
-                  </div>
-                ) : (
-                  <>
-                    <Button variant="ghost" size="sm" onClick={() => navigate("/auth")}>
-                      Se connecter
-                    </Button>
-                    <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={handleStartProject}>
-                      Démarrer un projet
-                    </Button>
-                  </>
-                )}
-              </div>
+
+              <div className="border-t border-border my-2"></div>
+
+              {session ? (
+                <div className="flex flex-col gap-2 px-3 py-2">
+                  <UserMenu session={session} />
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2 px-3">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      navigate("/auth");
+                      setMobileMenuOpen(false);
+                    }}
+                    className="w-full justify-start"
+                  >
+                    Se connecter
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="bg-primary text-primary-foreground hover:bg-primary/90 w-full"
+                    onClick={() => {
+                      handleStartProject();
+                      setMobileMenuOpen(false);
+                    }}
+                  >
+                    Démarrer
+                  </Button>
+                </div>
+              )}
             </nav>
           </div>
         )}
