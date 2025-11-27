@@ -1256,10 +1256,12 @@ export type Database = {
           oauth_uid: string | null
           organization_id: string | null
           phone: string | null
+          plan_tier: string | null
           professional_email: string | null
           professional_phone: string | null
           rejection_reason: string | null
           role: Database["public"]["Enums"]["app_role"]
+          subscription_status: string | null
           trust_score: number | null
           updated_at: string
           user_id: string
@@ -1292,10 +1294,12 @@ export type Database = {
           oauth_uid?: string | null
           organization_id?: string | null
           phone?: string | null
+          plan_tier?: string | null
           professional_email?: string | null
           professional_phone?: string | null
           rejection_reason?: string | null
           role?: Database["public"]["Enums"]["app_role"]
+          subscription_status?: string | null
           trust_score?: number | null
           updated_at?: string
           user_id: string
@@ -1328,10 +1332,12 @@ export type Database = {
           oauth_uid?: string | null
           organization_id?: string | null
           phone?: string | null
+          plan_tier?: string | null
           professional_email?: string | null
           professional_phone?: string | null
           rejection_reason?: string | null
           role?: Database["public"]["Enums"]["app_role"]
+          subscription_status?: string | null
           trust_score?: number | null
           updated_at?: string
           user_id?: string
