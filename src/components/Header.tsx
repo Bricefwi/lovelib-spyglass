@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
 import logoImotion from "@/assets/logo-imotion.png";
 import { useUserRole } from "@/hooks/useUserRole";
+import { UserMenu } from "@/components/UserMenu";
 
 export const Header = () => {
   const [session, setSession] = useState<Session | null>(null);
@@ -102,17 +103,7 @@ export const Header = () => {
           {/* CTA Buttons */}
           <div className="hidden md:flex items-center gap-4">
             {session ? (
-              <>
-                <span className="text-sm text-muted-foreground">
-                  {session.user.email}
-                </span>
-                <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard")}>
-                  Mon Tableau de Bord
-                </Button>
-                <Button variant="ghost" size="sm" onClick={handleSignOut}>
-                  Déconnexion
-                </Button>
-              </>
+              <UserMenu session={session} />
             ) : (
               <>
                 <Button variant="ghost" size="sm" onClick={() => navigate("/auth")}>
@@ -152,17 +143,9 @@ export const Header = () => {
               ))}
               <div className="flex flex-col gap-2 pt-4">
                 {session ? (
-                  <>
-                    <span className="text-sm text-muted-foreground px-2">
-                      {session.user.email}
-                    </span>
-                    <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard")}>
-                      Mon Tableau de Bord
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={handleSignOut}>
-                      Déconnexion
-                    </Button>
-                  </>
+                  <div className="px-2">
+                    <UserMenu session={session} />
+                  </div>
                 ) : (
                   <>
                     <Button variant="ghost" size="sm" onClick={() => navigate("/auth")}>
