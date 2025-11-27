@@ -6,10 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Building2, TrendingUp, FileText, Sparkles, Shield, Clock, Activity, Eye } from 'lucide-react';
 import { toast } from 'sonner';
-import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { ChatWidget } from '@/components/ChatWidget';
 import { useUserRole } from '@/hooks/useUserRole';
+import { ClientHeader } from '@/components/ClientHeader';
 
 interface ProfileData {
   company_legal_name: string;
@@ -205,7 +205,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      <ClientHeader />
       
       <main className="container mx-auto px-4 py-8 mt-20">
         <div className="max-w-7xl mx-auto">

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
+import { ClientHeader } from "@/components/ClientHeader";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -245,10 +246,12 @@ export default function AdminMessages() {
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <AdminSidebar unreadMessages={totalUnread} />
+    <div className="flex min-h-screen bg-background flex-col">
+      <ClientHeader />
+      <div className="flex flex-1">
+        <AdminSidebar unreadMessages={totalUnread} />
 
-      <main className="flex-1 flex flex-col">
+        <main className="flex-1 flex flex-col">
         <div className="border-b border-border p-6">
           <div className="max-w-7xl mx-auto">
             <div className="flex items-center justify-between">
@@ -472,6 +475,7 @@ export default function AdminMessages() {
           </div>
         </div>
       </main>
+      </div>
     </div>
   );
 }

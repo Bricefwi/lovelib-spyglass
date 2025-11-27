@@ -11,6 +11,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { ClientHeader } from "@/components/ClientHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -141,6 +142,7 @@ export default function OrchestrationMonitor() {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <ClientHeader />
       <div className="flex-1 container mx-auto p-6">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Monitoring des Audits Approfondis</h1>

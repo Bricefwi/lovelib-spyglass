@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Header } from "@/components/Header";
+import { ClientHeader } from "@/components/ClientHeader";
 import { Footer } from "@/components/Footer";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -118,7 +118,7 @@ const ClientNewProject = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      <ClientHeader />
       <div className="container mx-auto px-6 py-20">
         <div className="max-w-2xl mx-auto">
           <h1 className="text-4xl font-bold text-foreground mb-4">

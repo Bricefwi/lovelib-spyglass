@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Header } from "@/components/Header";
+import { ClientHeader } from "@/components/ClientHeader";
 import { Footer } from "@/components/Footer";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -99,7 +99,7 @@ export default function ClientAudits() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
+      <ClientHeader />
       <main className="flex-1 container mx-auto px-4 py-8" style={{ maxWidth: 960 }}>
         <h1 className="text-3xl font-bold mb-8">Mes audits</h1>
 
