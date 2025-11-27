@@ -146,7 +146,7 @@ export default function VeilleIA() {
   return (
     <div className="min-h-screen bg-background">
       <ClientHeader />
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 pt-8 pb-8">
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-4xl font-bold mb-2">🤖 Veille IA Automatique</h1>
