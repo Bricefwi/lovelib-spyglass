@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Header } from '@/components/Header';
+import { ClientHeader } from '@/components/ClientHeader';
 import { Footer } from '@/components/Footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -256,7 +256,7 @@ const AdminUsers = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
+      <ClientHeader />
       
       <main className="flex-1 container mx-auto px-4 py-8">
         <div className="mb-8">

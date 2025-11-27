@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Header } from "@/components/Header";
+import { ClientHeader } from "@/components/ClientHeader";
 import { Footer } from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -164,7 +164,7 @@ export default function AdminBlog() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <Header />
+      <ClientHeader />
       
       <main className="flex-1 container mx-auto px-6 py-32">
         <div className="max-w-7xl mx-auto">

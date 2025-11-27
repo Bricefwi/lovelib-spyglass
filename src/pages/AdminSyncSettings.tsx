@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ClientHeader } from "@/components/ClientHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -66,6 +67,7 @@ const AdminSyncSettings = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <ClientHeader />
       <div className="container mx-auto p-6 max-w-7xl">
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">Paramètres de Synchronisation</h1>

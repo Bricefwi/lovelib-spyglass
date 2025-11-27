@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
+import { ClientHeader } from "@/components/ClientHeader";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -130,13 +131,15 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <AdminSidebar 
-        pendingCount={stats.pendingAudits} 
-        unreadMessages={stats.unreadMessages}
-      />
+    <div className="flex min-h-screen bg-background flex-col">
+      <ClientHeader />
+      <div className="flex flex-1">
+        <AdminSidebar 
+          pendingCount={stats.pendingAudits} 
+          unreadMessages={stats.unreadMessages}
+        />
 
-      <main className="flex-1 p-8">
+        <main className="flex-1 p-8">
         <div className="max-w-7xl mx-auto space-y-8">
           {/* En-tête */}
           <div>
@@ -318,7 +321,8 @@ export default function AdminDashboard() {
             </Card>
           </div>
         </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 }
