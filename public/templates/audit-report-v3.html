@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rapport d'Audit Digital - iMotion</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --imotion-red: #d8232a;
+            --imotion-red-dark: #b01d23;
+            --imotion-red-light: #ff4d54;
+            --imotion-black: #1a1a1a;
+            --imotion-gray: #666666;
+            --imotion-white: #ffffff;
+            --imotion-bg-gray: #f5f5f5;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            color: var(--imotion-black);
+            background: var(--imotion-bg-gray);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* HEADER */
+        .header {
+            background: linear-gradient(135deg, #d8232a, #ff4d54);
+            color: white;
+            padding: 60px 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 40px rgba(216, 35, 42, 0.3);
+            margin-bottom: 40px;
+        }
+
+        .header-logo {
+            width: 180px;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .header .subtitle {
+            font-size: 18px;
+            opacity: 0.95;
+            margin-bottom: 30px;
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            font-size: 14px;
+        }
+
+        .header-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* SCORE GLOBAL */
+        .score-section {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.08);
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .score-circle {
+            width: 200px;
+            height: 200px;
+            margin: 0 auto 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #d8232a, #ff4d54);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 40px rgba(216, 35, 42, 0.3);
+        }
+
+        .score-circle-inner {
+            width: 180px;
+            height: 180px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .score-number {
+            font-size: 64px;
+            font-weight: 700;
+            color: var(--imotion-red);
+        }
+
+        .score-label {
+            font-size: 14px;
+            color: var(--imotion-gray);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .score-interpretation {
+            margin-top: 20px;
+            font-size: 18px;
+            color: var(--imotion-gray);
+        }
+
+        /* SECTIONS D'ANALYSE */
+        .analysis-section {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.08);
+            margin-bottom: 30px;
+        }
+
+        .analysis-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid var(--imotion-red);
+        }
+
+        .analysis-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #d8232a, #ff4d54);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+        }
+
+        .analysis-title {
+            flex: 1;
+        }
+
+        .analysis-title h2 {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--imotion-black);
+            margin-bottom: 5px;
+        }
+
+        .analysis-title .agent-name {
+            font-size: 14px;
+            color: var(--imotion-gray);
+        }
+
+        .analysis-score {
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--imotion-red);
+        }
+
+        .analysis-summary {
+            background: var(--imotion-bg-gray);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            font-size: 16px;
+            line-height: 1.8;
+        }
+
+        /* FINDINGS */
+        .findings {
+            margin-bottom: 30px;
+        }
+
+        .findings h3 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--imotion-black);
+        }
+
+        .finding-item {
+            background: var(--imotion-bg-gray);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--imotion-red);
+        }
+
+        .finding-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .severity-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .severity-high {
+            background: #ff4d54;
+            color: white;
+        }
+
+        .severity-medium {
+            background: #ffa500;
+            color: white;
+        }
+
+        .severity-low {
+            background: #4caf50;
+            color: white;
+        }
+
+        .finding-title {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .finding-description {
+            color: var(--imotion-gray);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        /* RECOMMENDATIONS */
+        .recommendations {
+            margin-bottom: 30px;
+        }
+
+        .recommendations h3 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--imotion-black);
+        }
+
+        .recommendation-item {
+            background: white;
+            border: 2px solid var(--imotion-bg-gray);
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .recommendation-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .recommendation-title {
+            font-weight: 600;
+            font-size: 18px;
+            color: var(--imotion-black);
+        }
+
+        .priority-badge {
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .priority-high {
+            background: linear-gradient(135deg, #d8232a, #ff4d54);
+            color: white;
+        }
+
+        .priority-medium {
+            background: #ffa500;
+            color: white;
+        }
+
+        .priority-low {
+            background: #4caf50;
+            color: white;
+        }
+
+        .recommendation-description {
+            color: var(--imotion-gray);
+            margin-bottom: 15px;
+            line-height: 1.7;
+        }
+
+        .recommendation-roi {
+            background: #e8f5e9;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            color: #2e7d32;
+            font-weight: 500;
+        }
+
+        .recommendation-steps {
+            margin-bottom: 15px;
+        }
+
+        .recommendation-steps h4 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--imotion-black);
+        }
+
+        .recommendation-steps ol {
+            margin-left: 20px;
+            color: var(--imotion-gray);
+        }
+
+        .recommendation-steps li {
+            margin-bottom: 5px;
+        }
+
+        .recommendation-tools {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .tool-badge {
+            background: var(--imotion-bg-gray);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            color: var(--imotion-gray);
+        }
+
+        /* UPGRADE TEASER */
+        .upgrade-teaser {
+            background: linear-gradient(135deg, #d8232a, #ff4d54);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-top: 30px;
+            box-shadow: 0 4px 40px rgba(216, 35, 42, 0.3);
+        }
+
+        .upgrade-teaser h3 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .upgrade-teaser p {
+            font-size: 16px;
+            margin-bottom: 20px;
+            opacity: 0.95;
+        }
+
+        .upgrade-teaser ul {
+            list-style: none;
+            margin-bottom: 25px;
+        }
+
+        .upgrade-teaser li {
+            padding: 8px 0;
+            padding-left: 30px;
+            position: relative;
+        }
+
+        .upgrade-teaser li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        .upgrade-button {
+            display: inline-block;
+            background: white;
+            color: var(--imotion-red);
+            padding: 15px 40px;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .upgrade-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        }
+
+        /* FOOTER */
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--imotion-gray);
+            font-size: 14px;
+        }
+
+        .footer-logo {
+            width: 120px;
+            margin-bottom: 15px;
+            opacity: 0.6;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 32px;
+            }
+            .score-circle {
+                width: 150px;
+                height: 150px;
+            }
+            .score-circle-inner {
+                width: 130px;
+                height: 130px;
+            }
+            .score-number {
+                font-size: 48px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- HEADER -->
+        <div class="header">
+            <img src="/assets/logo/imotion-logo-2025.svg" alt="iMotion" class="header-logo">
+            <h1>Rapport d'Audit Digital</h1>
+            <p class="subtitle">Analyse complète de votre présence digitale</p>
+            <div class="header-meta">
+                <div class="header-meta-item">
+                    <span>🌐</span>
+                    <span><strong>URL:</strong> {{URL}}</span>
+                </div>
+                <div class="header-meta-item">
+                    <span>🏢</span>
+                    <span><strong>Entreprise:</strong> {{COMPANY_NAME}}</span>
+                </div>
+                <div class="header-meta-item">
+                    <span>📅</span>
+                    <span><strong>Date:</strong> {{DATE}}</span>
+                </div>
+                <div class="header-meta-item">
+                    <span>💎</span>
+                    <span><strong>Plan:</strong> {{PLAN}}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCORE GLOBAL -->
+        <div class="score-section">
+            <div class="score-circle">
+                <div class="score-circle-inner">
+                    <div class="score-number">{{GLOBAL_SCORE}}</div>
+                    <div class="score-label">Score Global</div>
+                </div>
+            </div>
+            <p class="score-interpretation">{{SCORE_INTERPRETATION}}</p>
+        </div>
+
+        <!-- SECTIONS D'ANALYSE (Répété pour chaque agent) -->
+        {{#each PHASES}}
+        <div class="analysis-section">
+            <div class="analysis-header">
+                <div class="analysis-icon">{{icon}}</div>
+                <div class="analysis-title">
+                    <h2>{{title}}</h2>
+                    <p class="agent-name">Par {{agent_name}}</p>
+                </div>
+                <div class="analysis-score">{{score}}/100</div>
+            </div>
+
+            <div class="analysis-summary">
+                {{summary}}
+            </div>
+
+            {{#if findings.length}}
+            <div class="findings">
+                <h3>🔍 Points Identifiés</h3>
+                {{#each findings}}
+                <div class="finding-item">
+                    <div class="finding-header">
+                        <span class="severity-badge severity-{{severity}}">{{severity}}</span>
+                        <span class="finding-title">{{title}}</span>
+                    </div>
+                    <p class="finding-description">{{description}}</p>
+                </div>
+                {{/each}}
+            </div>
+            {{/if}}
+
+            {{#if recommendations.length}}
+            <div class="recommendations">
+                <h3>💡 Recommandations</h3>
+                {{#each recommendations}}
+                <div class="recommendation-item">
+                    <div class="recommendation-header">
+                        <span class="recommendation-title">{{title}}</span>
+                        <span class="priority-badge priority-{{priority}}">{{priority}}</span>
+                    </div>
+                    <p class="recommendation-description">{{description}}</p>
+                    
+                    {{#if impact_roi}}
+                    <div class="recommendation-roi">
+                        📈 Impact estimé: {{impact_roi}}
+                    </div>
+                    {{/if}}
+
+                    {{#if implementation_steps.length}}
+                    <div class="recommendation-steps">
+                        <h4>Étapes d'implémentation:</h4>
+                        <ol>
+                            {{#each implementation_steps}}
+                            <li>{{this}}</li>
+                            {{/each}}
+                        </ol>
+                    </div>
+                    {{/if}}
+
+                    {{#if required_tools.length}}
+                    <div class="recommendation-tools">
+                        {{#each required_tools}}
+                        <span class="tool-badge">🛠️ {{this}}</span>
+                        {{/each}}
+                    </div>
+                    {{/if}}
+                </div>
+                {{/each}}
+            </div>
+            {{/if}}
+
+            {{#if teasers.length}}
+            <div class="upgrade-teaser">
+                <h3>🚀 Débloquez Plus d'Analyses</h3>
+                <p>Passez au plan {{teasers.0.upgrade_plan}} pour accéder à:</p>
+                <ul>
+                    {{#each teasers}}
+                    <li>{{description}}</li>
+                    {{/each}}
+                </ul>
+                <a href="/pricing" class="upgrade-button">Découvrir le Plan {{teasers.0.upgrade_plan}}</a>
+            </div>
+            {{/if}}
+        </div>
+        {{/each}}
+
+        <!-- ENCART UPGRADE FINAL -->
+        <div class="upgrade-teaser">
+            <h3>🎯 Prêt à Passer au Niveau Supérieur ?</h3>
+            <p>Débloquez l'intégralité de nos analyses expertes et propulsez votre présence digitale.</p>
+            <ul>
+                <li>Analyse de 15-20 concurrents nationaux</li>
+                <li>Étude de marché régionale complète</li>
+                <li>Roadmap stratégique sur 6-12 mois</li>
+                <li>Consultation avec un expert (2h)</li>
+                <li>Rapports personnalisés et tableaux de bord</li>
+            </ul>
+            <a href="/pricing" class="upgrade-button">Voir Tous les Plans</a>
+        </div>
+
+        <!-- FOOTER -->
+        <div class="footer">
+            <img src="/assets/logo/imotion-logo-2025.svg" alt="iMotion" class="footer-logo">
+            <p>© 2025 iMotion. Tous droits réservés.</p>
+            <p>Rapport généré par notre système d'intelligence artificielle multi-agents.</p>
+        </div>
+    </div>
+</body>
+</html>

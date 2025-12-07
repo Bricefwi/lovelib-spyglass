@@ -24,6 +24,9 @@ verify_jwt = false
 [functions.orchestrate-multi-agent]
 verify_jwt = true
 
+[functions.orchestrate-multi-agent-v3]
+verify_jwt = true
+
 [functions.send-auth-diagnostic]
 verify_jwt = false
 
