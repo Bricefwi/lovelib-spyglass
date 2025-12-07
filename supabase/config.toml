@@ -4,7 +4,7 @@ project_id = "gzfrcshvrktpejctlgta"
 verify_jwt = true
 
 [functions.audit-html]
-verify_jwt = true
+verify_jwt = false
 
 [functions.faq-assistant]
 verify_jwt = false
@@ -61,7 +61,7 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.test-tiered-campaign]
-verify_jwt = true
+verify_jwt = false
 
 [functions.generate-blog-article]
 verify_jwt = true
