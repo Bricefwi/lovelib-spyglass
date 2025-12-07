@@ -22,23 +22,36 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Validation schema
+// Validation schema - Support tous les tiers
 const sendAuditSchema = z.object({
   reportId: z.string().uuid(),
   recipientEmail: z.string().email().optional(),
-  auditType: z.enum(['standard', 'premium']).optional(),
+  auditType: z.enum(['standard', 'premium', 'discovery', 'pro', 'agency', 'enterprise']).optional(),
+  subject: z.string().optional(),
 });
+
+// Mapping des types vers labels
+const TIER_LABELS: Record<string, { label: string; isPremium: boolean }> = {
+  'standard': { label: 'Pré-Audit Digital', isPremium: false },
+  'discovery': { label: 'Diagnostic Express', isPremium: false },
+  'pro': { label: 'Audit Professionnel', isPremium: true },
+  'agency': { label: 'Audit Ultra-Premium', isPremium: true },
+  'enterprise': { label: 'Expertise Enterprise', isPremium: true },
+  'premium': { label: 'Audit Digital Approfondi', isPremium: true },
+};
 
 // Génère un email professionnel avec la charte IMOTION
 function generateAuditEmailHTML(data: {
-  auditType: 'standard' | 'premium';
+  auditType: string;
   websiteUrl: string;
   companyName?: string;
   reportUrl: string;
   recipientName?: string;
 }): string {
   const { auditType, websiteUrl, companyName, reportUrl, recipientName } = data;
-  const auditTypeLabel = auditType === 'premium' ? 'Audit Digital Approfondi' : 'Pré-Audit Digital';
+  const tierConfig = TIER_LABELS[auditType] || TIER_LABELS['standard'];
+  const auditTypeLabel = tierConfig.label;
+  const isPremium = tierConfig.isPremium;
   const greeting = recipientName ? `Bonjour ${recipientName}` : 'Bonjour';
   
   return `<!DOCTYPE html>
@@ -61,6 +74,9 @@ function generateAuditEmailHTML(data: {
               <p style="color: rgba(255, 255, 255, 0.95); margin: 10px 0 0; font-size: 16px;">
                 ${companyName || websiteUrl}
               </p>
+              <span style="display: inline-block; background: rgba(255,255,255,0.2); padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; letter-spacing: 1px; margin-top: 12px; color: white; text-transform: uppercase;">
+                ${auditType.toUpperCase()}
+              </span>
             </td>
           </tr>
           <tr>
@@ -69,21 +85,33 @@ function generateAuditEmailHTML(data: {
               <p style="color: #1a1a1a; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
                 Nous avons finalisé votre <strong>${auditTypeLabel}</strong> pour <strong>${websiteUrl}</strong>.
               </p>
-              ${auditType === 'premium' ? `
+              ${isPremium ? `
               <div style="background-color: #fafafa; border-left: 4px solid ${IMOTION_BRAND.colors.primary}; padding: 20px; margin: 30px 0;">
                 <h3 style="color: ${IMOTION_BRAND.colors.primary}; margin: 0 0 15px; font-size: 18px; font-weight: 600;">
-                  📊 Votre audit approfondi comprend :
+                  📊 Votre audit ${auditType === 'agency' ? 'Ultra-Premium' : 'Professionnel'} comprend :
                 </h3>
                 <ul style="color: #1a1a1a; font-size: 15px; line-height: 1.8; margin: 0; padding-left: 20px;">
                   <li><strong>Analyse SWOT détaillée</strong> de votre positionnement digital</li>
-                  <li><strong>Scores de maturité</strong> par domaine (Marketing, Tech, Data, IA)</li>
-                  <li><strong>Roadmap stratégique</strong> sur 12 mois</li>
-                  <li><strong>Quick wins</strong> identifiés avec impact/effort/ROI</li>
-                  <li><strong>4 scénarios d'évolution</strong> adaptés à vos ressources</li>
-                  <li><strong>KPIs recommandés</strong> pour piloter votre transformation</li>
+                  <li><strong>Scores de maturité</strong> par domaine (Marketing, Tech, UX, SEO)</li>
+                  ${auditType === 'agency' || auditType === 'enterprise' ? `
+                  <li><strong>Étude de marché</strong> avec données TAM/SAM et analyse PESTEL</li>
+                  <li><strong>Benchmark concurrentiel</strong> détaillé</li>
+                  ` : ''}
+                  <li><strong>Roadmap stratégique</strong> personnalisée</li>
+                  <li><strong>Scénarios d'évolution</strong> avec ROI estimé</li>
+                  <li><strong>Plan d'action</strong> priorisé</li>
                 </ul>
               </div>
-              ` : ''}
+              ` : `
+              <div style="background-color: #fff8e1; border-left: 4px solid #ffc107; padding: 20px; margin: 30px 0;">
+                <h3 style="color: #f57c00; margin: 0 0 10px; font-size: 16px; font-weight: 600;">
+                  💡 Version Découverte
+                </h3>
+                <p style="color: #1a1a1a; font-size: 14px; margin: 0;">
+                  Ce diagnostic gratuit identifie vos principaux axes d'amélioration. Pour une analyse complète avec étude de marché et plan d'action détaillé, passez au niveau Pro !
+                </p>
+              </div>
+              `}
               <p style="color: #1a1a1a; font-size: 16px; line-height: 1.6; margin: 30px 0 20px;">
                 Cliquez sur le bouton ci-dessous pour consulter votre rapport complet :
               </p>
@@ -139,12 +167,12 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const { reportId, recipientEmail, auditType = 'premium' } = validation.data;
+    const { reportId, recipientEmail, auditType = 'premium', subject: customSubject } = validation.data;
     
     // Default email to patrice.simion@imotion.fr if not provided
     const targetEmail = recipientEmail || "patrice.simion@imotion.fr";
 
-    console.log(`Sending audit report ${reportId} to ${targetEmail}`);
+    console.log(`📧 Sending audit report ${reportId} to ${targetEmail} (type: ${auditType})`);
 
     // Utiliser SERVICE_ROLE pour bypasser RLS
     const supabase = createClient(
@@ -152,19 +180,10 @@ const handler = async (req: Request): Promise<Response> => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Récupérer les infos du rapport et du pre_audit
+    // Récupérer les infos du rapport
     const { data: report, error: reportError } = await supabase
       .from('audit_reports')
-      .select(`
-        id,
-        html,
-        pre_audit_id,
-        pre_audits!inner(
-          url,
-          company_guess,
-          companies(name)
-        )
-      `)
+      .select('*')
       .eq('id', reportId)
       .maybeSingle();
 
@@ -176,14 +195,33 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const preAudit = (report.pre_audits as any);
-    const website = preAudit?.url || 'votre site';
-    const companyName = preAudit?.companies?.name || preAudit?.company_guess;
+    // Essayer de récupérer les infos du pre_audit si disponible
+    let website = 'votre site';
+    let companyName = '';
     
-    // Construire l'URL du rapport - Utiliser l'application Lovable
+    if (report.pre_audit_id) {
+      const { data: preAudit } = await supabase
+        .from('pre_audits')
+        .select('url, company_guess')
+        .eq('id', report.pre_audit_id)
+        .maybeSingle();
+      
+      if (preAudit) {
+        website = preAudit.url || website;
+        companyName = preAudit.company_guess || '';
+      }
+    }
+    
+    // Fallback sur le titre du rapport
+    if (!companyName && report.title) {
+      companyName = report.title.replace(/\[TEST.*?\]\s*/g, '').trim();
+    }
+    
+    // Construire l'URL du rapport
     const reportUrl = `https://7c6553ec-011c-44ef-a323-d4dbfc5215db.lovableproject.com/audit-report/${reportId}`;
     
-    console.log('Report URL:', reportUrl);
+    console.log('📄 Report URL:', reportUrl);
+    console.log('🏢 Company:', companyName);
 
     // Générer l'email avec la charte IMOTION
     const emailHTML = generateAuditEmailHTML({
@@ -193,10 +231,10 @@ const handler = async (req: Request): Promise<Response> => {
       reportUrl,
     });
 
-    const auditTypeLabel = auditType === 'premium' ? 'Audit Digital Approfondi' : 'Pré-Audit Digital';
-    const subject = `🎯 Votre ${auditTypeLabel} IMOTION - ${companyName || website}`;
+    const tierConfig = TIER_LABELS[auditType] || TIER_LABELS['standard'];
+    const subject = customSubject || `🎯 Votre ${tierConfig.label} IMOTION - ${companyName || website}`;
     
-    console.log('Sending email with branded template');
+    console.log('📨 Sending email with subject:', subject);
 
     // Envoyer l'email avec le template IMOTION
     const emailResponse = await resend.emails.send({
@@ -206,7 +244,7 @@ const handler = async (req: Request): Promise<Response> => {
       html: emailHTML,
     });
 
-    console.log("Email sent successfully:", emailResponse);
+    console.log("✅ Email sent successfully:", emailResponse);
 
     return new Response(JSON.stringify({ 
       success: true, 
@@ -220,7 +258,7 @@ const handler = async (req: Request): Promise<Response> => {
       },
     });
   } catch (error: any) {
-    console.error("Error sending email:", error);
+    console.error("❌ Error sending email:", error);
     return new Response(
       JSON.stringify({ error: error.message || "Failed to send email" }),
       {
