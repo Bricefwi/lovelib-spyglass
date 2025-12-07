@@ -409,7 +409,14 @@ const Dashboard = () => {
                     <div className="text-center py-12 text-muted-foreground">
                       <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
                       <p className="mb-2">Aucun audit pour le moment</p>
-                      <p className="text-sm">Lancez votre premier audit pour commencer</p>
+                      <p className="text-sm mb-4">Lancez votre premier audit pour commencer</p>
+                      <Button 
+                        onClick={() => navigate('/audit-gratuit')}
+                        className="mt-2"
+                      >
+                        <Sparkles className="mr-2 h-4 w-4" />
+                        Lancer mon premier audit
+                      </Button>
                     </div>
                   )}
                 </CardContent>

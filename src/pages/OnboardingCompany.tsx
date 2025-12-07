@@ -4,11 +4,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, CheckCircle2, AlertCircle, Upload } from "lucide-react";
+import { Loader2, CheckCircle2, AlertCircle, Upload, ArrowLeft, Home } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function OnboardingCompany() {
@@ -22,7 +23,7 @@ export default function OnboardingCompany() {
   const [siretError, setSiretError] = useState("");
   const [companyData, setCompanyData] = useState<any>(null);
   
-  // États formulaire
+  // États formulaire enrichis
   const [website, setWebsite] = useState("");
   const [firstname, setFirstname] = useState("");
   const [lastname, setLastname] = useState("");
@@ -32,6 +33,11 @@ export default function OnboardingCompany() {
   const [documentFile, setDocumentFile] = useState<File | null>(null);
   const [certified, setCertified] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  
+  // Nouveaux champs pour l'IA
+  const [employeeRange, setEmployeeRange] = useState("");
+  const [targetType, setTargetType] = useState("");
+  const [fullAddress, setFullAddress] = useState("");
 
   // Vérifier si l'onboarding est déjà complété
   useEffect(() => {
@@ -44,16 +50,27 @@ export default function OnboardingCompany() {
 
       const { data: profile } = await supabase
         .from('profiles')
-        .select('email')
+        .select('company_siret, company_legal_name, firstname, lastname')
         .eq('user_id', user.id)
         .single();
       
-      // Pour l'instant on ne redirige pas car on n'a pas encore les colonnes company_
-      // On vérifiera plus tard
+      // Si l'entreprise est déjà validée, rediriger vers le dashboard
+      if (profile?.company_siret && profile?.company_legal_name) {
+        toast({
+          title: "Profil déjà complété",
+          description: "Vous pouvez lancer vos audits.",
+        });
+        navigate('/dashboard');
+        return;
+      }
+      
+      // Pré-remplir les champs si disponibles
+      if (profile?.firstname) setFirstname(profile.firstname);
+      if (profile?.lastname) setLastname(profile.lastname);
     };
     
     checkOnboarding();
-  }, [navigate]);
+  }, [navigate, toast]);
 
   const handleValidateSiret = async () => {
     if (!siret || siret.length !== 14) {
@@ -74,6 +91,21 @@ export default function OnboardingCompany() {
       if (data.valid) {
         setCompanyData(data);
         setSiretValid(true);
+        
+        // Pré-remplir l'adresse si disponible
+        if (data.address) {
+          setFullAddress(data.address);
+        }
+        
+        // Pré-remplir la tranche d'effectif si disponible
+        if (data.employees) {
+          const emp = parseInt(data.employees);
+          if (emp <= 10) setEmployeeRange("1-10");
+          else if (emp <= 50) setEmployeeRange("11-50");
+          else if (emp <= 200) setEmployeeRange("51-200");
+          else setEmployeeRange("200+");
+        }
+        
         toast({
           title: "✅ SIRET validé",
           description: `Entreprise : ${data.legalName}`,
@@ -138,24 +170,60 @@ export default function OnboardingCompany() {
         documentUrl = await handleFileUpload(documentFile);
       }
 
-      // Sauvegarder dans profiles (temporairement sans les champs company_)
-      const { error } = await supabase
+      // Créer ou mettre à jour l'entreprise dans la table companies
+      const { data: company, error: companyError } = await supabase
+        .from('companies')
+        .upsert({
+          siret: siret,
+          siren: companyData.siren,
+          name: companyData.legalName,
+          address: fullAddress || companyData.address,
+          city: companyData.city || 'Non renseigné',
+          country: 'France',
+          website: website,
+          industry: targetType,
+          employee_count: employeeRange ? parseInt(employeeRange.split('-')[0]) : null,
+          size_estimate: employeeRange,
+        }, { onConflict: 'siret' })
+        .select()
+        .single();
+
+      if (companyError) {
+        console.error('Error creating company:', companyError);
+        // Continuer même si l'entreprise existe déjà
+      }
+
+      // Sauvegarder dans profiles avec toutes les infos entreprise
+      const { error: profileError } = await supabase
         .from('profiles')
         .update({
           firstname,
           lastname,
-          email: user.email,
+          job_title: jobTitle,
+          professional_email: professionalEmail || null,
+          professional_phone: professionalPhone || null,
+          verification_document_url: documentUrl,
+          verification_method: 'api_recherche_entreprise',
+          company_siret: siret,
+          company_siren: companyData.siren,
+          company_legal_name: companyData.legalName,
+          company_legal_form: companyData.legalForm,
+          company_address: fullAddress || companyData.address,
+          company_creation_date: companyData.creationDate,
+          company_website: website,
+          company_id: company?.id || null,
+          gdpr_consent: certified,
         })
         .eq('user_id', user.id);
 
-      if (error) throw error;
+      if (profileError) throw profileError;
 
       toast({
-        title: "✅ Profil complété avec succès !",
-        description: "Vous pouvez maintenant accéder à votre compte.",
+        title: "✅ Profil entreprise complété !",
+        description: "Vous pouvez maintenant lancer vos audits stratégiques.",
       });
 
-      navigate('/');
+      navigate('/dashboard');
     } catch (error: any) {
       console.error('Erreur sauvegarde:', error);
       toast({
@@ -171,11 +239,31 @@ export default function OnboardingCompany() {
   return (
     <div className="min-h-screen bg-background py-12 px-4">
       <div className="max-w-3xl mx-auto">
+        {/* Boutons de navigation */}
+        <div className="flex items-center gap-4 mb-6">
+          <Button 
+            variant="ghost" 
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Retour
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => navigate('/')}
+            className="flex items-center gap-2"
+          >
+            <Home className="h-4 w-4" />
+            Accueil
+          </Button>
+        </div>
+
         <Card className="border-2 shadow-lg">
           <CardHeader className="text-center">
             <CardTitle className="text-3xl">Identification de votre entreprise</CardTitle>
             <CardDescription>
-              Ces informations nous permettent de personnaliser votre audit et de garantir la qualité des analyses.
+              Ces informations nous permettent de personnaliser votre audit et de garantir la qualité des analyses IA.
             </CardDescription>
           </CardHeader>
 
@@ -190,7 +278,7 @@ export default function OnboardingCompany() {
                     <Input
                       id="siret"
                       type="text"
-                      placeholder="14 chiffres (ex: 12345678901234)"
+                      placeholder="14 chiffres (ex: 85780250800047)"
                       value={siret}
                       onChange={(e) => {
                         const value = e.target.value.replace(/\D/g, '');
@@ -236,7 +324,7 @@ export default function OnboardingCompany() {
                     <Alert className="border-green-500 bg-green-50">
                       <CheckCircle2 className="h-4 w-4 text-green-600" />
                       <AlertDescription className="text-green-700">
-                        SIRET validé avec succès
+                        SIRET validé avec succès - Entreprise identifiée
                       </AlertDescription>
                     </Alert>
                   )}
@@ -251,22 +339,47 @@ export default function OnboardingCompany() {
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
                       <Label>Raison sociale</Label>
-                      <Input value={companyData.legalName} disabled />
+                      <Input value={companyData.legalName} disabled className="bg-muted" />
                     </div>
                     
                     <div className="space-y-2">
                       <Label>Date de création</Label>
-                      <Input value={companyData.creationDate} disabled />
-                    </div>
-                    
-                    <div className="space-y-2 md:col-span-2">
-                      <Label>Adresse du siège</Label>
-                      <Input value={companyData.address} disabled />
+                      <Input value={companyData.creationDate} disabled className="bg-muted" />
                     </div>
                     
                     <div className="space-y-2">
                       <Label>Forme juridique</Label>
-                      <Input value={companyData.legalForm} disabled />
+                      <Input value={companyData.legalForm} disabled className="bg-muted" />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="employeeRange">Effectif (Tranche salariale) *</Label>
+                      <Select value={employeeRange} onValueChange={setEmployeeRange} required>
+                        <SelectTrigger id="employeeRange">
+                          <SelectValue placeholder="Sélectionnez une tranche" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1-10">1 à 10 salariés</SelectItem>
+                          <SelectItem value="11-50">11 à 50 salariés</SelectItem>
+                          <SelectItem value="51-200">51 à 200 salariés</SelectItem>
+                          <SelectItem value="200+">Plus de 200 salariés</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="targetType">Type de Cible *</Label>
+                      <Select value={targetType} onValueChange={setTargetType} required>
+                        <SelectTrigger id="targetType">
+                          <SelectValue placeholder="B2B, B2C, B2B2C..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="B2B">B2B (Entreprises)</SelectItem>
+                          <SelectItem value="B2C">B2C (Particuliers)</SelectItem>
+                          <SelectItem value="B2B2C">B2B2C (Mixte)</SelectItem>
+                          <SelectItem value="Marketplace">Marketplace</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                     
                     <div className="space-y-2">
@@ -278,6 +391,17 @@ export default function OnboardingCompany() {
                         value={website}
                         onChange={(e) => setWebsite(e.target.value)}
                         required
+                      />
+                    </div>
+                    
+                    <div className="space-y-2 md:col-span-2">
+                      <Label htmlFor="fullAddress">Adresse complète du siège</Label>
+                      <Textarea
+                        id="fullAddress"
+                        placeholder="Adresse, Code postal, Ville"
+                        value={fullAddress}
+                        onChange={(e) => setFullAddress(e.target.value)}
+                        className="min-h-[80px]"
                       />
                     </div>
                   </div>
@@ -418,20 +542,28 @@ export default function OnboardingCompany() {
                       htmlFor="certified"
                       className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                     >
-                      Je certifie être habilité à représenter cette entreprise et que les informations fournies sont exactes.
+                      Je certifie être habilité à représenter cette entreprise et que les informations fournies sont exactes. J'accepte les CGU et la politique RGPD.
                     </label>
                   </div>
                 </div>
               )}
 
-              {/* Bouton de validation */}
+              {/* Boutons d'action */}
               {siretValid && (
-                <div className="pt-6">
+                <div className="pt-6 flex gap-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => navigate('/')}
+                    className="flex-1"
+                  >
+                    Annuler
+                  </Button>
                   <Button
                     type="submit"
-                    className="w-full"
+                    className="flex-1"
                     size="lg"
-                    disabled={!certified || !jobTitle || !firstname || !lastname || !website || submitting}
+                    disabled={!certified || !jobTitle || !firstname || !lastname || !website || !employeeRange || !targetType || submitting}
                   >
                     {submitting ? (
                       <>

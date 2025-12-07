@@ -58,15 +58,45 @@ export const PreAuditForm = () => {
     setStep("collecting");
     
     try {
-      // Étape 1: Créer le pre-audit et lancer l'orchestration
+      // Récupérer l'utilisateur actuel
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // Vérification 1: Utilisateur connecté ?
+      if (!user) {
+        toast({
+          title: "🔐 Connexion requise",
+          description: "Veuillez vous connecter pour lancer un audit.",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        setStep("idle");
+        navigate('/auth');
+        return;
+      }
+
+      // Vérification 2: Profil entreprise complété ?
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_siret, company_legal_name, company_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!profile?.company_siret || !profile?.company_legal_name) {
+        toast({
+          title: "🏢 Identification requise",
+          description: "Veuillez compléter votre fiche d'identité entreprise pour initialiser l'IA.",
+        });
+        setIsLoading(false);
+        setStep("idle");
+        navigate('/onboarding/company');
+        return;
+      }
+
+      // Profil complet, on peut lancer l'audit
       toast({
         title: "🔍 Initialisation...",
         description: "Création de l'audit et préparation des agents",
       });
-
-      // Récupérer l'utilisateur actuel
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Non authentifié');
 
       // Créer le pre_audit
       const { data: preAudit, error: insertError } = await supabase
@@ -75,7 +105,9 @@ export const PreAuditForm = () => {
           url: website.trim(),
           status: 'pending',
           created_by: user.id,
-          current_phase: 'PHASE_0_INIT'
+          current_phase: 'PHASE_0_INIT',
+          company_id: profile.company_id || null,
+          company_siret: profile.company_siret,
         })
         .select()
         .single();
