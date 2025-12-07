@@ -9,7 +9,8 @@ import {
   Settings,
   ChevronRight,
   GitBranch,
-  FlaskConical
+  FlaskConical,
+  Layers
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -70,6 +71,12 @@ export function AdminSidebar({ pendingCount = 0, unreadMessages = 0 }: AdminSide
       href: "/admin/test-campaign",
       icon: FlaskConical,
       badge: null,
+    },
+    {
+      name: "Test Multi-Niveaux",
+      href: "/admin/test-tiered",
+      icon: Layers,
+      badge: "NEW",
     },
   ];
 

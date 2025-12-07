@@ -26,6 +26,7 @@ import AdminAudits from "./pages/AdminAudits";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminMessages from "./pages/AdminMessages";
 import TestDataSender from "./pages/TestDataSender";
+import TestTieredCampaign from "./pages/TestTieredCampaign";
 import AdminBlog from "./pages/AdminBlog";
 import AdminUsers from "./pages/AdminUsers";
 import ClientAudits from "./pages/ClientAudits";
@@ -132,6 +133,11 @@ const App = () => {
             <Route path="/admin/test-campaign" element={
               <ProtectedRoute requireAuth requireAdmin>
                 <TestDataSender />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/test-tiered" element={
+              <ProtectedRoute requireAuth requireAdmin>
+                <TestTieredCampaign />
               </ProtectedRoute>
             } />
             <Route path="/admin/veille-ia" element={
