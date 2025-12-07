@@ -8,7 +8,8 @@ import {
   Users,
   Settings,
   ChevronRight,
-  GitBranch
+  GitBranch,
+  FlaskConical
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -62,6 +63,12 @@ export function AdminSidebar({ pendingCount = 0, unreadMessages = 0 }: AdminSide
       name: "Synchronisation",
       href: "/admin/sync",
       icon: GitBranch,
+      badge: null,
+    },
+    {
+      name: "Campagne de Test",
+      href: "/admin/test-campaign",
+      icon: FlaskConical,
       badge: null,
     },
   ];
