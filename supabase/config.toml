@@ -59,3 +59,9 @@ verify_jwt = true
 
 [functions.audit-html-advanced]
 verify_jwt = true
+
+[functions.test-tiered-campaign]
+verify_jwt = true
+
+[functions.generate-blog-article]
+verify_jwt = true
