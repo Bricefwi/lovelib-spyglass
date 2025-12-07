@@ -78,16 +78,20 @@ serve(async (req) => {
       }
     }
 
-    // Données de l'audit
+    // Données de l'audit - Support pre_audits OU content direct
     const preAudit = report.pre_audits;
-    const data = preAudit?.consolidated || {};
-    const clientCompany = preAudit?.company_guess || data.company?.name || "Entreprise";
-    const clientUrl = preAudit?.url || "#";
+    // Priorité: pre_audits.consolidated > report.content > {}
+    const data = preAudit?.consolidated || report.content || {};
+    const clientCompany = preAudit?.company_guess || data.company?.name || report.title?.replace(/\[TEST.*?\]\s*/g, '') || "Entreprise";
+    const clientUrl = preAudit?.url || data.url || "#";
     const dateGen = new Date(report.created_at).toLocaleDateString('fr-FR', {
       year: 'numeric',
       month: 'long',
       day: 'numeric'
     });
+    
+    console.log('📊 Data source:', preAudit?.consolidated ? 'pre_audits.consolidated' : report.content ? 'report.content' : 'empty');
+    console.log('📊 Scores:', JSON.stringify(data.scores));
 
     // Scores sécurisés
     const scoreMarket = data.scores?.market ?? data.scores?.global ?? 0;
