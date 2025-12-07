@@ -1234,6 +1234,7 @@ export type Database = {
           account_status: string | null
           block_reason: string | null
           blocked_until: string | null
+          branding_config: Json | null
           company_address: string | null
           company_creation_date: string | null
           company_id: string | null
@@ -1261,6 +1262,7 @@ export type Database = {
           professional_phone: string | null
           rejection_reason: string | null
           role: Database["public"]["Enums"]["app_role"]
+          subscription_plan: string | null
           subscription_status: string | null
           trust_score: number | null
           updated_at: string
@@ -1272,6 +1274,7 @@ export type Database = {
           account_status?: string | null
           block_reason?: string | null
           blocked_until?: string | null
+          branding_config?: Json | null
           company_address?: string | null
           company_creation_date?: string | null
           company_id?: string | null
@@ -1299,6 +1302,7 @@ export type Database = {
           professional_phone?: string | null
           rejection_reason?: string | null
           role?: Database["public"]["Enums"]["app_role"]
+          subscription_plan?: string | null
           subscription_status?: string | null
           trust_score?: number | null
           updated_at?: string
@@ -1310,6 +1314,7 @@ export type Database = {
           account_status?: string | null
           block_reason?: string | null
           blocked_until?: string | null
+          branding_config?: Json | null
           company_address?: string | null
           company_creation_date?: string | null
           company_id?: string | null
@@ -1337,6 +1342,7 @@ export type Database = {
           professional_phone?: string | null
           rejection_reason?: string | null
           role?: Database["public"]["Enums"]["app_role"]
+          subscription_plan?: string | null
           subscription_status?: string | null
           trust_score?: number | null
           updated_at?: string
