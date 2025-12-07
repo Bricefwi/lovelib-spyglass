@@ -129,9 +129,14 @@ const App = () => {
                 <VeilleIA />
               </ProtectedRoute>
             } />
-            <Route path="/test-data-sender" element={
-              <ProtectedRoute requireAuth>
+            <Route path="/admin/test-campaign" element={
+              <ProtectedRoute requireAuth requireAdmin>
                 <TestDataSender />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/veille-ia" element={
+              <ProtectedRoute requireAuth requireAdmin>
+                <VeilleIA />
               </ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
