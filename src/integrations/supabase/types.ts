@@ -1146,6 +1146,7 @@ export type Database = {
         Row: {
           ai_tier: string | null
           audit_logs: Json | null
+          available_choices: Json | null
           company_guess: string | null
           company_id: string | null
           company_siret: string | null
@@ -1156,10 +1157,12 @@ export type Database = {
           current_phase: string | null
           domain: string | null
           id: string
+          interaction_step: string | null
           last_step: string | null
           organization_id: string | null
           raw_sources: Json | null
           report_html_url: string | null
+          selected_choice: string | null
           sources_raw: Json | null
           status: string
           timeline: Json | null
@@ -1169,6 +1172,7 @@ export type Database = {
         Insert: {
           ai_tier?: string | null
           audit_logs?: Json | null
+          available_choices?: Json | null
           company_guess?: string | null
           company_id?: string | null
           company_siret?: string | null
@@ -1179,10 +1183,12 @@ export type Database = {
           current_phase?: string | null
           domain?: string | null
           id?: string
+          interaction_step?: string | null
           last_step?: string | null
           organization_id?: string | null
           raw_sources?: Json | null
           report_html_url?: string | null
+          selected_choice?: string | null
           sources_raw?: Json | null
           status?: string
           timeline?: Json | null
@@ -1192,6 +1198,7 @@ export type Database = {
         Update: {
           ai_tier?: string | null
           audit_logs?: Json | null
+          available_choices?: Json | null
           company_guess?: string | null
           company_id?: string | null
           company_siret?: string | null
@@ -1202,10 +1209,12 @@ export type Database = {
           current_phase?: string | null
           domain?: string | null
           id?: string
+          interaction_step?: string | null
           last_step?: string | null
           organization_id?: string | null
           raw_sources?: Json | null
           report_html_url?: string | null
+          selected_choice?: string | null
           sources_raw?: Json | null
           status?: string
           timeline?: Json | null
