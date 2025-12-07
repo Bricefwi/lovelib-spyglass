@@ -27,6 +27,9 @@ verify_jwt = true
 [functions.orchestrate-multi-agent-v3]
 verify_jwt = true
 
+[functions.orchestrate-multi-agent-v4]
+verify_jwt = true
+
 [functions.send-auth-diagnostic]
 verify_jwt = false
 
@@ -49,4 +52,10 @@ verify_jwt = false
 verify_jwt = true
 
 [functions.generate-strategic-options]
+verify_jwt = true
+
+[functions.send-test-reports]
+verify_jwt = true
+
+[functions.audit-html-advanced]
 verify_jwt = true
