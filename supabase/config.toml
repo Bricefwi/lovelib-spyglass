@@ -65,3 +65,6 @@ verify_jwt = false
 
 [functions.generate-blog-article]
 verify_jwt = true
+
+[functions.orchestrate-deep-research]
+verify_jwt = true
