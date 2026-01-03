@@ -48,7 +48,7 @@ const MASTER_PROMPTS = {
     **Analysis Areas:**
     1.  **On-Page SEO:** Title tags, meta descriptions, header tags, keyword density, internal linking, URL structure.
     2.  **Off-Page SEO:** Backlink profile (quality, quantity, anchor text), domain authority.
-    3.  **Technical SEO:** `robots.txt`, `sitemap.xml`, structured data (Schema.org), crawlability, indexability.
+    3.  **Technical SEO:** robots.txt, sitemap.xml, structured data (Schema.org), crawlability, indexability.
     4.  **Keyword Analysis:** Identify primary and secondary keywords, search intent, ranking opportunities.
     
     {modulator}

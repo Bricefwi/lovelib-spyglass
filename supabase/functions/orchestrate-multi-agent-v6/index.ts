@@ -14,7 +14,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { getAIConfigForPlan, getModelForTask, AIModelConfig } from "../_shared/aiModelsConfig.ts";
+import { getAIConfigForPlan, getModelForTask, ModelConfig, PlanTier, TaskType, PROVIDER_ENDPOINTS } from "../_shared/aiModelsConfig.ts";
 import { getPremiumPrompt } from "../_shared/aiPromptsPremium.ts";
 import { validateQuality } from "../_shared/qualityValidator.ts";
 import { generateInfographicsForPlan, getExpectedInfographicsCount } from "../_shared/infographicsGenerator.ts";
@@ -59,13 +59,13 @@ serve(async (req) => {
       throw new Error('Audit not found');
     }
 
-    const plan = audit.organizations.subscription_plan || 'freemium';
+    const plan = (audit.organizations?.subscription_plan || 'freemium') as PlanTier;
     console.log(`📊 Plan: ${plan}`);
-    console.log(`🏢 Organization: ${audit.organizations.name}`);
+    console.log(`🏢 Organization: ${audit.organizations?.name || 'Unknown'}`);
 
     // Get AI configuration
     const aiConfig = getAIConfigForPlan(plan);
-    console.log(`🤖 AI Models: ${aiConfig.primaryModel.displayName}, ${aiConfig.researchModel.displayName}, ${aiConfig.analysisModel.displayName}`);
+    console.log(`🤖 AI Models: ${aiConfig.displayModels}`);
 
     // Get length target
     const lengthTarget = getLengthTarget(plan);
@@ -97,10 +97,10 @@ serve(async (req) => {
     ];
 
     // Filter agents based on plan
-    const planHierarchy = { freemium: 0, pro: 1, agency: 2, enterprise: 3 };
+    const planHierarchy: Record<PlanTier, number> = { freemium: 0, pro: 1, agency: 2, enterprise: 3 };
     const currentPlanLevel = planHierarchy[plan];
     
-    const activeAgents = ALL_AGENTS.filter(agent => planHierarchy[agent.minPlan] <= currentPlanLevel);
+    const activeAgents = ALL_AGENTS.filter(agent => planHierarchy[agent.minPlan as PlanTier] <= currentPlanLevel);
     
     console.log(`🤖 Active Agents: ${activeAgents.length}/${ALL_AGENTS.length}`);
     console.log(`🎯 Agents: ${activeAgents.map(a => a.agent).join(', ')}`);
@@ -116,14 +116,23 @@ serve(async (req) => {
     for (const agent of activeAgents) {
       console.log(`\n🔄 Agent ${agent.id}/${activeAgents.length}: ${agent.agent}`);
       
+      // Map agent taskType to valid TaskType
+      const taskTypeMap: Record<string, TaskType> = {
+        'general': 'synthesis',
+        'analysis': 'analysis',
+        'research': 'research',
+        'writing': 'writing'
+      };
+      const taskType = taskTypeMap[agent.taskType] || 'analysis';
+      
       // Get the best model for this task
-      const model = getModelForTask(plan, agent.taskType);
-      console.log(`   📡 Model: ${model.displayName}`);
+      const model = getModelForTask(plan, taskType);
+      console.log(`   📡 Model: ${model.model} (${model.description})`);
 
       // Build premium prompt (500-1000 words)
       const context = {
         url: audit.url,
-        sector: audit.sector || 'general'
+        sector: (audit as any).sector || 'general'
       };
       const prompt = getPremiumPrompt(agent.name, plan, context);
       console.log(`   📝 Prompt length: ${prompt.length} characters`);
@@ -155,25 +164,21 @@ serve(async (req) => {
       } catch (error) {
         console.error(`   ❌ ${agent.agent} failed:`, error);
         
-        // Try fallback
-        if (aiConfig.fallbackModel) {
-          console.log(`   🔄 Retrying with fallback...`);
-          try {
-            const result = await executeAIAnalysis(
-              aiConfig.fallbackModel,
-              prompt,
-              audit,
-              agentResults
-            );
-            agentResults[agent.name] = result;
-            reportSections[agent.agent] = result;
-            console.log(`   ✅ ${agent.agent} completed with fallback`);
-          } catch (fallbackError) {
-            console.error(`   ❌ Fallback failed:`, fallbackError);
-            agentResults[agent.name] = `Error: Analysis failed for ${agent.agent}`;
-            reportSections[agent.agent] = '';
-          }
-        } else {
+        // Try fallback with freemium model
+        console.log(`   🔄 Retrying with fallback model...`);
+        try {
+          const fallbackModel = getModelForTask('freemium', taskType);
+          const result = await executeAIAnalysis(
+            fallbackModel,
+            prompt,
+            audit,
+            agentResults
+          );
+          agentResults[agent.name] = result;
+          reportSections[agent.agent] = result;
+          console.log(`   ✅ ${agent.agent} completed with fallback`);
+        } catch (fallbackError) {
+          console.error(`   ❌ Fallback failed:`, fallbackError);
           agentResults[agent.name] = `Error: Analysis failed for ${agent.agent}`;
           reportSections[agent.agent] = '';
         }
@@ -189,9 +194,9 @@ serve(async (req) => {
     const adjustedSections = await adjustReportLength(
       reportSections,
       plan,
-      async (prompt: string) => {
-        const model = getModelForTask(plan, 'writing');
-        return await executeAIAnalysis(model, prompt, audit, {});
+      async (expansionPrompt: string) => {
+        const writingModel = getModelForTask(plan, 'writing');
+        return await executeAIAnalysis(writingModel, expansionPrompt, audit, {});
       }
     );
 
@@ -234,13 +239,13 @@ serve(async (req) => {
       audit_id: audit.id,
       url: audit.url,
       plan,
-      organization: audit.organizations.name,
+      organization: audit.organizations?.name || 'Unknown',
       generated_at: new Date().toISOString(),
       models_used: {
-        primary: aiConfig.primaryModel.displayName,
-        research: aiConfig.researchModel.displayName,
-        analysis: aiConfig.analysisModel.displayName,
-        writing: aiConfig.writingModel.displayName
+        display: aiConfig.displayModels,
+        research: aiConfig.research.model,
+        analysis: aiConfig.analysis.model,
+        writing: aiConfig.writing.model
       },
       agents_executed: activeAgents.map(a => a.agent),
       sections: adjustedSections,
@@ -263,18 +268,13 @@ serve(async (req) => {
       .from('pre_audits')
       .update({
         status: 'completed',
-        progress: 100,
-        results: finalReport,
-        completed_at: new Date().toISOString()
+        consolidated: finalReport,
+        updated_at: new Date().toISOString()
       })
       .eq('id', audit_id);
 
-    // Decrement credits for freemium
-    if (plan === 'freemium') {
-      await supabase.rpc('decrement_organization_credits', {
-        org_id: audit.organizations.id
-      });
-    }
+    // Log completion
+    console.log('🎉 Audit completed and saved to database');
 
     console.log('\n=== ✅ Orchestration Completed Successfully ===');
     console.log(`📊 Final Metrics:`);
@@ -316,7 +316,7 @@ serve(async (req) => {
  * Execute AI analysis with the specified model
  */
 async function executeAIAnalysis(
-  model: AIModelConfig,
+  model: ModelConfig,
   prompt: string,
   audit: any,
   previousResults: Record<string, any>
@@ -328,13 +328,13 @@ async function executeAIAnalysis(
   
   // Route to the appropriate API
   switch (model.provider) {
-    case 'Google':
-      return await callGeminiAPI(model, fullPrompt);
-    case 'Anthropic':
+    case 'lovable':
+      return await callLovableAPI(model, fullPrompt);
+    case 'anthropic':
       return await callClaudeAPI(model, fullPrompt);
-    case 'OpenAI':
+    case 'openai':
       return await callOpenAIAPI(model, fullPrompt);
-    case 'Perplexity':
+    case 'perplexity':
       return await callPerplexityAPI(model, fullPrompt);
     default:
       throw new Error(`Unknown provider: ${model.provider}`);
@@ -363,39 +363,36 @@ function countScenarios(results: Record<string, any>): number {
   return scenarioMatches ? Math.min(scenarioMatches.length, 7) : 1;
 }
 
-// API call functions (same as v5)
-async function callGeminiAPI(model: AIModelConfig, prompt: string): Promise<string> {
-  const apiKey = Deno.env.get('GEMINI_API_KEY');
-  if (!apiKey) throw new Error('GEMINI_API_KEY not configured');
+// API call functions
+async function callLovableAPI(model: ModelConfig, prompt: string): Promise<string> {
+  const endpoint = PROVIDER_ENDPOINTS.lovable;
 
-  const response = await fetch(
-    `${model.apiEndpoint}?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: model.temperature,
-          maxOutputTokens: model.maxTokens
-        }
-      })
-    }
-  );
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: model.model,
+      messages: [{ role: 'user', content: prompt }],
+      max_tokens: model.maxTokens,
+      temperature: model.temperature
+    })
+  });
 
   if (!response.ok) {
-    throw new Error(`Gemini API error: ${response.statusText}`);
+    const errorText = await response.text();
+    throw new Error(`Lovable API error: ${response.status} - ${errorText}`);
   }
 
   const data = await response.json();
-  return data.candidates[0].content.parts[0].text;
+  return data.choices?.[0]?.message?.content || '';
 }
 
-async function callClaudeAPI(model: AIModelConfig, prompt: string): Promise<string> {
+async function callClaudeAPI(model: ModelConfig, prompt: string): Promise<string> {
   const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
   if (!apiKey) throw new Error('ANTHROPIC_API_KEY not configured');
 
-  const response = await fetch(model.apiEndpoint!, {
+  const endpoint = PROVIDER_ENDPOINTS.anthropic;
+  const response = await fetch(endpoint, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -410,18 +407,20 @@ async function callClaudeAPI(model: AIModelConfig, prompt: string): Promise<stri
   });
 
   if (!response.ok) {
-    throw new Error(`Claude API error: ${response.statusText}`);
+    const errorText = await response.text();
+    throw new Error(`Claude API error: ${response.status} - ${errorText}`);
   }
 
   const data = await response.json();
-  return data.content[0].text;
+  return data.content?.[0]?.text || '';
 }
 
-async function callOpenAIAPI(model: AIModelConfig, prompt: string): Promise<string> {
+async function callOpenAIAPI(model: ModelConfig, prompt: string): Promise<string> {
   const apiKey = Deno.env.get('OPENAI_API_KEY');
   if (!apiKey) throw new Error('OPENAI_API_KEY not configured');
 
-  const response = await fetch(model.apiEndpoint!, {
+  const endpoint = PROVIDER_ENDPOINTS.openai;
+  const response = await fetch(endpoint, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -436,18 +435,20 @@ async function callOpenAIAPI(model: AIModelConfig, prompt: string): Promise<stri
   });
 
   if (!response.ok) {
-    throw new Error(`OpenAI API error: ${response.statusText}`);
+    const errorText = await response.text();
+    throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
   }
 
   const data = await response.json();
-  return data.choices[0].message.content;
+  return data.choices?.[0]?.message?.content || '';
 }
 
-async function callPerplexityAPI(model: AIModelConfig, prompt: string): Promise<string> {
+async function callPerplexityAPI(model: ModelConfig, prompt: string): Promise<string> {
   const apiKey = Deno.env.get('SONAR_API_KEY');
   if (!apiKey) throw new Error('SONAR_API_KEY not configured');
 
-  const response = await fetch(model.apiEndpoint!, {
+  const endpoint = PROVIDER_ENDPOINTS.perplexity;
+  const response = await fetch(endpoint, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -462,9 +463,10 @@ async function callPerplexityAPI(model: AIModelConfig, prompt: string): Promise<
   });
 
   if (!response.ok) {
-    throw new Error(`Perplexity API error: ${response.statusText}`);
+    const errorText = await response.text();
+    throw new Error(`Perplexity API error: ${response.status} - ${errorText}`);
   }
 
   const data = await response.json();
-  return data.choices[0].message.content;
+  return data.choices?.[0]?.message?.content || '';
 }
