@@ -74,3 +74,6 @@ verify_jwt = true
 
 [functions.migration-analyzer]
 verify_jwt = true
+
+[functions.generate-blog-article]
+verify_jwt = false
