@@ -40,6 +40,7 @@ const Pricing = () => {
       auditsPerYear: 3,
       aiAgents: 7,
       aiModel: "Gemini 2.5 Flash Lite",
+      aiModelsDetail: ["🧠 Gemini 2.5 Flash Lite"],
       features: {
         included: [
           "3 audits gratuits",
@@ -72,12 +73,17 @@ const Pricing = () => {
       tier: "pro",
       name: "Pro",
       icon: Zap,
-      price: 49,
+      price: 149,
       period: "/mois",
       description: "Pour professionnels et PME",
       auditsPerYear: 60,
       aiAgents: 12,
-      aiModel: "Gemini 2.5 Flash",
+      aiModel: "Gemini 3 Pro + Claude Sonnet 4 + Perplexity",
+      aiModelsDetail: [
+        "🔬 Perplexity Sonar Pro (Recherche)",
+        "🧠 Gemini 3 Pro (Analyse & Stratégie)",
+        "✍️ Claude Sonnet 4 (Rédaction)"
+      ],
       features: {
         included: [
           "60 audits par an (5/mois)",
@@ -111,12 +117,18 @@ const Pricing = () => {
       tier: "agency",
       name: "Agency",
       icon: Building2,
-      price: 199,
+      price: 490,
       period: "/mois",
       description: "Pour agences et consultants",
       auditsPerYear: 240,
       aiAgents: 15,
-      aiModel: "Gemini 2.5 Pro",
+      aiModel: "Gemini 3 Pro + Claude Sonnet 4 + GPT-5 + Perplexity",
+      aiModelsDetail: [
+        "🔬 Perplexity Sonar Reasoning (Recherche)",
+        "🧠 Claude Sonnet 4 (Analyse)",
+        "📊 Gemini 3 Pro (Stratégie)",
+        "✍️ GPT-5 (Rédaction)"
+      ],
       features: {
         included: [
           "240 audits par an (20/mois)",
@@ -150,12 +162,18 @@ const Pricing = () => {
       tier: "enterprise",
       name: "Enterprise",
       icon: Rocket,
-      price: 499,
+      price: 990,
       period: "/mois",
       description: "Solution complète pour grandes organisations",
       auditsPerYear: 600,
       aiAgents: 17,
-      aiModel: "Gemini 2.5 Pro + GPT-4o",
+      aiModel: "Claude Opus 4.5 + GPT-5 + Perplexity Reasoning",
+      aiModelsDetail: [
+        "🔬 Perplexity Sonar Reasoning (Recherche)",
+        "🧠 GPT-5 (Analyse)",
+        "📊 Claude Opus 4.5 (Stratégie)",
+        "✍️ Claude Opus 4.5 (Rédaction)"
+      ],
       features: {
         included: [
           "600 audits par an (50/mois)",
@@ -257,13 +275,19 @@ const Pricing = () => {
                     </div>
 
                     {/* AI Info */}
-                    <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-                      <p className="text-xs font-semibold text-gray-700 mb-1">
+                    <div className="mb-4 p-3 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg border border-gray-200">
+                      <p className="text-xs font-semibold text-gray-700 mb-2">
                         🤖 {plan.aiAgents} agents IA
                       </p>
-                      <p className="text-xs text-gray-600">
-                        {plan.aiModel}
-                      </p>
+                      <div className="space-y-1">
+                        {(plan as any).aiModelsDetail?.map((model: string, idx: number) => (
+                          <p key={idx} className="text-xs text-gray-600">
+                            {model}
+                          </p>
+                        )) || (
+                          <p className="text-xs text-gray-600">{plan.aiModel}</p>
+                        )}
+                      </div>
                     </div>
 
                     {/* Description */}
@@ -361,9 +385,11 @@ const Pricing = () => {
                   Quels modèles d'IA utilisez-vous ?
                 </h3>
                 <p className="text-gray-600">
-                  Nous utilisons Google Gemini 2.5 (Flash Lite pour Freemium, Flash pour Pro, 
-                  Pro pour Agency/Enterprise) et GPT-4o pour les analyses les plus complexes. 
-                  Les plans supérieurs bénéficient des modèles les plus avancés pour une qualité maximale.
+                  Nous utilisons les meilleurs modèles IA du marché, routés intelligemment par tâche : 
+                  <strong> Perplexity Sonar</strong> pour la recherche web, <strong>Gemini 3 Pro</strong> pour l'analyse, 
+                  <strong> Claude Opus 4.5</strong> et <strong>GPT-5</strong> pour la stratégie et la rédaction. 
+                  Chaque plan débloque des modèles plus puissants — l'Enterprise utilise les modèles les plus 
+                  avancés pour une qualité de niveau McKinsey.
                 </p>
               </div>
 

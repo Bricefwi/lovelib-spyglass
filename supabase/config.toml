@@ -30,6 +30,9 @@ verify_jwt = true
 [functions.orchestrate-multi-agent-v4]
 verify_jwt = true
 
+[functions.orchestrate-multi-agent-v5]
+verify_jwt = true
+
 [functions.send-auth-diagnostic]
 verify_jwt = false
 
@@ -64,7 +67,7 @@ verify_jwt = true
 verify_jwt = false
 
 [functions.generate-blog-article]
-verify_jwt = true
+verify_jwt = false
 
 [functions.orchestrate-deep-research]
 verify_jwt = true
@@ -74,6 +77,3 @@ verify_jwt = true
 
 [functions.migration-analyzer]
 verify_jwt = true
-
-[functions.generate-blog-article]
-verify_jwt = false
