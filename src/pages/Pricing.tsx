@@ -77,7 +77,7 @@ const Pricing = () => {
       description: "Pour professionnels et PME",
       auditsPerYear: 60,
       aiAgents: 12,
-      aiModel: "Gemini 2.5 Flash",
+      aiModel: "Gemini 3 Pro + Claude Sonnet 4 + Perplexity Sonar Pro",
       features: {
         included: [
           "60 audits par an (5/mois)",
@@ -116,7 +116,7 @@ const Pricing = () => {
       description: "Pour agences et consultants",
       auditsPerYear: 240,
       aiAgents: 15,
-      aiModel: "Gemini 2.5 Pro",
+      aiModel: "Gemini 3 Pro + Claude Sonnet 4 + GPT-4o + Perplexity Reasoning",
       features: {
         included: [
           "240 audits par an (20/mois)",
@@ -155,7 +155,7 @@ const Pricing = () => {
       description: "Solution complète pour grandes organisations",
       auditsPerYear: 600,
       aiAgents: 17,
-      aiModel: "Gemini 2.5 Pro + GPT-4o",
+      aiModel: "Claude Opus 4.5 + GPT-5.2 + Perplexity Reasoning",
       features: {
         included: [
           "600 audits par an (50/mois)",
