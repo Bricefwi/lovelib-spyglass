@@ -56,39 +56,39 @@ const API_ENDPOINTS = {
 export const LATEST_MODELS = {
   // OpenAI - GPT-5 Series (Janvier 2026)
   openai: {
-    'gpt-5.2-pro': 'gpt-5-2025-08-07',           // Top-tier Enterprise - Le meilleur
-    'gpt-5.2': 'gpt-5-2025-08-07',               // Standard GPT-5.2
-    'gpt-5.1': 'gpt-5-2025-08-07',               // GPT-5.1
-    'gpt-5': 'gpt-5-2025-08-07',                 // GPT-5 base
-    'gpt-5-mini': 'gpt-5-mini-2025-08-07',       // Économique
-    'gpt-4o': 'gpt-4o',                          // Fallback
-    'o1-pro': 'o3-2025-04-16',                   // Reasoning avancé - Excellent pour stratégie
-    'o1': 'o4-mini-2025-04-16',                  // Reasoning standard
+    'gpt-5.2-pro': 'gpt-5.2-pro',
+    'gpt-5.2': 'gpt-5.2',
+    'gpt-5.1': 'gpt-5.1',
+    'gpt-5': 'gpt-5',
+    'gpt-5-mini': 'gpt-5-mini',
+    'gpt-4o': 'gpt-4o',
+    'o1-pro': 'o1-pro',
+    'o1': 'o1',
   },
   
-  // Anthropic - Claude 4.5 Series (Les meilleurs modèles Claude)
+  // Anthropic - Claude 4.5 Series
   anthropic: {
-    'claude-opus-4-5': 'claude-opus-4-5-20251101',     // TOP-TIER - Le plus intelligent
-    'claude-sonnet-4-5': 'claude-sonnet-4-5',          // Excellent rapport qualité/performance
-    'claude-haiku-4-5': 'claude-3-5-haiku-20241022',   // Fast & économique
+    'claude-opus-4-5': 'claude-opus-4-5-20251101',
+    'claude-sonnet-4-5': 'claude-sonnet-4-5-20250929',
+    'claude-haiku-4-5': 'claude-haiku-4-5-20251001',
   },
   
-  // Perplexity - Sonar Series (Pro & Labs - Les meilleurs pour la recherche)
+  // Perplexity - Sonar Series
   perplexity: {
-    'sonar-deep-research': 'sonar-deep-research',   // LABS - Deep Research ultra-profond
-    'sonar-reasoning-pro': 'sonar-reasoning-pro',   // Reasoning avancé avec citations
-    'sonar-reasoning': 'sonar-reasoning',           // Reasoning standard
-    'sonar-pro': 'sonar-pro',                       // PRO - Recherche avancée avec citations
-    'sonar': 'sonar',                               // Standard
+    'sonar-deep-research': 'sonar-deep-research',
+    'sonar-reasoning-pro': 'sonar-reasoning-pro',
+    'sonar-reasoning': 'sonar-reasoning',
+    'sonar-pro': 'sonar-pro',
+    'sonar': 'sonar',
   },
   
-  // Google - Gemini Series
+  // Google - Gemini 3 Series
   google: {
-    'gemini-3-pro': 'gemini-2.5-pro',               // Pro avec Deep Research
-    'gemini-3-flash': 'gemini-2.5-flash',           // Flash rapide
-    'gemini-2.5-pro': 'gemini-2.5-pro',             // Pro preview
-    'gemini-2.5-flash': 'gemini-2.5-flash',         // Flash économique
-    'gemini-2.5-flash-lite': 'gemini-2.5-flash-lite', // Ultra économique (Freemium)
+    'gemini-3-pro': 'gemini-3.0-pro',
+    'gemini-3-flash': 'gemini-3.0-flash',
+    'gemini-2.5-pro': 'gemini-2.5-pro-preview',
+    'gemini-2.5-flash': 'gemini-2.5-flash',
+    'gemini-2.5-flash-lite': 'gemini-2.5-flash-lite',
   }
 };
 
@@ -130,8 +130,6 @@ export async function callAI(options: AICallOptions): Promise<AIResponse> {
     }
   } catch (error) {
     console.error(`❌ AI Call Error (${provider}/${model}):`, error);
-    
-    // Tentative de fallback
     return await handleFallback(options, error);
   }
 }
@@ -153,7 +151,6 @@ async function callOpenAI(
     throw new Error('OPENAI_API_KEY not configured');
   }
 
-  // Résoudre le nom du modèle
   const resolvedModel = LATEST_MODELS.openai[model as keyof typeof LATEST_MODELS.openai] || model;
 
   const response = await fetch(API_ENDPOINTS.openai, {
@@ -168,7 +165,8 @@ async function callOpenAI(
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
       ],
-      max_completion_tokens: maxTokens
+      max_tokens: maxTokens,
+      temperature: temperature
     })
   });
 
@@ -208,7 +206,6 @@ async function callAnthropic(
     throw new Error('ANTHROPIC_API_KEY not configured');
   }
 
-  // Résoudre le nom du modèle
   const resolvedModel = LATEST_MODELS.anthropic[model as keyof typeof LATEST_MODELS.anthropic] || model;
 
   const response = await fetch(API_ENDPOINTS.anthropic, {
@@ -236,7 +233,6 @@ async function callAnthropic(
 
   const data = await response.json();
   
-  // Extraire le contenu de la réponse Anthropic
   const content = data.content
     .filter((block: any) => block.type === 'text')
     .map((block: any) => block.text)
@@ -255,7 +251,7 @@ async function callAnthropic(
 }
 
 // ============================================================================
-// PERPLEXITY IMPLEMENTATION (avec citations)
+// PERPLEXITY IMPLEMENTATION
 // ============================================================================
 
 async function callPerplexity(
@@ -272,7 +268,6 @@ async function callPerplexity(
     throw new Error('PERPLEXITY_API_KEY not configured');
   }
 
-  // Résoudre le nom du modèle
   const resolvedModel = LATEST_MODELS.perplexity[model as keyof typeof LATEST_MODELS.perplexity] || model;
 
   const response = await fetch(API_ENDPOINTS.perplexity, {
@@ -331,9 +326,7 @@ async function callGoogle(
     throw new Error('GOOGLE_AI_API_KEY not configured');
   }
 
-  // Résoudre le nom du modèle
   const resolvedModel = LATEST_MODELS.google[model as keyof typeof LATEST_MODELS.google] || model;
-
   const endpoint = `${API_ENDPOINTS.google}/${resolvedModel}:generateContent?key=${apiKey}`;
 
   const response = await fetch(endpoint, {
@@ -364,7 +357,6 @@ async function callGoogle(
 
   const data = await response.json();
   
-  // Extraire le contenu de la réponse Google
   const content = data.candidates?.[0]?.content?.parts
     ?.map((part: any) => part.text)
     .join('\n') || '';
@@ -382,7 +374,7 @@ async function callGoogle(
 }
 
 // ============================================================================
-// LOVABLE GATEWAY (Fallback)
+// LOVABLE GATEWAY
 // ============================================================================
 
 async function callLovableGateway(
@@ -449,7 +441,7 @@ async function handleFallback(options: AICallOptions, originalError: any): Promi
   ];
 
   for (const fallback of fallbackChain) {
-    if (fallback.provider === options.provider) continue; // Skip the failed provider
+    if (fallback.provider === options.provider) continue;
     
     try {
       console.log(`   🔄 Trying fallback: ${fallback.provider}/${fallback.model}`);
@@ -465,7 +457,6 @@ async function handleFallback(options: AICallOptions, originalError: any): Promi
     }
   }
 
-  // Si tous les fallbacks échouent
   return {
     content: '',
     model: options.model,
@@ -478,9 +469,6 @@ async function handleFallback(options: AICallOptions, originalError: any): Promi
 // HELPER FUNCTIONS
 // ============================================================================
 
-/**
- * Appel parallèle à plusieurs modèles pour comparaison
- */
 export async function callMultipleModels(
   models: Array<{ provider: AIProvider; model: string }>,
   systemPrompt: string,
@@ -500,9 +488,6 @@ export async function callMultipleModels(
   return await Promise.all(calls);
 }
 
-/**
- * Recherche approfondie avec Perplexity
- */
 export async function deepResearch(
   query: string,
   model: 'sonar-pro' | 'sonar-reasoning' | 'sonar-deep-research' = 'sonar-pro'
@@ -519,9 +504,6 @@ export async function deepResearch(
   });
 }
 
-/**
- * Synthèse avec Claude Opus 4.5
- */
 export async function premiumSynthesis(
   content: string,
   instructions: string
@@ -537,9 +519,6 @@ export async function premiumSynthesis(
   });
 }
 
-/**
- * Vérification des clés API disponibles
- */
 export function checkAvailableProviders(): Record<AIProvider, boolean> {
   return {
     openai: !!Deno.env.get('OPENAI_API_KEY'),
