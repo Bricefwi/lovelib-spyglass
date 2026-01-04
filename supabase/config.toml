@@ -1,5 +1,8 @@
 project_id = "gzfrcshvrktpejctlgta"
 
+[functions.follow-up-conversation]
+verify_jwt = false
+
 [functions.preaudit]
 verify_jwt = true
 

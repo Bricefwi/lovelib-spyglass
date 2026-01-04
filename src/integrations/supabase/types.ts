@@ -1154,6 +1154,7 @@ export type Database = {
           consolidated: Json | null
           conversation_completed: boolean | null
           conversation_completed_at: string | null
+          conversation_history: Json | null
           conversation_started_at: string | null
           conversational_brief: Json | null
           created_at: string | null
@@ -1161,6 +1162,9 @@ export type Database = {
           current_phase: string | null
           domain: string | null
           email_verified: boolean | null
+          follow_up_expires_at: string | null
+          follow_up_messages_count: number | null
+          follow_up_token: string | null
           id: string
           interaction_step: string | null
           last_step: string | null
@@ -1190,6 +1194,7 @@ export type Database = {
           consolidated?: Json | null
           conversation_completed?: boolean | null
           conversation_completed_at?: string | null
+          conversation_history?: Json | null
           conversation_started_at?: string | null
           conversational_brief?: Json | null
           created_at?: string | null
@@ -1197,6 +1202,9 @@ export type Database = {
           current_phase?: string | null
           domain?: string | null
           email_verified?: boolean | null
+          follow_up_expires_at?: string | null
+          follow_up_messages_count?: number | null
+          follow_up_token?: string | null
           id?: string
           interaction_step?: string | null
           last_step?: string | null
@@ -1226,6 +1234,7 @@ export type Database = {
           consolidated?: Json | null
           conversation_completed?: boolean | null
           conversation_completed_at?: string | null
+          conversation_history?: Json | null
           conversation_started_at?: string | null
           conversational_brief?: Json | null
           created_at?: string | null
@@ -1233,6 +1242,9 @@ export type Database = {
           current_phase?: string | null
           domain?: string | null
           email_verified?: boolean | null
+          follow_up_expires_at?: string | null
+          follow_up_messages_count?: number | null
+          follow_up_token?: string | null
           id?: string
           interaction_step?: string | null
           last_step?: string | null
@@ -1712,6 +1724,7 @@ export type Database = {
         }
         Returns: Json
       }
+      get_follow_up_limit: { Args: { plan_tier: string }; Returns: number }
       get_user_organization_id: { Args: { p_user_id: string }; Returns: string }
       has_role: {
         Args: {
