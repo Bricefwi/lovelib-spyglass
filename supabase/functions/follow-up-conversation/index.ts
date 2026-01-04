@@ -293,6 +293,84 @@ Return ONLY valid JSON. If nothing new, return empty arrays and empty string.`
       console.error('Error updating audit:', updateError)
     }
 
+    // ========================================
+    // 📧 NOTIFICATION ADMIN - Brief enrichi
+    // ========================================
+    const briefWasEnriched = Object.keys(enrichment).some(k => 
+      Array.isArray((enrichment as Record<string, unknown>)[k]) 
+        ? ((enrichment as Record<string, string[]>)[k]).length > 0 
+        : Boolean((enrichment as Record<string, unknown>)[k])
+    )
+    
+    if (briefWasEnriched) {
+      try {
+        const resendKey = Deno.env.get("RESEND_API_KEY")
+        if (resendKey) {
+          const adminEmail = "patrice.simion@gmail.com"
+          const clientEmail = audit.user_email || "Client"
+          const companyName = audit.company_guess || audit.url || "Entreprise"
+          
+          console.log("📧 Envoi notification admin - brief enrichi")
+          
+          const notificationHtml = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+              <div style="background: linear-gradient(135deg, #d8232a, #b91c1c); color: white; padding: 20px; border-radius: 12px 12px 0 0;">
+                <h1 style="margin: 0; font-size: 20px;">🔔 Brief Client Enrichi</h1>
+              </div>
+              <div style="background: #f8fafc; padding: 24px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 12px 12px;">
+                <p style="color: #475569; margin-bottom: 16px;">
+                  <strong>${clientEmail}</strong> a ajouté des informations à son audit via le canal de suivi Alex.
+                </p>
+                
+                <div style="background: white; padding: 16px; border-radius: 8px; border-left: 4px solid #d8232a; margin-bottom: 16px;">
+                  <p style="font-weight: 600; color: #1e293b; margin: 0 0 8px 0;">Entreprise : ${companyName}</p>
+                  <p style="font-size: 14px; color: #64748b; margin: 0;">Tier: ${planTier}</p>
+                </div>
+                
+                <div style="background: #fef3c7; padding: 12px; border-radius: 8px; margin-bottom: 16px;">
+                  <p style="font-weight: 600; color: #92400e; margin: 0 0 4px 0;">💬 Nouveau message client :</p>
+                  <p style="color: #78350f; font-size: 14px; margin: 0; font-style: italic;">"${message.substring(0, 200)}${message.length > 200 ? '...' : ''}"</p>
+                </div>
+                
+                <div style="background: #ecfdf5; padding: 12px; border-radius: 8px; margin-bottom: 16px;">
+                  <p style="font-weight: 600; color: #065f46; margin: 0 0 4px 0;">✨ Nouveaux éléments extraits :</p>
+                  <pre style="color: #047857; font-size: 12px; margin: 0; white-space: pre-wrap; font-family: monospace;">${JSON.stringify(enrichment, null, 2).substring(0, 500)}</pre>
+                </div>
+                
+                <p style="font-size: 13px; color: #64748b;">
+                  Messages restants pour ce client : <strong>${messageLimit - currentCount - 1}</strong>
+                </p>
+                
+                <a href="https://imotion-conseil.lovable.app/admin/audits" 
+                   style="display: inline-block; background: #d8232a; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; margin-top: 16px;">
+                  Voir les audits
+                </a>
+              </div>
+            </div>
+          `
+          
+          await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${resendKey}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              from: "IMOTION Conseil <noreply@imotion-conseil.com>",
+              to: [adminEmail],
+              subject: `🔔 Brief enrichi - ${companyName}`,
+              html: notificationHtml
+            })
+          })
+          
+          console.log("✅ Notification admin envoyée")
+        }
+      } catch (notifError) {
+        console.error("⚠️ Erreur notification admin (non bloquante):", notifError)
+      }
+    }
+    // ========================================
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -300,11 +378,7 @@ Return ONLY valid JSON. If nothing new, return empty arrays and empty string.`
         remaining_messages: messageLimit - currentCount - 1,
         message_limit: messageLimit,
         plan: planTier,
-        brief_updated: Object.keys(enrichment).some(k => 
-          Array.isArray((enrichment as Record<string, unknown>)[k]) 
-            ? ((enrichment as Record<string, string[]>)[k]).length > 0 
-            : Boolean((enrichment as Record<string, unknown>)[k])
-        )
+        brief_updated: briefWasEnriched
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
