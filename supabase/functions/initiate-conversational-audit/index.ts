@@ -186,33 +186,42 @@ serve(async (req) => {
 </html>
     `
 
-    // Send email via Supabase Auth (or external service)
-    try {
-      // Note: You'll need to configure an email service (Resend, SendGrid, etc.)
-      // For now, we'll log the email content
-      console.log('📧 Verification email would be sent to:', user_email)
+    // Send email via Resend
+    const resendApiKey = Deno.env.get('RESEND_API_KEY')
+    
+    if (resendApiKey) {
+      try {
+        console.log('📧 Sending verification email via Resend to:', user_email)
+        
+        const emailResponse = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${resendApiKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            from: 'IMOTION Conseil <noreply@imotion-conseil.com>',
+            to: user_email,
+            subject: '🔐 Vérifiez votre identité pour votre audit IMOTION',
+            html: emailHtml
+          })
+        })
+        
+        if (emailResponse.ok) {
+          const emailResult = await emailResponse.json()
+          console.log('✅ Email sent successfully:', emailResult.id)
+        } else {
+          const errorText = await emailResponse.text()
+          console.error('❌ Failed to send email:', errorText)
+        }
+        
+      } catch (emailError) {
+        console.error('Error sending email:', emailError)
+        // Don't fail the request if email fails
+      }
+    } else {
+      console.log('⚠️ RESEND_API_KEY not configured - email not sent')
       console.log('Verification URL:', verification_url)
-      
-      // TODO: Implement actual email sending
-      // Example with Resend:
-      // const resendApiKey = Deno.env.get('RESEND_API_KEY')
-      // await fetch('https://api.resend.com/emails', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Authorization': `Bearer ${resendApiKey}`,
-      //     'Content-Type': 'application/json'
-      //   },
-      //   body: JSON.stringify({
-      //     from: 'MANUS IA <audits@manus.im>',
-      //     to: user_email,
-      //     subject: '🔐 Vérifiez votre identité pour votre audit MANUS IA',
-      //     html: emailHtml
-      //   })
-      // })
-      
-    } catch (emailError) {
-      console.error('Error sending email:', emailError)
-      // Don't fail the request if email fails
     }
 
     return new Response(
