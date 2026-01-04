@@ -110,55 +110,70 @@ export default function ClientAudits() {
         <h1 className="text-3xl font-bold mb-8">Mes audits</h1>
 
         <div className="space-y-4">
-          {audits.map((audit) => (
-            <Card key={audit.id} className="p-6">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <h3 className="font-semibold text-lg">
-                      {audit.company?.name || audit.company?.domain || audit.domain || "Entreprise"}
-                    </h3>
-                    <Badge variant={audit.status === "consolidated" ? "default" : "secondary"}>
-                      {audit.status}
-                    </Badge>
-                    {audit.confidence !== null && audit.confidence > 0 && (
-                      <Badge variant="outline">
-                        Confiance: {audit.confidence > 1 ? Math.round(audit.confidence) : Math.round(audit.confidence * 100)}%
+          {audits.map((audit) => {
+            // Calcul des messages restants
+            const planTier = audit.ai_tier || 'discovery';
+            const maxMessages = planTier === 'enterprise' ? 30 : planTier === 'agency' ? 15 : planTier === 'pro' ? 5 : 3;
+            const usedMessages = audit.follow_up_messages_count || 0;
+            const remainingMessages = Math.max(0, maxMessages - usedMessages);
+            
+            return (
+              <Card key={audit.id} className="p-6">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="font-semibold text-lg">
+                        {audit.company?.name || audit.company?.domain || audit.domain || "Entreprise"}
+                      </h3>
+                      <Badge variant={audit.status === "consolidated" ? "default" : "secondary"}>
+                        {audit.status}
                       </Badge>
+                      {audit.confidence !== null && audit.confidence > 0 && (
+                        <Badge variant="outline">
+                          Confiance: {audit.confidence > 1 ? Math.round(audit.confidence) : Math.round(audit.confidence * 100)}%
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground">{audit.url}</p>
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2">
+                      <span>Créé le {new Date(audit.created_at).toLocaleDateString("fr-FR")}</span>
+                      {audit.conversation_completed && (
+                        <span className={`font-medium ${remainingMessages === 0 ? 'text-destructive' : 'text-primary'}`}>
+                          💬 {remainingMessages} message{remainingMessages > 1 ? 's' : ''} restant{remainingMessages > 1 ? 's' : ''} avec Alex
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {audit.conversation_completed && remainingMessages > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setSelectedAuditForChat({
+                          id: audit.id,
+                          planTier,
+                          history: audit.conversation_history || []
+                        })}
+                        title="Enrichir la demande"
+                      >
+                        <MessageCircle className="h-4 w-4" />
+                      </Button>
+                    )}
+                    {audit.status === "consolidated" && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => viewReport(audit.id)}
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        Voir le rapport
+                      </Button>
                     )}
                   </div>
-                  <p className="text-sm text-muted-foreground">{audit.url}</p>
-                  <div className="text-xs text-muted-foreground mt-2">
-                    Créé le {new Date(audit.created_at).toLocaleDateString("fr-FR")}
-                  </div>
                 </div>
-                {audit.conversation_completed && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setSelectedAuditForChat({
-                      id: audit.id,
-                      planTier: audit.ai_tier || 'discovery',
-                      history: audit.conversation_history || []
-                    })}
-                    title="Enrichir la demande"
-                  >
-                    <MessageCircle className="h-4 w-4" />
-                  </Button>
-                )}
-                {audit.status === "consolidated" && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => viewReport(audit.id)}
-                  >
-                    <Eye className="h-4 w-4 mr-2" />
-                    Voir le rapport
-                  </Button>
-                )}
-              </div>
-            </Card>
-          ))}
+              </Card>
+            );
+          })}
 
           {audits.length === 0 && (
             <Card className="p-12 text-center">
