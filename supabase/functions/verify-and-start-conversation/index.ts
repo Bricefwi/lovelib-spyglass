@@ -6,6 +6,14 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi
+
+function extractLastUuid(input: string | undefined | null): string {
+  if (!input) return ''
+  const matches = input.match(UUID_RE)
+  return matches && matches.length ? matches[matches.length - 1] : input
+}
+
 interface VerifyRequest {
   verification_token: string
 }
@@ -22,10 +30,12 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const { verification_token }: VerifyRequest = await req.json()
+    const { verification_token: verification_token_raw }: VerifyRequest = await req.json()
+    const verification_token = extractLastUuid(verification_token_raw)
 
     console.log('=== Verify Email & Start Conversation ===')
-    console.log('Token:', verification_token)
+    console.log('Token (raw):', verification_token_raw)
+    console.log('Token (normalized):', verification_token)
 
     if (!verification_token) {
       return new Response(
@@ -44,13 +54,16 @@ serve(async (req) => {
     if (findError || !audit) {
       console.error('Audit not found:', findError)
       return new Response(
-        JSON.stringify({ 
+        JSON.stringify({
           error: 'Invalid or expired verification token',
           details: 'The verification link may have expired or is invalid'
         }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
+
+    const target_url = (audit.url ?? audit.target_url) as string | null
+    const subscription_tier = (audit.ai_tier ?? audit.subscription_tier) as string | null
 
     // Check if token is expired
     const expiresAt = new Date(audit.verification_token_expires_at)
@@ -59,7 +72,7 @@ serve(async (req) => {
     if (now > expiresAt) {
       console.error('Token expired:', { expiresAt, now })
       return new Response(
-        JSON.stringify({ 
+        JSON.stringify({
           error: 'Verification token has expired',
           details: 'Please request a new audit to receive a fresh verification link'
         }),
@@ -70,7 +83,7 @@ serve(async (req) => {
     // Check if already verified
     if (audit.email_verified) {
       console.log('Email already verified, returning conversation config')
-      
+
       // If conversation is already completed, trigger orchestrator
       if (audit.conversation_completed) {
         return new Response(
@@ -97,8 +110,8 @@ serve(async (req) => {
             agent_role: 'Analyste Stratégique MANUS IA',
             user_name: audit.user_name,
             user_email: audit.user_email,
-            target_url: audit.target_url,
-            subscription_tier: audit.subscription_tier
+            target_url,
+            subscription_tier
           }
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -125,6 +138,8 @@ serve(async (req) => {
 
     console.log('✅ Email verified for audit:', audit.id)
 
+    const tierLabel = (subscription_tier || '').toUpperCase() || 'PRO'
+
     // Return conversation configuration
     return new Response(
       JSON.stringify({
@@ -137,9 +152,9 @@ serve(async (req) => {
           agent_role: 'Analyste Stratégique MANUS IA',
           user_name: audit.user_name,
           user_email: audit.user_email,
-          target_url: audit.target_url,
-          subscription_tier: audit.subscription_tier,
-          welcome_message: `Bonjour ${audit.user_name || 'cher client'} ! Je suis Alex, votre analyste stratégique dédié chez MANUS IA. Pour garantir la sécurité et la pertinence de votre audit ${audit.subscription_tier.toUpperCase()} pour ${audit.target_url}, j'ai quelques questions rapides pour vous. Cela ne prendra que 2-3 minutes. Êtes-vous prêt(e) à commencer ?`
+          target_url,
+          subscription_tier,
+          welcome_message: `Bonjour ${audit.user_name || 'cher client'} ! Je suis Alex, votre analyste stratégique dédié chez MANUS IA. Pour garantir la sécurité et la pertinence de votre audit ${tierLabel} pour ${target_url || 'votre site'}, j'ai quelques questions rapides pour vous. Cela ne prendra que 2-3 minutes. Êtes-vous prêt(e) à commencer ?`
         }
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
