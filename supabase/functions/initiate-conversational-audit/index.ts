@@ -137,7 +137,9 @@ serve(async (req) => {
     console.log('✅ Audit created:', audit.id)
 
     // Send verification email
-    const verification_url = `${Deno.env.get('FRONTEND_URL')}/verify-email?token=${verification_token}`
+    const frontendUrlRaw = Deno.env.get('FRONTEND_URL') || req.headers.get('origin') || ''
+    const frontendUrl = frontendUrlRaw.replace(/\/+$/, '')
+    const verification_url = `${frontendUrl}/verify-email?token=${verification_token}`
     
     const emailHtml = `
 <!DOCTYPE html>
