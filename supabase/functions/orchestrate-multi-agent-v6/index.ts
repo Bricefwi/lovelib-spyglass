@@ -41,12 +41,12 @@ serve(async (req) => {
     console.log('🚀 Full Implementation with Quality Guarantees');
     console.log('Audit ID:', audit_id);
 
-    // Get audit details
+    // Get audit details - use LEFT JOIN (no !inner) to allow audits without organizations
     const { data: audit, error: auditError } = await supabase
       .from('pre_audits')
       .select(`
         *,
-        organizations!inner(
+        organizations(
           id,
           subscription_plan,
           name
@@ -56,10 +56,12 @@ serve(async (req) => {
       .single();
 
     if (auditError || !audit) {
-      throw new Error('Audit not found');
+      console.error('Audit fetch error:', auditError);
+      throw new Error(`Audit not found: ${audit_id}`);
     }
 
-    const plan = (audit.organizations?.subscription_plan || 'freemium') as PlanTier;
+    // Get plan from organization OR from audit's subscription_tier field (fallback)
+    const plan = (audit.organizations?.subscription_plan || (audit as any).subscription_tier || 'freemium') as PlanTier;
     console.log(`📊 Plan: ${plan}`);
     console.log(`🏢 Organization: ${audit.organizations?.name || 'Unknown'}`);
 
