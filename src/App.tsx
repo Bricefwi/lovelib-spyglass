@@ -28,6 +28,8 @@ import AdminMessages from "./pages/AdminMessages";
 import TestDataSender from "./pages/TestDataSender";
 import TestTieredCampaign from "./pages/TestTieredCampaign";
 import TestOrchestratorV6 from "./pages/TestOrchestratorV6";
+import VerifyEmail from "./pages/VerifyEmail";
+import ConversationAlex from "./pages/ConversationAlex";
 import AdminBlog from "./pages/AdminBlog";
 import AdminUsers from "./pages/AdminUsers";
 import ClientAudits from "./pages/ClientAudits";
@@ -70,6 +72,8 @@ const App = () => {
             <Route path="/contact" element={<Contact />} />
             <Route path="/audit-methodologie" element={<AuditMethodologie />} />
             <Route path="/audit-gratuit" element={<AuditGratuit />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
+            <Route path="/conversation-alex" element={<ConversationAlex />} />
             <Route path="/calculs-kpis" element={<CalculsKPIs />} />
             <Route path="/methodologie-roi" element={<MethodologieROI />} />
             <Route path="/guide/support" element={<Support />} />
