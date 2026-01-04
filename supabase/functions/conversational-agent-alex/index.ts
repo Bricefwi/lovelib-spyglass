@@ -254,7 +254,12 @@ Return ONLY valid JSON, no markdown, no explanation.`
 
       console.log('📝 Brief synthesized:', conversationalBrief)
 
-      // Update audit with brief and mark as completed
+      // Generate follow-up token for continued conversations
+      const followUpToken = crypto.randomUUID()
+      const followUpExpiresAt = new Date()
+      followUpExpiresAt.setDate(followUpExpiresAt.getDate() + 30) // 30 days validity
+
+      // Update audit with brief, mark as completed, and set follow-up token
       const { error: updateError } = await supabaseClient
         .from('pre_audits')
         .update({
@@ -263,9 +268,18 @@ Return ONLY valid JSON, no markdown, no explanation.`
           conversational_brief: conversationalBrief,
           status: 'ready_for_orchestration',
           user_name: conversationalBrief.client_name,
-          user_role: conversationalBrief.client_role
+          user_role: conversationalBrief.client_role,
+          follow_up_token: followUpToken,
+          follow_up_expires_at: followUpExpiresAt.toISOString(),
+          conversation_history: [
+            ...conversation_history,
+            { role: 'user', content: message, timestamp: new Date().toISOString() },
+            { role: 'assistant', content: alexResponse, timestamp: new Date().toISOString() }
+          ]
         })
         .eq('id', audit_id)
+
+      console.log('Follow-up token generated:', followUpToken)
 
       if (updateError) {
         console.error('Error updating audit:', updateError)

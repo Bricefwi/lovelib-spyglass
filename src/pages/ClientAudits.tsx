@@ -6,11 +6,17 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Loader2, Eye } from "lucide-react";
+import { Loader2, Eye, MessageCircle } from "lucide-react";
+import FollowUpConversation from "@/components/FollowUpConversation";
 
 export default function ClientAudits() {
   const [audits, setAudits] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedAuditForChat, setSelectedAuditForChat] = useState<{
+    id: string;
+    planTier: string;
+    history: any[];
+  } | null>(null);
 
   useEffect(() => {
     fetchAudits();
@@ -126,6 +132,20 @@ export default function ClientAudits() {
                     Créé le {new Date(audit.created_at).toLocaleDateString("fr-FR")}
                   </div>
                 </div>
+                {audit.conversation_completed && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedAuditForChat({
+                      id: audit.id,
+                      planTier: audit.ai_tier || 'discovery',
+                      history: audit.conversation_history || []
+                    })}
+                    title="Enrichir la demande"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                  </Button>
+                )}
                 {audit.status === "consolidated" && (
                   <Button
                     variant="outline"
@@ -146,6 +166,15 @@ export default function ClientAudits() {
             </Card>
           )}
         </div>
+
+        {selectedAuditForChat && (
+          <FollowUpConversation
+            auditId={selectedAuditForChat.id}
+            existingHistory={selectedAuditForChat.history}
+            planTier={selectedAuditForChat.planTier}
+            onClose={() => setSelectedAuditForChat(null)}
+          />
+        )}
       </main>
       <Footer />
     </div>
