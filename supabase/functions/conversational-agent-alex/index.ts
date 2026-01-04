@@ -172,8 +172,16 @@ Respond naturally in French (the client's language).`
       'audit va maintenant commencer',
       'analyse complète va',
       'nos agents vont',
-      'merci pour ces informations',
-      'rapport final'
+      'procéder à l\'audit',
+      'lancer l\'audit',
+      'démarrer l\'audit',
+      'merci encore pour votre confiance',
+      'merci pour votre confiance',
+      'rapport final',
+      'nous allons maintenant procéder',
+      'nous allons procéder',
+      'toutes les informations nécessaires',
+      'tiendrons informé'
     ]
     
     const isComplete = completionKeywords.some(keyword => 
