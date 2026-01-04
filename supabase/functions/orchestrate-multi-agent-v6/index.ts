@@ -1,6 +1,7 @@
 /**
  * Supabase Edge Function: orchestrate-multi-agent-v6
- * Phase 4: Sequential Execution + Premium Prompts + Infographics + Length Control
+ * Phase 5: Complete System with Quality Guardian
+ * Features: Sequential Execution + Premium Prompts + Infographics + Length Control + Quality Validation
  */
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -425,8 +426,8 @@ serve(async (req) => {
 
     const { audit_id } = await req.json();
 
-    console.log('=== Multi-Agent Orchestration v6.0 - Phase 4 ===');
-    console.log('Sequential Execution + Premium Prompts + Infographics + Length Control');
+    console.log('=== Multi-Agent Orchestration v6.0 - Phase 5 ===');
+    console.log('Complete System with Quality Guardian');
     console.log('Audit ID:', audit_id);
 
     // Get audit details
@@ -514,6 +515,29 @@ serve(async (req) => {
     // Generate infographics
     const infographics = generateInfographics(plan, agentResults, audit.target_url);
 
+    // Quality Guardian - Validate report quality
+    console.log('\n🛡️ Quality Guardian: Validating report...');
+    const qualityValidation = validateReportQuality(agentResults, infographics, plan);
+    
+    if (!qualityValidation.passed) {
+      console.error('❌ Quality validation failed!');
+      console.error(`   Issues: ${qualityValidation.issues.join(', ')}`);
+      
+      // Log quality issues but continue (in production, you might want to retry)
+      await supabase
+        .from('pre_audits')
+        .update({ 
+          status: 'quality_issues',
+          progress: 95,
+          quality_validation: qualityValidation
+        })
+        .eq('id', audit_id);
+    } else {
+      console.log('✅ Quality validation passed!');
+      console.log(`   Score: ${qualityValidation.quality_score}/100`);
+      console.log(`   Standards: ${qualityValidation.standards_met.join(', ')}`);
+    }
+
     // Generate final report
     const report = {
       metadata: {
@@ -522,8 +546,8 @@ serve(async (req) => {
         agents_executed: agentsCount,
         total_agents_available: ALL_AGENTS.length,
         timestamp: new Date().toISOString(),
-        version: '6.0-phase4',
-        features: ['sequential-execution', 'premium-prompts', 'infographics-generation', 'length-control'],
+        version: '6.0-phase5',
+        features: ['sequential-execution', 'premium-prompts', 'infographics-generation', 'length-control', 'quality-validation'],
         infographics_count: infographics.length,
         report_length: {
           target: lengthConfig.target,
@@ -539,6 +563,7 @@ serve(async (req) => {
       },
       agents: agentResults,
       infographics,
+      quality_validation: qualityValidation,
       content: generateFinalReport(audit.target_url, plan, agentResults, infographics)
     };
 
@@ -556,6 +581,7 @@ serve(async (req) => {
     console.log(`   ${agentsCount} agents executed with premium prompts`);
     console.log(`   ${infographics.length} infographics generated`);
     console.log(`   Overall score: ${report.summary.overall_score}/100`);
+    console.log(`   Quality score: ${qualityValidation.quality_score}/100`);
     console.log(`   Total recommendations: ${report.summary.total_recommendations}`);
 
     return new Response(
@@ -774,7 +800,7 @@ ${infographics.map((info, i) => `${i + 1}. **${info.title}** - ${info.descriptio
 This ${plan} audit provides ${agentResults.length} specialized analyses with ${agentResults.reduce((acc, r) => acc + r.recommendations.length, 0)} actionable recommendations.
 
 *Report generated: ${new Date().toISOString()}*
-*Orchestrator v6.0 - Phase 4: Premium Prompts + Infographics + Length Control*
+*Orchestrator v6.0 - Phase 5: Complete System with Quality Guardian*
 `;
 
   // Appliquer le contrôle de longueur
@@ -792,4 +818,99 @@ function generateDetailedAnalysis(result: any, plan: string): string {
   }
   
   return analysis;
+}
+
+// Quality Guardian - Validation qualité McKinsey/BCG standards
+function validateReportQuality(agentResults: any[], infographics: any[], plan: string): any {
+  console.log('   Checking McKinsey/BCG quality standards...');
+  
+  const issues: string[] = [];
+  const standards_met: string[] = [];
+  let quality_score = 100;
+  
+  // 1. Vérifier le nombre d'agents
+  const expectedAgents = AGENTS_BY_PLAN[plan as keyof typeof AGENTS_BY_PLAN] || 7;
+  if (agentResults.length < expectedAgents) {
+    issues.push(`Insufficient agents: ${agentResults.length}/${expectedAgents}`);
+    quality_score -= 20;
+  } else {
+    standards_met.push('Agent count');
+  }
+  
+  // 2. Vérifier le nombre d'infographies
+  const expectedInfographics = INFOGRAPHICS_BY_PLAN[plan as keyof typeof INFOGRAPHICS_BY_PLAN] || 3;
+  if (infographics.length < expectedInfographics) {
+    issues.push(`Insufficient infographics: ${infographics.length}/${expectedInfographics}`);
+    quality_score -= 15;
+  } else {
+    standards_met.push('Infographics count');
+  }
+  
+  // 3. Vérifier que chaque agent a des recommandations
+  const agentsWithoutRecs = agentResults.filter(r => !r.recommendations || r.recommendations.length === 0);
+  if (agentsWithoutRecs.length > 0) {
+    issues.push(`${agentsWithoutRecs.length} agents without recommendations`);
+    quality_score -= 10 * agentsWithoutRecs.length;
+  } else {
+    standards_met.push('All agents have recommendations');
+  }
+  
+  // 4. Vérifier les scores des agents (doivent être réalistes)
+  const avgScore = agentResults.reduce((acc, r) => acc + (r.score || 0), 0) / agentResults.length;
+  if (avgScore < 50 || avgScore > 95) {
+    issues.push(`Unrealistic average score: ${avgScore.toFixed(1)}`);
+    quality_score -= 10;
+  } else {
+    standards_met.push('Realistic scoring');
+  }
+  
+  // 5. Vérifier la qualité des recommandations (longueur minimale)
+  const minRecsPerAgent = plan === 'freemium' ? 3 : plan === 'pro' ? 8 : plan === 'agency' ? 15 : 25;
+  const agentsWithFewRecs = agentResults.filter(r => r.recommendations && r.recommendations.length < minRecsPerAgent);
+  if (agentsWithFewRecs.length > 0) {
+    issues.push(`${agentsWithFewRecs.length} agents with insufficient recommendations`);
+    quality_score -= 5 * agentsWithFewRecs.length;
+  } else {
+    standards_met.push('Recommendation depth');
+  }
+  
+  // 6. Vérifier que tous les agents ont terminé avec succès
+  const failedAgents = agentResults.filter(r => r.status !== 'completed');
+  if (failedAgents.length > 0) {
+    issues.push(`${failedAgents.length} agents failed`);
+    quality_score -= 20 * failedAgents.length;
+  } else {
+    standards_met.push('All agents completed');
+  }
+  
+  // 7. Standards McKinsey/BCG
+  const mckinsey_standards = {
+    data_driven: agentResults.every(r => r.score !== undefined),
+    actionable: agentResults.every(r => r.recommendations && r.recommendations.length > 0),
+    structured: agentResults.length >= expectedAgents,
+    visual: infographics.length >= expectedInfographics,
+    comprehensive: standards_met.length >= 4
+  };
+  
+  const mckinsey_score = Object.values(mckinsey_standards).filter(v => v).length;
+  if (mckinsey_score >= 4) {
+    standards_met.push('McKinsey/BCG standards');
+  } else {
+    issues.push(`McKinsey standards not met: ${mckinsey_score}/5`);
+    quality_score -= 15;
+  }
+  
+  // Calcul du score final
+  quality_score = Math.max(0, Math.min(100, quality_score));
+  const passed = quality_score >= 70 && issues.length === 0;
+  
+  return {
+    passed,
+    quality_score,
+    issues,
+    standards_met,
+    mckinsey_standards,
+    validation_timestamp: new Date().toISOString(),
+    validator_version: '1.0'
+  };
 }
