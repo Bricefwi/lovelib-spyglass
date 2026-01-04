@@ -95,3 +95,6 @@ verify_jwt = false
 
 [functions.orchestrate-multi-agent-v7]
 verify_jwt = false
+
+[functions.orchestrate-multi-agent-v8]
+verify_jwt = true
