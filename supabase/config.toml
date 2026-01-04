@@ -92,3 +92,6 @@ verify_jwt = false
 
 [functions.conversational-agent-alex]
 verify_jwt = false
+
+[functions.orchestrate-multi-agent-v7]
+verify_jwt = false
