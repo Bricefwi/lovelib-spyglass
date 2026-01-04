@@ -10,8 +10,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { callAI, deepResearch, premiumSynthesis, checkAvailableProviders } from '../_shared/aiUniversalClient.ts';
-import { AI_MODELS_CONFIG, getAIConfigForPlan, type PlanTier } from '../_shared/aiModelsConfigV2.ts';
-import { generateInfographicsForPlan } from '../_shared/infographicsGeneratorV2.ts';
+import { AI_MODELS_CONFIG, getAIConfigForPlan, type PlanTier } from '../_shared/aiModelsConfig.ts';
+import { generateInfographicsForPlan } from '../_shared/infographicsGenerator.ts';
 import { IMOTION_LOGO_BASE64, IMOTION_BRAND_INFO } from '../_shared/imotionLogo.ts';
 
 const corsHeaders = {
