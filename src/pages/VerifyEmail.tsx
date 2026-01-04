@@ -11,6 +11,7 @@ export default function VerifyEmail() {
   const [status, setStatus] = useState<'verifying' | 'success' | 'error'>('verifying');
   const [message, setMessage] = useState('Vérification de votre email en cours...');
   const [auditId, setAuditId] = useState<string | null>(null);
+  const [isResending, setIsResending] = useState(false);
 
   useEffect(() => {
     const token = searchParams.get('token');
@@ -57,6 +58,41 @@ export default function VerifyEmail() {
     }
   };
 
+  const resendVerificationEmail = async () => {
+    const token = searchParams.get('token');
+
+    if (!token) {
+      navigate('/audit-gratuit');
+      return;
+    }
+
+    try {
+      setIsResending(true);
+      setStatus('verifying');
+      setMessage('Renvoi du lien de vérification en cours...');
+
+      const { error } = await supabase.functions.invoke('initiate-conversational-audit', {
+        body: { verification_token: token }
+      });
+
+      if (error) {
+        console.error('Resend error:', error);
+        setStatus('error');
+        setMessage(error.message || 'Impossible de renvoyer le lien. Réessayez.');
+        return;
+      }
+
+      setStatus('error');
+      setMessage("Lien renvoyé. Ouvrez le dernier email reçu et cliquez sur 'Vérifier mon email'.");
+    } catch (err) {
+      console.error('Unexpected resend error:', err);
+      setStatus('error');
+      setMessage('Une erreur inattendue est survenue lors du renvoi. Veuillez réessayer.');
+    } finally {
+      setIsResending(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
@@ -91,14 +127,22 @@ export default function VerifyEmail() {
 
           {status === 'error' && (
             <div className="space-y-3">
-              <Button 
-                onClick={() => window.location.href = '/audit-gratuit'}
+              <Button
+                onClick={resendVerificationEmail}
+                disabled={isResending}
                 className="w-full"
               >
-                Demander un nouvel audit
+                {isResending ? (
+                  <span className="inline-flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Envoi en cours...
+                  </span>
+                ) : (
+                  'Renvoyer le lien de vérification'
+                )}
               </Button>
-              <Button 
-                onClick={() => window.location.href = '/support'}
+              <Button
+                onClick={() => navigate('/guide/support')}
                 variant="outline"
                 className="w-full"
               >

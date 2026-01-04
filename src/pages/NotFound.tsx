@@ -8,8 +8,16 @@ const NotFound = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    const normalizedPath = location.pathname.replace(/\/{2,}/g, '/');
+
+    // Fix common "double slash" links (e.g. //verify-email) coming from emails
+    if (normalizedPath !== location.pathname) {
+      navigate(`${normalizedPath}${location.search}${location.hash}`, { replace: true });
+      return;
+    }
+
     console.error("404 Error: User attempted to access non-existent route:", location.pathname);
-  }, [location.pathname]);
+  }, [location.pathname, location.search, location.hash, navigate]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">

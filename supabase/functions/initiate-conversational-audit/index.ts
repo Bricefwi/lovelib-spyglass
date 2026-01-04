@@ -11,8 +11,9 @@ interface InitiateAuditRequest {
   url?: string
   subscription_tier?: string
   ai_tier?: string
-  user_email: string
+  user_email?: string
   user_name?: string
+  verification_token?: string
 }
 
 serve(async (req) => {
@@ -28,16 +29,63 @@ serve(async (req) => {
     )
 
     const body: InitiateAuditRequest = await req.json()
-    
+
     // Support both naming conventions
-    const target_url = body.target_url || body.url
-    const subscription_tier = body.subscription_tier || body.ai_tier
-    const { user_email, user_name } = body
+    let target_url = body.target_url || body.url
+    let subscription_tier = body.subscription_tier || body.ai_tier
+    let user_email = body.user_email
+    let user_name = body.user_name
+
+    const resend_token = body.verification_token
+    const isResend = !!resend_token && !target_url && !subscription_tier
 
     console.log('=== Initiate Conversational Audit ===')
     console.log('Target URL:', target_url)
     console.log('Subscription Tier:', subscription_tier)
     console.log('User Email:', user_email)
+    console.log('Is resend:', isResend)
+
+    let existingAuditId: string | null = null
+
+    if (isResend) {
+      console.log('🔁 Resend requested for verification token')
+
+      const { data: existing, error: existingError } = await supabaseClient
+        .from('pre_audits')
+        .select('id, url, ai_tier, user_email, user_name, email_verified')
+        .eq('verification_token', resend_token)
+        .maybeSingle()
+
+      if (existingError) {
+        console.error('Error fetching audit by token:', existingError)
+        return new Response(
+          JSON.stringify({ error: 'Failed to fetch audit', details: existingError.message }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      if (!existing) {
+        return new Response(
+          JSON.stringify({ error: 'Verification token not found or expired' }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      if (existing.email_verified) {
+        return new Response(
+          JSON.stringify({ error: 'Email already verified' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      existingAuditId = existing.id
+      target_url = existing.url
+      subscription_tier = existing.ai_tier ?? subscription_tier
+      user_email = existing.user_email ?? user_email
+      user_name = existing.user_name ?? user_name
+
+      console.log('✅ Resend resolved audit:', existingAuditId)
+    }
 
     // Validate required fields
     if (!target_url || !subscription_tier || !user_email) {
@@ -109,32 +157,44 @@ serve(async (req) => {
     const verification_token = crypto.randomUUID()
     const verification_token_expires_at = new Date(Date.now() + 60 * 60 * 1000) // 1 hour
 
-    // Create pre_audit entry
-    const { data: audit, error: createError } = await supabaseClient
-      .from('pre_audits')
-      .insert({
-        url: target_url,
-        ai_tier: subscription_tier,
-        status: 'pending_verification',
-        user_email,
-        user_name: user_name || null,
-        email_verified: false,
-        verification_token,
-        verification_token_expires_at: verification_token_expires_at.toISOString(),
-        conversation_completed: false
-      })
-      .select()
-      .single()
+    // Create or update pre_audit entry
+    const insertPayload = {
+      url: target_url,
+      ai_tier: subscription_tier,
+      status: 'pending_verification',
+      user_email,
+      user_name: user_name || null,
+      email_verified: false,
+      verification_token,
+      verification_token_expires_at: verification_token_expires_at.toISOString(),
+      conversation_completed: false
+    }
+
+    const mutation = existingAuditId
+      ? supabaseClient
+          .from('pre_audits')
+          .update({
+            verification_token,
+            verification_token_expires_at: verification_token_expires_at.toISOString(),
+            email_verified: false,
+            status: 'pending_verification'
+          })
+          .eq('id', existingAuditId)
+      : supabaseClient
+          .from('pre_audits')
+          .insert(insertPayload)
+
+    const { data: audit, error: createError } = await mutation.select().single()
 
     if (createError) {
-      console.error('Error creating audit:', createError)
+      console.error('Error creating/updating audit:', createError)
       return new Response(
-        JSON.stringify({ error: 'Failed to create audit', details: createError.message }),
+        JSON.stringify({ error: 'Failed to create/update audit', details: createError.message }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    console.log('✅ Audit created:', audit.id)
+    console.log(existingAuditId ? '✅ Audit updated:' : '✅ Audit created:', audit.id)
 
     // Send verification email
     const frontendUrlRaw = Deno.env.get('FRONTEND_URL') || req.headers.get('origin') || ''
@@ -240,7 +300,9 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         audit_id: audit.id,
-        message: 'Verification email sent. Please check your inbox.',
+        message: existingAuditId
+          ? 'Verification email resent. Please check your inbox.'
+          : 'Verification email sent. Please check your inbox.',
         requires_conversation: true,
         next_step: 'verify_email',
         verification_expires_at: verification_token_expires_at.toISOString()
