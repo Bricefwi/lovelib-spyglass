@@ -5,6 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
+const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
+
+function extractLastUuid(input: string | null | undefined): string | null {
+  if (!input) return null;
+  const matches = input.match(UUID_RE);
+  return matches && matches.length ? matches[matches.length - 1] : input;
+}
+
 export default function VerifyEmail() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -14,8 +22,8 @@ export default function VerifyEmail() {
   const [isResending, setIsResending] = useState(false);
 
   useEffect(() => {
-    const token = searchParams.get('token');
-    
+    const token = extractLastUuid(searchParams.get('token'));
+
     if (!token) {
       setStatus('error');
       setMessage('Token de vérification manquant. Veuillez vérifier le lien dans votre email.');
@@ -42,7 +50,7 @@ export default function VerifyEmail() {
         setStatus('success');
         setAuditId(data.audit_id);
         setMessage('Email vérifié avec succès ! Vous allez être redirigé vers le chat avec Alex...');
-        
+
         // Redirect to conversation page after 2 seconds
         setTimeout(() => {
           navigate(`/conversation-alex?audit_id=${data.audit_id}`);
@@ -59,7 +67,7 @@ export default function VerifyEmail() {
   };
 
   const resendVerificationEmail = async () => {
-    const token = searchParams.get('token');
+    const token = extractLastUuid(searchParams.get('token'));
 
     if (!token) {
       navigate('/audit-gratuit');

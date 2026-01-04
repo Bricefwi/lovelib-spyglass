@@ -36,8 +36,9 @@ serve(async (req) => {
     let user_email = body.user_email
     let user_name = body.user_name
 
-    const resend_token = body.verification_token
-    const isResend = !!resend_token && !target_url && !subscription_tier
+    const resend_token_raw = body.verification_token || ''
+    const resend_token = (resend_token_raw.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi) || []).slice(-1)[0] || body.verification_token
+    const isResend = !!body.verification_token && !target_url && !subscription_tier
 
     console.log('=== Initiate Conversational Audit ===')
     console.log('Target URL:', target_url)
@@ -198,9 +199,16 @@ serve(async (req) => {
 
     // Send verification email
     const frontendUrlRaw = Deno.env.get('FRONTEND_URL') || req.headers.get('origin') || ''
-    const frontendUrl = frontendUrlRaw.replace(/\/+$/, '')
-    const verification_url = `${frontendUrl}/verify-email?token=${verification_token}`
-    
+    const frontendBase = (() => {
+      try {
+        return new URL(frontendUrlRaw).origin
+      } catch {
+        const m = frontendUrlRaw.match(/^(https?:\/\/[^/]+)/i)
+        return m?.[1] || frontendUrlRaw
+      }
+    })().replace(/\/+$/, '')
+    const verification_url = `${frontendBase}/verify-email?token=${verification_token}`
+
     const emailHtml = `
 <!DOCTYPE html>
 <html>
