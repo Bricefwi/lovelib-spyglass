@@ -83,8 +83,8 @@ serve(async (req) => {
 **Client Information:**
 - Name: ${audit.user_name || 'Not provided'}
 - Email: ${audit.user_email}
-- Company Website: ${audit.target_url}
-- Plan: ${audit.subscription_tier.toUpperCase()}
+- Company Website: ${audit.url}
+- Plan: ${(audit.ai_tier || 'pro').toUpperCase()}
 
 **Conversation Flow:**
 1. If this is the first message, greet warmly and explain the process (2-3 minutes, 5 questions)
@@ -106,41 +106,64 @@ ${message}
 
 Respond naturally in French (the client's language).`
 
-    // Call Gemini API
+    // Try OpenAI first (more reliable), fallback to Gemini
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY')
     const geminiApiKey = Deno.env.get('GEMINI_API_KEY')
-    if (!geminiApiKey) {
-      throw new Error('GEMINI_API_KEY not configured')
-    }
+    
+    let alexResponse: string
 
-    const geminiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${geminiApiKey}`,
-      {
+    if (openaiApiKey) {
+      console.log('Using OpenAI API...')
+      const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Authorization': `Bearer ${openaiApiKey}`,
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({
-          contents: [
-            {
-              role: 'user',
-              parts: [{ text: systemPrompt }]
-            }
+          model: 'gpt-4o-mini',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: message }
           ],
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 500,
-            topP: 0.9,
-          }
+          max_tokens: 500,
+          temperature: 0.7
         })
+      })
+
+      if (!openaiResponse.ok) {
+        const errorText = await openaiResponse.text()
+        console.error('OpenAI API error:', errorText)
+        throw new Error(`OpenAI API failed: ${openaiResponse.status}`)
       }
-    )
 
-    if (!geminiResponse.ok) {
-      const errorText = await geminiResponse.text()
-      console.error('Gemini API error:', errorText)
-      throw new Error(`Gemini API failed: ${geminiResponse.status}`)
+      const openaiData = await openaiResponse.json()
+      alexResponse = openaiData.choices[0].message.content
+    } else if (geminiApiKey) {
+      console.log('Using Gemini API...')
+      const geminiResponse = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${geminiApiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ role: 'user', parts: [{ text: systemPrompt }] }],
+            generationConfig: { temperature: 0.7, maxOutputTokens: 500, topP: 0.9 }
+          })
+        }
+      )
+
+      if (!geminiResponse.ok) {
+        const errorText = await geminiResponse.text()
+        console.error('Gemini API error:', errorText)
+        throw new Error(`Gemini API failed: ${geminiResponse.status}`)
+      }
+
+      const geminiData = await geminiResponse.json()
+      alexResponse = geminiData.candidates[0].content.parts[0].text
+    } else {
+      throw new Error('No API key configured (OPENAI_API_KEY or GEMINI_API_KEY)')
     }
-
-    const geminiData = await geminiResponse.json()
-    const alexResponse = geminiData.candidates[0].content.parts[0].text
 
     console.log('Alex Response:', alexResponse)
 
@@ -182,20 +205,39 @@ Extract and structure:
 
 Return ONLY valid JSON, no markdown, no explanation.`
 
-      const synthesisResponse = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${geminiApiKey}`,
-        {
+      let briefText: string
+      
+      if (openaiApiKey) {
+        const synthesisResponse = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Authorization': `Bearer ${openaiApiKey}`,
+            'Content-Type': 'application/json'
+          },
           body: JSON.stringify({
-            contents: [{ role: 'user', parts: [{ text: synthesisPrompt }] }],
-            generationConfig: { temperature: 0.3, maxOutputTokens: 1000 }
+            model: 'gpt-4o-mini',
+            messages: [{ role: 'user', content: synthesisPrompt }],
+            max_tokens: 1000,
+            temperature: 0.3
           })
-        }
-      )
-
-      const synthesisData = await synthesisResponse.json()
-      let briefText = synthesisData.candidates[0].content.parts[0].text
+        })
+        const synthesisData = await synthesisResponse.json()
+        briefText = synthesisData.choices[0].message.content
+      } else {
+        const synthesisResponse = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${geminiApiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ role: 'user', parts: [{ text: synthesisPrompt }] }],
+              generationConfig: { temperature: 0.3, maxOutputTokens: 1000 }
+            })
+          }
+        )
+        const synthesisData = await synthesisResponse.json()
+        briefText = synthesisData.candidates[0].content.parts[0].text
+      }
       
       // Clean up markdown if present
       briefText = briefText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
