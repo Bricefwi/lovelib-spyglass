@@ -16,7 +16,7 @@ const TEST_SCENARIOS = [
     name: 'Freemium - Discovery',
     tier: 'discovery',
     model: 'google/gemini-2.5-flash-lite',
-    url: 'https://www.imotion-conseil.com',
+    url: 'https://travaux-renovation-compiegne.fr/',
     description: 'Analyse rapide avec sections cadenassées',
     expectedScore: 65,
     features: {
@@ -32,7 +32,7 @@ const TEST_SCENARIOS = [
     name: 'Pro - PME',
     tier: 'pro',
     model: 'google/gemini-2.5-flash',
-    url: 'https://www.imotion-conseil.com',
+    url: 'https://travaux-renovation-compiegne.fr/',
     description: 'Audit complet + brief conversationnel Alex',
     expectedScore: 78,
     features: {
@@ -48,8 +48,8 @@ const TEST_SCENARIOS = [
     name: 'Agency - Conseil Premium',
     tier: 'agency',
     model: 'openai/gpt-5',
-    url: 'https://www.imotion-conseil.com',
-    description: 'Dream Team IA + benchmarks sectoriels',
+    url: 'https://travaux-renovation-compiegne.fr/',
+    description: 'Dream Team IA + benchmarks sectoriels BTP',
     expectedScore: 88,
     features: {
       deepScraping: true,
@@ -65,7 +65,7 @@ const TEST_SCENARIOS = [
     name: 'Enterprise - Transformation',
     tier: 'enterprise',
     model: 'openai/gpt-5',
-    url: 'https://www.imotion-conseil.com',
+    url: 'https://travaux-renovation-compiegne.fr/',
     description: 'McKinsey-level + roadmap transformation + ROI',
     expectedScore: 95,
     features: {
@@ -76,7 +76,8 @@ const TEST_SCENARIOS = [
       includeBrief: true,
       multiAgentMode: true,
       deepResearch: true,
-      internationalScope: true
+      internationalScope: false,
+      localMarketFocus: true
     }
   }
 ];
