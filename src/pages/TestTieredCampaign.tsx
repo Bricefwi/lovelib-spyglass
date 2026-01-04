@@ -6,46 +6,58 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Mail, CheckCircle2, AlertCircle, Rocket, Sparkles, Crown, Zap, Building2, Download, Eye, MessageSquare } from "lucide-react";
 
-// Brief conversationnel enrichi basé sur l'échange avec Alex
+// Brief conversationnel enrichi pour BLC Pro Rénovation
 const ENRICHED_BRIEF = {
   client_identity: {
-    name: "Patrice Simion",
-    role: "Créateur et fondateur",
-    company: "iMotion Conseil"
+    name: "BLC Pro Rénovation",
+    role: "Entreprise de travaux et rénovation",
+    company: "BLC Pro Rénovation"
+  },
+  company_info: {
+    website: "https://travaux-renovation-compiegne.fr/",
+    address: "160 Rue Marie Curie Zone intermarché, 60190 Moyvillers",
+    phone: "03 44 43 01 00",
+    location: "Région Compiègne, Oise (60)"
   },
   strategic_objectives: [
-    "Gagner en visibilité",
-    "Transformer cette visibilité en clients",
-    "Améliorer l'image de la société pour donner confiance",
-    "Créer un cycle vertueux pour plus de clients abonnés"
+    "Développer la visibilité locale sur le secteur Compiègne/Oise",
+    "Générer des leads qualifiés pour travaux de rénovation",
+    "Améliorer le référencement local (Google Maps, SEO local)",
+    "Construire une image de confiance et expertise métier"
   ],
   current_challenges: [
-    "Difficulté à gagner en visibilité et crédibilité au démarrage",
-    "Transformer la visibilité en chiffre d'affaires"
+    "Concurrence locale forte dans le secteur BTP/rénovation",
+    "Difficulté à se démarquer face aux grandes enseignes",
+    "Besoin de prouver la qualité et fiabilité des prestations",
+    "Transformation des devis en chantiers signés"
   ],
   competitive_landscape: {
-    known_competitors: [],
-    niche: "Accompagnement Marketing et Commercial avec IA",
-    positioning: "Agence IA spécialisée B2B, peu de concurrence directe sur cette niche"
+    known_competitors: ["Entreprises locales de rénovation", "Grandes enseignes (Leroy Merlin, Point P)", "Artisans indépendants"],
+    niche: "Rénovation complète et travaux pour particuliers et professionnels",
+    positioning: "Entreprise locale spécialisée, proximité client, devis rapides"
   },
   focus_areas: [
-    "Stratégie de pricing",
-    "Évaluation du modèle Freemium vs offre d'audits gratuits",
-    "Pertinence de la conversion sans Freemium"
+    "Stratégie de référencement local (SEO + Google My Business)",
+    "Optimisation du site web pour conversion (devis en ligne)",
+    "Présence sur les réseaux sociaux professionnels",
+    "Avis clients et réputation en ligne"
   ],
   key_questions: [
-    "Est-ce que ma stratégie de pricing est la bonne par rapport au marché ?",
-    "Est-ce que la démarche Freemium est pertinente ?",
-    "Faut-il offrir 2 audits avant de convertir en forfait ?"
+    "Comment améliorer ma visibilité sur Google pour les recherches locales ?",
+    "Quels canaux digitaux privilégier pour le secteur BTP ?",
+    "Comment transformer plus de visiteurs en demandes de devis ?",
+    "Quel budget marketing digital pour une PME du bâtiment ?"
   ]
 };
+
+const TEST_URL = "https://travaux-renovation-compiegne.fr/";
 
 const SCENARIOS = [
   {
     id: 'freemium',
     name: 'Freemium - Discovery',
     tier: 'discovery',
-    url: 'https://www.imotion-conseil.com',
+    url: TEST_URL,
     description: 'Analyse rapide avec sections cadenassées pour inciter à l\'upgrade',
     model: 'google/gemini-2.5-flash-lite',
     icon: Zap,
@@ -57,36 +69,36 @@ const SCENARIOS = [
     id: 'pro',
     name: 'Pro - PME',
     tier: 'pro',
-    url: 'https://www.imotion-conseil.com',
+    url: TEST_URL,
     description: 'Audit complet + brief conversationnel + recommandations actionnables',
     model: 'google/gemini-2.5-flash',
     icon: Sparkles,
     color: 'bg-blue-500',
-    expectedFeatures: ['Brief Alex intégré', 'Analyse pricing', 'Concurrents identifiés', 'Plan d\'action 6 mois'],
+    expectedFeatures: ['Brief Alex intégré', 'Analyse SEO local', 'Concurrents identifiés', 'Plan d\'action 6 mois'],
     briefIncluded: true
   },
   {
     id: 'agency',
     name: 'Agency - Conseil Premium',
     tier: 'agency',
-    url: 'https://www.imotion-conseil.com',
-    description: 'Dream Team IA + brief enrichi + benchmarks sectoriels',
+    url: TEST_URL,
+    description: 'Dream Team IA + brief enrichi + benchmarks sectoriels BTP',
     model: 'openai/gpt-5',
     icon: Crown,
     color: 'bg-purple-500',
-    expectedFeatures: ['Brief Alex complet', 'Analyse pricing approfondie', '3 scénarios stratégiques', 'Marque Blanche'],
+    expectedFeatures: ['Brief Alex complet', 'Analyse marché BTP', '3 scénarios stratégiques', 'ROI détaillé'],
     briefIncluded: true
   },
   {
     id: 'enterprise',
     name: 'Enterprise - Transformation',
     tier: 'enterprise',
-    url: 'https://www.imotion-conseil.com',
-    description: 'Analyse McKinsey-level + roadmap transformation + ROI détaillé',
+    url: TEST_URL,
+    description: 'Analyse McKinsey-level + roadmap transformation + stratégie multi-canaux',
     model: 'openai/gpt-5',
     icon: Building2,
     color: 'bg-amber-500',
-    expectedFeatures: ['Brief Alex + Deep Research', 'Analyse marché complète', 'Roadmap 12-36 mois', 'ROI quantifié', 'Benchmark international'],
+    expectedFeatures: ['Brief Alex + Deep Research', 'Analyse marché régionale complète', 'Roadmap 12-36 mois', 'ROI quantifié', 'Benchmark concurrentiel'],
     briefIncluded: true
   }
 ];
