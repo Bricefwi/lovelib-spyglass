@@ -209,7 +209,8 @@ serve(async (req) => {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            from: 'IMOTION Conseil <noreply@imotion-conseil.com>',
+            // Using Resend test domain - TODO: Switch to noreply@imotion-conseil.com once domain is verified
+            from: 'IMOTION Conseil <onboarding@resend.dev>',
             to: user_email,
             subject: '🔐 Vérifiez votre identité pour votre audit IMOTION',
             html: emailHtml
