@@ -7,8 +7,10 @@ const corsHeaders = {
 }
 
 interface InitiateAuditRequest {
-  target_url: string
-  subscription_tier: string
+  target_url?: string
+  url?: string
+  subscription_tier?: string
+  ai_tier?: string
   user_email: string
   user_name?: string
 }
@@ -25,7 +27,12 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const { target_url, subscription_tier, user_email, user_name }: InitiateAuditRequest = await req.json()
+    const body: InitiateAuditRequest = await req.json()
+    
+    // Support both naming conventions
+    const target_url = body.target_url || body.url
+    const subscription_tier = body.subscription_tier || body.ai_tier
+    const { user_email, user_name } = body
 
     console.log('=== Initiate Conversational Audit ===')
     console.log('Target URL:', target_url)
@@ -35,7 +42,7 @@ serve(async (req) => {
     // Validate required fields
     if (!target_url || !subscription_tier || !user_email) {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields: target_url, subscription_tier, user_email' }),
+        JSON.stringify({ error: 'Missing required fields: url/target_url, ai_tier/subscription_tier, user_email' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
