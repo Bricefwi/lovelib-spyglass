@@ -51,11 +51,12 @@ export const StrategicChoiceSelector = ({
 
       if (updateError) throw updateError;
 
-      // 2. Relancer l'orchestrateur avec le contexte du choix
-      const { error: orchestrateError } = await supabase.functions.invoke('orchestrate-multi-agent', {
+      // 2. Relancer l'orchestrateur V8 avec le contexte du choix
+      const { error: orchestrateError } = await supabase.functions.invoke('orchestrate-multi-agent-v8', {
         body: { 
           audit_id: auditId,
-          strategic_choice: optionId 
+          strategic_choice: optionId,
+          action: 'resume'
         }
       });
 

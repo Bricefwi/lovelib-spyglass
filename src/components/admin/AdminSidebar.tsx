@@ -73,10 +73,10 @@ export function AdminSidebar({ pendingCount = 0, unreadMessages = 0 }: AdminSide
       badge: null,
     },
     {
-      name: "Test Multi-Niveaux",
-      href: "/admin/test-tiered",
+      name: "Test Orchestrateur V8",
+      href: "/admin/test-v6",
       icon: Layers,
-      badge: "NEW",
+      badge: "V8",
     },
   ];
 

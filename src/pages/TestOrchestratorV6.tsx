@@ -24,7 +24,7 @@ const PLANS = [
     name: 'Freemium',
     tier: 'discovery',
     url: 'https://www.boulangerie-test.fr',
-    description: '7 agents IA, Gemini 2.5 Flash Lite, 15-20 pages',
+    description: '7 agents IA, Claude Sonnet 4.5 + Gemini Flash, 15-20 pages',
     icon: Zap,
     color: 'bg-slate-500',
     expectedAgents: 7,
@@ -36,7 +36,7 @@ const PLANS = [
     name: 'Pro (49€)',
     tier: 'pro',
     url: 'https://www.qonto.com',
-    description: '12 agents IA, Gemini 3 Pro + Claude Sonnet 4, 40-60 pages',
+    description: '12 agents IA, Claude Sonnet 4.5 + GPT-5 + Perplexity Pro, 40-60 pages',
     icon: Sparkles,
     color: 'bg-blue-500',
     expectedAgents: 12,
@@ -48,7 +48,7 @@ const PLANS = [
     name: 'Agency (199€)',
     tier: 'agency',
     url: 'https://www.saint-gobain.com',
-    description: '15 agents IA, GPT-4o + Perplexity, 80-100 pages',
+    description: '15 agents IA, Claude Opus 4.5 + GPT-5.2 + Perplexity Deep, 80-100 pages',
     icon: Crown,
     color: 'bg-purple-500',
     expectedAgents: 15,
@@ -60,11 +60,11 @@ const PLANS = [
     name: 'Enterprise (499€)',
     tier: 'enterprise',
     url: 'https://www.lvmh.com',
-    description: '17 agents IA, Claude Opus 4.5 + GPT-5.2, 120-150 pages',
+    description: '17 agents IA, Claude Opus 4.5 + GPT-5.2 Pro + Perplexity Deep Research, 120-300 pages',
     icon: Building2,
     color: 'bg-amber-500',
     expectedAgents: 17,
-    expectedPages: '120-150',
+    expectedPages: '120-300',
     expectedInfographics: 25
   }
 ];
@@ -109,11 +109,11 @@ export default function TestOrchestratorV6() {
 
       addLog(`📝 Pre-audit créé: ${preAudit.id} (tier: ${plan.tier})`);
 
-      // 3. Appeler l'orchestrateur v6
-      addLog(`⚡ Appel orchestrate-multi-agent-v6...`);
+      // 3. Appeler l'orchestrateur v8 (Premium)
+      addLog(`⚡ Appel orchestrate-multi-agent-v8...`);
       
       const { data: orchestrationResult, error: functionError } = await supabase.functions.invoke(
-        'orchestrate-multi-agent-v6',
+        'orchestrate-multi-agent-v8',
         {
           body: {
             audit_id: preAudit.id,
@@ -206,10 +206,10 @@ export default function TestOrchestratorV6() {
         {/* Header */}
         <div className="text-center space-y-4">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-            🧪 Test Orchestrateur v6
+            🧪 Test Orchestrateur V8 Premium
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Validation du système multi-agents pour les 4 plans tarifaires
+            Validation du système multi-agents 17 agents avec modèles premium
           </p>
         </div>
 
