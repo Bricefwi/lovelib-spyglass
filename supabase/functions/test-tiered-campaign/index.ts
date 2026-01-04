@@ -8,53 +8,75 @@ const corsHeaders = {
 };
 
 // ======================================================
-// 🎯 CONFIGURATION DES 3 NIVEAUX DE TEST
+// 🎯 CONFIGURATION DES 4 NIVEAUX DE TEST
 // ======================================================
 const TEST_SCENARIOS = [
   {
     id: 'freemium',
-    name: 'Freemium - TPE',
+    name: 'Freemium - Discovery',
     tier: 'discovery',
-    model: 'google/gemini-2.5-flash',
-    url: 'https://www.boulangerie-delalune.fr',
-    description: 'TPE locale - Analyse rapide avec sections cadenassées',
+    model: 'google/gemini-2.5-flash-lite',
+    url: 'https://www.imotion-conseil.com',
+    description: 'Analyse rapide avec sections cadenassées',
     expectedScore: 65,
     features: {
       deepScraping: false,
       competitorAnalysis: false,
       financialData: false,
-      lockedSections: true
+      lockedSections: true,
+      includeBrief: false
     }
   },
   {
     id: 'pro',
-    name: 'Pro - PME SaaS',
+    name: 'Pro - PME',
     tier: 'pro',
-    model: 'openai/gpt-5',
-    url: 'https://www.qonto.com',
-    description: 'PME SaaS - Audit complet avec GPT-5',
-    expectedScore: 82,
+    model: 'google/gemini-2.5-flash',
+    url: 'https://www.imotion-conseil.com',
+    description: 'Audit complet + brief conversationnel Alex',
+    expectedScore: 78,
     features: {
       deepScraping: true,
       competitorAnalysis: true,
       financialData: false,
-      lockedSections: false
+      lockedSections: false,
+      includeBrief: true
     }
   },
   {
-    id: 'ultra_premium',
-    name: 'Ultra-Premium - Grand Compte',
+    id: 'agency',
+    name: 'Agency - Conseil Premium',
     tier: 'agency',
     model: 'openai/gpt-5',
-    url: 'https://www.saint-gobain.com',
-    description: 'Grand compte industriel - Dream Team IA avec données enrichies',
-    expectedScore: 91,
+    url: 'https://www.imotion-conseil.com',
+    description: 'Dream Team IA + benchmarks sectoriels',
+    expectedScore: 88,
     features: {
       deepScraping: true,
       competitorAnalysis: true,
       financialData: true,
       lockedSections: false,
+      includeBrief: true,
       multiAgentMode: true
+    }
+  },
+  {
+    id: 'enterprise',
+    name: 'Enterprise - Transformation',
+    tier: 'enterprise',
+    model: 'openai/gpt-5',
+    url: 'https://www.imotion-conseil.com',
+    description: 'McKinsey-level + roadmap transformation + ROI',
+    expectedScore: 95,
+    features: {
+      deepScraping: true,
+      competitorAnalysis: true,
+      financialData: true,
+      lockedSections: false,
+      includeBrief: true,
+      multiAgentMode: true,
+      deepResearch: true,
+      internationalScope: true
     }
   }
 ];
@@ -62,20 +84,25 @@ const TEST_SCENARIOS = [
 // ======================================================
 // 🎨 BRANDING PAR NIVEAU
 // ======================================================
-const BRANDING = {
+const BRANDING: Record<string, { primary_color: string; company_name: string; logo_url: string | null }> = {
   discovery: {
     primary_color: '#d8232a', // IMOTION Red
-    company_name: 'IMOTION',
+    company_name: 'IMOTION Conseil',
     logo_url: null
   },
   pro: {
     primary_color: '#d8232a', // IMOTION Red
-    company_name: 'IMOTION',
+    company_name: 'IMOTION Conseil',
     logo_url: null
   },
   agency: {
-    primary_color: '#1e40af', // Blue (Marque Blanche)
-    company_name: 'Agency Corp Premium',
+    primary_color: '#7c3aed', // Purple Premium
+    company_name: 'IMOTION Premium',
+    logo_url: null
+  },
+  enterprise: {
+    primary_color: '#0f172a', // Slate dark - Executive
+    company_name: 'IMOTION Enterprise',
     logo_url: null
   }
 };
@@ -86,7 +113,7 @@ serve(async (req) => {
   try {
     console.log("🚀 ========== CAMPAGNE TEST MULTI-NIVEAUX ==========");
     
-    const { scenario_id, recipient_email, run_all } = await req.json();
+    const { scenario_id, recipient_email, run_all, enriched_brief, use_imotion_url } = await req.json();
     
     if (!recipient_email) {
       return new Response(
@@ -123,11 +150,12 @@ serve(async (req) => {
         // 1. Scraping avec Tavily
         const siteContent = await scrapeSite(scenario.url, scenario.features.deepScraping);
         
-        // 2. Analyse IA selon le niveau
-        const report = await generateTieredReport(scenario, siteContent);
+        // 2. Analyse IA selon le niveau (avec brief enrichi si disponible)
+        console.log(`📋 Brief inclus: ${scenario.features.includeBrief ? 'OUI' : 'NON'}`);
+        const report = await generateTieredReport(scenario, siteContent, enriched_brief);
         
         // 3. Génération HTML avec branding
-        const html = generateTieredHTML(scenario, report);
+        const html = generateTieredHTML(scenario, report, enriched_brief);
         
         // 4. Sauvegarde en base
         const { data: savedReport, error: saveError } = await supabase.from('audit_reports').insert({
@@ -279,15 +307,39 @@ async function scrapeSite(url: string, deep: boolean): Promise<string> {
 }
 
 // ======================================================
-// 🧠 GÉNÉRATION RAPPORT SELON NIVEAU
+// 🧠 GÉNÉRATION RAPPORT SELON NIVEAU (avec brief enrichi)
 // ======================================================
-async function generateTieredReport(scenario: typeof TEST_SCENARIOS[0], siteContent: string): Promise<any> {
+async function generateTieredReport(scenario: typeof TEST_SCENARIOS[0], siteContent: string, enrichedBrief?: any): Promise<any> {
   const lovableKey = Deno.env.get("LOVABLE_API_KEY");
   if (!lovableKey) {
     throw new Error("LOVABLE_API_KEY non configurée");
   }
 
-  const tierPrompts = {
+  // Brief context pour les tiers payants
+  const briefContext = enrichedBrief && scenario.features.includeBrief ? `
+=== BRIEF CONVERSATIONNEL ALEX ===
+Client: ${enrichedBrief.client_identity?.name || 'N/A'} - ${enrichedBrief.client_identity?.role || 'N/A'}
+Entreprise: ${enrichedBrief.client_identity?.company || 'N/A'}
+
+OBJECTIFS STRATÉGIQUES:
+${(enrichedBrief.strategic_objectives || []).map((o: string) => `- ${o}`).join('\n')}
+
+DÉFIS ACTUELS:
+${(enrichedBrief.current_challenges || []).map((c: string) => `- ${c}`).join('\n')}
+
+FOCUS SPÉCIFIQUE (PRICING):
+${(enrichedBrief.focus_areas || []).map((f: string) => `- ${f}`).join('\n')}
+
+QUESTIONS CLÉS DU CLIENT:
+${(enrichedBrief.key_questions || []).map((q: string) => `- ${q}`).join('\n')}
+
+PAYSAGE CONCURRENTIEL:
+- Niche: ${enrichedBrief.competitive_landscape?.niche || 'N/A'}
+- Positionnement: ${enrichedBrief.competitive_landscape?.positioning || 'N/A'}
+====================================
+` : '';
+
+  const tierPrompts: Record<string, string> = {
     discovery: `Tu es un assistant marketing. Fais une analyse RAPIDE et SUPERFICIELLE.
     LIMITE: 
     - Identifie 2-3 problèmes évidents seulement
@@ -296,23 +348,38 @@ async function generateTieredReport(scenario: typeof TEST_SCENARIOS[0], siteCont
     - Score moyen autour de 60-70/100`,
     
     pro: `Tu es un Consultant Senior en Stratégie Digitale.
+    ${briefContext ? 'IMPORTANT: Tu as accès au brief conversationnel du client. UTILISE-LE pour personnaliser tes recommandations.' : ''}
     PROFONDEUR: Analyse complète avec recommandations actionnables.
     - Identifie 5-7 problèmes avec solutions
-    - Analyse concurrentielle de base
+    - Analyse concurrentielle de base  
+    - Réponds aux questions spécifiques du client (notamment sur le pricing)
     - Plan d'action sur 6 mois
     - Score réaliste 75-85/100`,
     
-    agency: `Tu es un Directeur Associé chez McKinsey Digital, spécialiste des grands comptes industriels.
+    agency: `Tu es un Directeur Associé chez McKinsey Digital, spécialiste transformation digitale.
+    ${briefContext ? 'CRITIQUE: Le brief conversationnel Alex contient les vraies attentes du client. Personnalise TOUTE ton analyse.' : ''}
     PROFONDEUR MAXIMALE - MODE "DEEP THINK":
     - Analyse stratégique à 360° (marché, concurrence, technologie, organisation)
     - Données financières et tendances sectorielles
+    - Analyse APPROFONDIE du modèle de pricing (Freemium vs alternatives)
     - 3 scénarios stratégiques détaillés avec ROI
     - Benchmarks sectoriels précis
     - Recommandations de transformation digitale
-    - Score premium 85-95/100`
+    - Score premium 85-92/100`,
+    
+    enterprise: `Tu es Partner Senior chez McKinsey & Company, expert en transformation digitale Fortune 500.
+    ${briefContext ? 'MISSION CRITIQUE: Le brief Alex est ta boussole stratégique. Chaque recommandation doit y répondre directement.' : ''}
+    PROFONDEUR EXECUTIVE - MODE "TRANSFORMATION GLOBALE":
+    - Analyse stratégique internationale (benchmarks mondiaux)
+    - Deep-dive modèle économique et pricing (analyse Freemium, LTV/CAC, cohorts)
+    - 5 scénarios stratégiques avec modélisation financière 36 mois
+    - Roadmap de transformation complète avec jalons
+    - Analyse de risques et mitigation
+    - ROI quantifié par initiative
+    - Score excellence 92-98/100`
   };
 
-  const systemPrompt = tierPrompts[scenario.tier as keyof typeof tierPrompts] || tierPrompts.pro;
+  const systemPrompt = tierPrompts[scenario.tier] || tierPrompts.pro;
 
   const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
@@ -330,16 +397,20 @@ async function generateTieredReport(scenario: typeof TEST_SCENARIOS[0], siteCont
 FORMAT JSON STRICT:
 {
   "executive_summary": "...",
-  "scores": { "market": 75, "tech": 68, "ux": 72, "seo": 55, "conversion": 48 },
+  "scores": { "market": 75, "tech": 68, "ux": 72, "seo": 55, "conversion": 48, "pricing": 70 },
   "swot": { "strengths": [], "weaknesses": [], "opportunities": [], "threats": [] },
-  "strategic_scenarios": [{ "name": "...", "description": "...", "roi": "...", "risk": "..." }],
-  "action_plan": [{ "step": "...", "action": "...", "budget": "..." }],
+  "pricing_analysis": { "current_model": "...", "recommendations": [], "benchmark": "..." },
+  "strategic_scenarios": [{ "name": "...", "description": "...", "roi": "...", "risk": "...", "timeline": "..." }],
+  "action_plan": [{ "step": "...", "action": "...", "budget": "...", "priority": "..." }],
+  "roadmap": { "months_6": [], "months_12": [], "months_36": [] },
   "locked_premium": ${scenario.features.lockedSections ? '["Analyse concurrentielle complète", "Données financières sectorielles", "Plan de transformation 12 mois"]' : '[]'}
 }` 
         },
         { 
           role: "user", 
           content: `AUDIT ${scenario.tier.toUpperCase()} pour: ${scenario.url}
+
+${briefContext}
 
 CONTENU SITE:
 ${siteContent}
@@ -377,19 +448,69 @@ Retourne UNIQUEMENT le JSON.`
 // ======================================================
 // 🎨 GÉNÉRATION HTML AVEC BRANDING
 // ======================================================
-function generateTieredHTML(scenario: typeof TEST_SCENARIOS[0], report: any): string {
-  const branding = BRANDING[scenario.tier as keyof typeof BRANDING] || BRANDING.discovery;
+function generateTieredHTML(scenario: typeof TEST_SCENARIOS[0], report: any, enrichedBrief?: any): string {
+  const branding = BRANDING[scenario.tier] || BRANDING.discovery;
   const scores = report.scores || {};
   const swot = report.swot || {};
   const scenarios_strat = report.strategic_scenarios || [];
   const actionPlan = report.action_plan || [];
   const lockedPremium = report.locked_premium || [];
+  const pricingAnalysis = report.pricing_analysis || {};
+  const roadmap = report.roadmap || {};
 
-  const tierBadge = {
+  const tierBadge: Record<string, { label: string; color: string; icon: string }> = {
     discovery: { label: 'FREEMIUM', color: '#6b7280', icon: '🆓' },
     pro: { label: 'PRO', color: '#0ea5e9', icon: '⭐' },
-    agency: { label: 'PREMIUM', color: '#8b5cf6', icon: '👑' }
-  }[scenario.tier] || { label: 'STANDARD', color: '#6b7280', icon: '📊' };
+    agency: { label: 'AGENCY', color: '#7c3aed', icon: '👑' },
+    enterprise: { label: 'ENTERPRISE', color: '#0f172a', icon: '🏛️' }
+  };
+  const badge = tierBadge[scenario.tier] || tierBadge.discovery;
+
+  // Section brief Alex pour les tiers payants
+  const briefSection = enrichedBrief && scenario.features.includeBrief ? `
+    <div class="card" style="border-left: 4px solid #f59e0b;">
+      <h2>📋 Brief Conversationnel Alex</h2>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <div>
+          <p style="font-weight: 600; margin-bottom: 8px;">👤 Client</p>
+          <p style="color: #64748b;">${enrichedBrief.client_identity?.name || 'N/A'} - ${enrichedBrief.client_identity?.role || ''}</p>
+        </div>
+        <div>
+          <p style="font-weight: 600; margin-bottom: 8px;">🎯 Objectifs</p>
+          <ul style="color: #64748b; padding-left: 16px;">
+            ${(enrichedBrief.strategic_objectives || []).slice(0, 3).map((o: string) => `<li>${o}</li>`).join('')}
+          </ul>
+        </div>
+        <div>
+          <p style="font-weight: 600; margin-bottom: 8px;">💰 Focus Pricing</p>
+          <ul style="color: #64748b; padding-left: 16px;">
+            ${(enrichedBrief.key_questions || []).slice(0, 2).map((q: string) => `<li>${q}</li>`).join('')}
+          </ul>
+        </div>
+        <div>
+          <p style="font-weight: 600; margin-bottom: 8px;">⚡ Défis</p>
+          <ul style="color: #64748b; padding-left: 16px;">
+            ${(enrichedBrief.current_challenges || []).map((c: string) => `<li>${c}</li>`).join('')}
+          </ul>
+        </div>
+      </div>
+    </div>
+  ` : '';
+
+  // Section pricing pour les tiers avec brief
+  const pricingSection = pricingAnalysis.current_model ? `
+    <div class="card">
+      <h2>💰 Analyse Pricing</h2>
+      <p style="margin-bottom: 16px;"><strong>Modèle actuel:</strong> ${pricingAnalysis.current_model}</p>
+      ${pricingAnalysis.benchmark ? `<p style="margin-bottom: 16px;"><strong>Benchmark:</strong> ${pricingAnalysis.benchmark}</p>` : ''}
+      ${pricingAnalysis.recommendations?.length ? `
+        <p style="font-weight: 600; margin-bottom: 8px;">Recommandations:</p>
+        <ul style="padding-left: 16px;">
+          ${pricingAnalysis.recommendations.map((r: string) => `<li>${r}</li>`).join('')}
+        </ul>
+      ` : ''}
+    </div>
+  ` : '';
 
   return `<!DOCTYPE html>
 <html lang="fr">
@@ -520,12 +641,15 @@ function generateTieredHTML(scenario: typeof TEST_SCENARIOS[0], report: any): st
 </head>
 <body>
   <div class="header">
-    <h1>${tierBadge.icon} ${branding.company_name}</h1>
+    <h1>${badge.icon} ${branding.company_name}</h1>
     <p class="subtitle">Rapport d'Audit Stratégique - ${scenario.url}</p>
-    <span class="tier-badge">${tierBadge.label}</span>
+    <span class="tier-badge">${badge.label}</span>
   </div>
   
   <div class="container">
+    ${briefSection}
+    ${pricingSection}
+    
     <div class="card">
       <h2>📊 Scores de Performance</h2>
       <div class="scores-grid">

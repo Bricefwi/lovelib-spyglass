@@ -4,47 +4,97 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Mail, CheckCircle2, AlertCircle, Rocket, Sparkles, Crown, Zap } from "lucide-react";
+import { Loader2, Mail, CheckCircle2, AlertCircle, Rocket, Sparkles, Crown, Zap, Building2, Download, Eye, MessageSquare } from "lucide-react";
+
+// Brief conversationnel enrichi basé sur l'échange avec Alex
+const ENRICHED_BRIEF = {
+  client_identity: {
+    name: "Patrice Simion",
+    role: "Créateur et fondateur",
+    company: "iMotion Conseil"
+  },
+  strategic_objectives: [
+    "Gagner en visibilité",
+    "Transformer cette visibilité en clients",
+    "Améliorer l'image de la société pour donner confiance",
+    "Créer un cycle vertueux pour plus de clients abonnés"
+  ],
+  current_challenges: [
+    "Difficulté à gagner en visibilité et crédibilité au démarrage",
+    "Transformer la visibilité en chiffre d'affaires"
+  ],
+  competitive_landscape: {
+    known_competitors: [],
+    niche: "Accompagnement Marketing et Commercial avec IA",
+    positioning: "Agence IA spécialisée B2B, peu de concurrence directe sur cette niche"
+  },
+  focus_areas: [
+    "Stratégie de pricing",
+    "Évaluation du modèle Freemium vs offre d'audits gratuits",
+    "Pertinence de la conversion sans Freemium"
+  ],
+  key_questions: [
+    "Est-ce que ma stratégie de pricing est la bonne par rapport au marché ?",
+    "Est-ce que la démarche Freemium est pertinente ?",
+    "Faut-il offrir 2 audits avant de convertir en forfait ?"
+  ]
+};
 
 const SCENARIOS = [
   {
     id: 'freemium',
-    name: 'Freemium - TPE Locale',
+    name: 'Freemium - Discovery',
     tier: 'discovery',
-    url: 'https://www.boulangerie-delalune.fr',
+    url: 'https://www.imotion-conseil.com',
     description: 'Analyse rapide avec sections cadenassées pour inciter à l\'upgrade',
-    model: 'gemini-2.0-flash',
+    model: 'google/gemini-2.5-flash-lite',
     icon: Zap,
     color: 'bg-slate-500',
-    expectedFeatures: ['Analyse de surface', 'SWOT basique', 'Sections Premium verrouillées']
+    expectedFeatures: ['Analyse de surface', 'SWOT basique', 'Sections Premium verrouillées'],
+    briefIncluded: false
   },
   {
     id: 'pro',
-    name: 'Pro - PME SaaS',
+    name: 'Pro - PME',
     tier: 'pro',
-    url: 'https://www.qonto.com',
-    description: 'Audit complet avec GPT-5, recommandations actionnables',
-    model: 'openai/gpt-5',
+    url: 'https://www.imotion-conseil.com',
+    description: 'Audit complet + brief conversationnel + recommandations actionnables',
+    model: 'google/gemini-2.5-flash',
     icon: Sparkles,
     color: 'bg-blue-500',
-    expectedFeatures: ['Analyse complète', 'Concurrents identifiés', 'Plan d\'action 6 mois']
+    expectedFeatures: ['Brief Alex intégré', 'Analyse pricing', 'Concurrents identifiés', 'Plan d\'action 6 mois'],
+    briefIncluded: true
   },
   {
-    id: 'ultra_premium',
-    name: 'Ultra-Premium - Grand Compte',
+    id: 'agency',
+    name: 'Agency - Conseil Premium',
     tier: 'agency',
-    url: 'https://www.saint-gobain.com',
-    description: 'Dream Team IA + données enrichies + Marque Blanche',
-    model: 'openai/gpt-5 (DeepThink)',
+    url: 'https://www.imotion-conseil.com',
+    description: 'Dream Team IA + brief enrichi + benchmarks sectoriels',
+    model: 'openai/gpt-5',
     icon: Crown,
     color: 'bg-purple-500',
-    expectedFeatures: ['Analyse 360°', 'Benchmarks sectoriels', '3 scénarios stratégiques', 'Marque Blanche']
+    expectedFeatures: ['Brief Alex complet', 'Analyse pricing approfondie', '3 scénarios stratégiques', 'Marque Blanche'],
+    briefIncluded: true
+  },
+  {
+    id: 'enterprise',
+    name: 'Enterprise - Transformation',
+    tier: 'enterprise',
+    url: 'https://www.imotion-conseil.com',
+    description: 'Analyse McKinsey-level + roadmap transformation + ROI détaillé',
+    model: 'openai/gpt-5',
+    icon: Building2,
+    color: 'bg-amber-500',
+    expectedFeatures: ['Brief Alex + Deep Research', 'Analyse marché complète', 'Roadmap 12-36 mois', 'ROI quantifié', 'Benchmark international'],
+    briefIncluded: true
   }
 ];
 
 export default function TestTieredCampaign() {
   const [loading, setLoading] = useState<string | null>(null);
   const [results, setResults] = useState<any>(null);
+  const [savedReports, setSavedReports] = useState<any[]>([]);
   const { toast } = useToast();
 
   const launchCampaign = async (runAll: boolean, scenarioId?: string) => {
@@ -63,13 +113,16 @@ export default function TestTieredCampaign() {
         return;
       }
 
-      console.log("🚀 Lancement campagne pour:", user.email);
+      console.log("🚀 Lancement campagne enrichie pour:", user.email);
+      console.log("📋 Brief conversationnel inclus:", ENRICHED_BRIEF);
 
       const { data, error } = await supabase.functions.invoke('test-tiered-campaign', {
         body: { 
           recipient_email: user.email,
           run_all: runAll,
-          scenario_id: scenarioId
+          scenario_id: scenarioId,
+          enriched_brief: ENRICHED_BRIEF, // Inclure le brief enrichi
+          use_imotion_url: true // Utiliser imotion-conseil.com pour tous
         }
       });
 
@@ -79,10 +132,21 @@ export default function TestTieredCampaign() {
 
       console.log("📊 Résultats:", data);
       setResults(data);
+      
+      // Récupérer les rapports sauvegardés pour visualisation
+      if (data.results) {
+        const reportIds = data.results.filter((r: any) => r.report_id).map((r: any) => r.report_id);
+        if (reportIds.length > 0) {
+          const { data: reports } = await supabase.from('audit_reports')
+            .select('*')
+            .in('id', reportIds);
+          setSavedReports(reports || []);
+        }
+      }
 
       toast({
         title: "✅ Campagne exécutée !",
-        description: `${data.summary?.success || 0} rapport(s) envoyé(s) à ${user.email}`,
+        description: `${data.summary?.success || 0} rapport(s) généré(s) et envoyé(s) à ${user.email}`,
       });
 
     } catch (error: any) {
@@ -97,6 +161,26 @@ export default function TestTieredCampaign() {
     }
   };
 
+  const downloadReport = (report: any) => {
+    const blob = new Blob([report.html || ''], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `rapport-${report.report_type || 'audit'}-${report.id.slice(0,8)}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const viewReport = (report: any) => {
+    const newWindow = window.open('', '_blank');
+    if (newWindow) {
+      newWindow.document.write(report.html || '<p>Aucun contenu HTML</p>');
+      newWindow.document.close();
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 p-6">
       <div className="max-w-5xl mx-auto space-y-8">
@@ -106,17 +190,60 @@ export default function TestTieredCampaign() {
             🎯 Campagne Test Multi-Niveaux
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Validez la gradation de qualité entre les offres Freemium, Pro et Ultra-Premium
+            Testez les 4 niveaux d'audit (Freemium, Pro, Agency, Enterprise) avec votre brief conversationnel Alex
           </p>
         </div>
+
+        {/* Brief enrichi - Affichage */}
+        <Card className="border-amber-200 bg-gradient-to-r from-amber-50 to-amber-100/50 dark:from-amber-950/20 dark:to-amber-900/10">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
+              <MessageSquare className="h-5 w-5" />
+              Brief Conversationnel Alex
+            </CardTitle>
+            <CardDescription>Contexte enrichi basé sur votre échange avec Alex</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid md:grid-cols-2 gap-4 text-sm">
+              <div>
+                <p className="font-medium text-amber-900 dark:text-amber-100">👤 Client</p>
+                <p className="text-amber-700 dark:text-amber-300">{ENRICHED_BRIEF.client_identity.name} - {ENRICHED_BRIEF.client_identity.role}</p>
+              </div>
+              <div>
+                <p className="font-medium text-amber-900 dark:text-amber-100">🎯 Objectifs</p>
+                <ul className="text-amber-700 dark:text-amber-300 list-disc list-inside">
+                  {ENRICHED_BRIEF.strategic_objectives.slice(0, 2).map((obj, i) => (
+                    <li key={i} className="truncate">{obj}</li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <p className="font-medium text-amber-900 dark:text-amber-100">💰 Focus Pricing</p>
+                <ul className="text-amber-700 dark:text-amber-300 list-disc list-inside">
+                  {ENRICHED_BRIEF.key_questions.slice(0, 2).map((q, i) => (
+                    <li key={i} className="truncate">{q}</li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <p className="font-medium text-amber-900 dark:text-amber-100">⚡ Défis</p>
+                <ul className="text-amber-700 dark:text-amber-300 list-disc list-inside">
+                  {ENRICHED_BRIEF.current_challenges.map((c, i) => (
+                    <li key={i} className="truncate">{c}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Bouton principal */}
         <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10">
           <CardContent className="p-6">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
               <div>
-                <h2 className="text-xl font-semibold">Lancer les 3 tests simultanément</h2>
-                <p className="text-muted-foreground">Recevez les 3 rapports sur votre email pour comparaison</p>
+                <h2 className="text-xl font-semibold">Lancer les 4 tests simultanément</h2>
+                <p className="text-muted-foreground">Générez et comparez les 4 niveaux d'audit avec votre brief Alex</p>
               </div>
               <Button 
                 size="lg" 
@@ -132,7 +259,7 @@ export default function TestTieredCampaign() {
                 ) : (
                   <>
                     <Rocket className="mr-2 h-5 w-5" />
-                    Lancer les 3 audits
+                    Lancer les 4 audits
                   </>
                 )}
               </Button>
@@ -141,7 +268,7 @@ export default function TestTieredCampaign() {
         </Card>
 
         {/* Scénarios individuels */}
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
           {SCENARIOS.map((scenario) => {
             const Icon = scenario.icon;
             const isLoading = loading === scenario.id;
@@ -263,6 +390,41 @@ export default function TestTieredCampaign() {
           </Card>
         )}
 
+        {/* Rapports générés - Visualisation et téléchargement */}
+        {savedReports.length > 0 && (
+          <Card className="border-green-200">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Download className="h-5 w-5 text-green-600" />
+                Rapports Générés
+              </CardTitle>
+              <CardDescription>Visualisez et téléchargez les rapports générés</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {savedReports.map((report) => (
+                  <div key={report.id} className="p-4 bg-muted/30 rounded-lg border">
+                    <p className="font-medium text-sm mb-2 truncate">{report.title}</p>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      Type: {report.report_type || 'audit'}
+                    </p>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" onClick={() => viewReport(report)}>
+                        <Eye className="h-4 w-4 mr-1" />
+                        Voir
+                      </Button>
+                      <Button size="sm" variant="default" onClick={() => downloadReport(report)}>
+                        <Download className="h-4 w-4 mr-1" />
+                        .html
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Grille de validation */}
         <Card>
           <CardHeader>
@@ -277,39 +439,59 @@ export default function TestTieredCampaign() {
                     <th className="text-left py-3 px-2">Critère</th>
                     <th className="text-center py-3 px-2">Freemium</th>
                     <th className="text-center py-3 px-2">Pro</th>
-                    <th className="text-center py-3 px-2">Premium</th>
+                    <th className="text-center py-3 px-2">Agency</th>
+                    <th className="text-center py-3 px-2">Enterprise</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
                   <tr>
-                    <td className="py-2 px-2">Branding personnalisé</td>
-                    <td className="text-center">IMOTION Rouge</td>
-                    <td className="text-center">IMOTION Rouge</td>
-                    <td className="text-center">Agency Corp Bleu</td>
+                    <td className="py-2 px-2">Brief Alex intégré</td>
+                    <td className="text-center">❌</td>
+                    <td className="text-center">✅</td>
+                    <td className="text-center">✅</td>
+                    <td className="text-center">✅+</td>
                   </tr>
                   <tr>
                     <td className="py-2 px-2">Sections verrouillées</td>
                     <td className="text-center">✅ Oui</td>
                     <td className="text-center">❌ Non</td>
                     <td className="text-center">❌ Non</td>
+                    <td className="text-center">❌ Non</td>
+                  </tr>
+                  <tr>
+                    <td className="py-2 px-2">Analyse Pricing</td>
+                    <td className="text-center">Surface</td>
+                    <td className="text-center">Complète</td>
+                    <td className="text-center">Benchmark</td>
+                    <td className="text-center">Stratégique</td>
                   </tr>
                   <tr>
                     <td className="py-2 px-2">Profondeur d'analyse</td>
                     <td className="text-center">Surface</td>
                     <td className="text-center">Complète</td>
                     <td className="text-center">Expert</td>
+                    <td className="text-center">McKinsey</td>
                   </tr>
                   <tr>
                     <td className="py-2 px-2">Scénarios stratégiques</td>
                     <td className="text-center">1</td>
                     <td className="text-center">2</td>
-                    <td className="text-center">3+</td>
+                    <td className="text-center">3</td>
+                    <td className="text-center">5+</td>
                   </tr>
                   <tr>
                     <td className="py-2 px-2">Score attendu</td>
                     <td className="text-center">~65/100</td>
-                    <td className="text-center">~82/100</td>
-                    <td className="text-center">~91/100</td>
+                    <td className="text-center">~78/100</td>
+                    <td className="text-center">~88/100</td>
+                    <td className="text-center">~95/100</td>
+                  </tr>
+                  <tr>
+                    <td className="py-2 px-2">Roadmap</td>
+                    <td className="text-center">❌</td>
+                    <td className="text-center">6 mois</td>
+                    <td className="text-center">12 mois</td>
+                    <td className="text-center">36 mois</td>
                   </tr>
                 </tbody>
               </table>
