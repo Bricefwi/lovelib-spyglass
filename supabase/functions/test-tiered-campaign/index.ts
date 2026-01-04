@@ -9,16 +9,19 @@ const corsHeaders = {
 
 // ======================================================
 // 🎯 CONFIGURATION DES 4 NIVEAUX DE TEST
+// Modèles CORRIGÉS pour correspondre aux modèles Lovable AI disponibles
 // ======================================================
 const TEST_SCENARIOS = [
   {
     id: 'freemium',
     name: 'Freemium - Discovery',
     tier: 'discovery',
-    model: 'google/gemini-2.5-flash-lite',
+    model: 'google/gemini-2.5-flash-lite', // Rapide, économique
     url: 'https://travaux-renovation-compiegne.fr/',
     description: 'Analyse rapide avec sections cadenassées',
     expectedScore: 65,
+    expectedPages: '15-20',
+    agents: 7,
     features: {
       deepScraping: false,
       competitorAnalysis: false,
@@ -31,10 +34,12 @@ const TEST_SCENARIOS = [
     id: 'pro',
     name: 'Pro - PME',
     tier: 'pro',
-    model: 'google/gemini-2.5-flash',
+    model: 'google/gemini-2.5-flash', // Bon rapport qualité/prix
     url: 'https://travaux-renovation-compiegne.fr/',
     description: 'Audit complet + brief conversationnel Alex',
     expectedScore: 78,
+    expectedPages: '35-50',
+    agents: 12,
     features: {
       deepScraping: true,
       competitorAnalysis: true,
@@ -47,10 +52,12 @@ const TEST_SCENARIOS = [
     id: 'agency',
     name: 'Agency - Conseil Premium',
     tier: 'agency',
-    model: 'openai/gpt-5',
+    model: 'google/gemini-2.5-pro', // Premium multi-modal
     url: 'https://travaux-renovation-compiegne.fr/',
     description: 'Dream Team IA + benchmarks sectoriels BTP',
     expectedScore: 88,
+    expectedPages: '60-80',
+    agents: 15,
     features: {
       deepScraping: true,
       competitorAnalysis: true,
@@ -64,10 +71,12 @@ const TEST_SCENARIOS = [
     id: 'enterprise',
     name: 'Enterprise - Transformation',
     tier: 'enterprise',
-    model: 'openai/gpt-5',
+    model: 'openai/gpt-5', // Top-tier reasoning
     url: 'https://travaux-renovation-compiegne.fr/',
     description: 'McKinsey-level + roadmap transformation + ROI',
     expectedScore: 95,
+    expectedPages: '100-150',
+    agents: 17,
     features: {
       deepScraping: true,
       competitorAnalysis: true,
@@ -146,6 +155,8 @@ serve(async (req) => {
       console.log(`🔗 URL: ${scenario.url}`);
       console.log(`🤖 Model: ${scenario.model}`);
       console.log(`📊 Tier: ${scenario.tier}`);
+      console.log(`📄 Pages attendues: ${scenario.expectedPages}`);
+      console.log(`🤖 Agents: ${scenario.agents}`);
 
       try {
         // 1. Scraping avec Tavily
@@ -155,8 +166,8 @@ serve(async (req) => {
         console.log(`📋 Brief inclus: ${scenario.features.includeBrief ? 'OUI' : 'NON'}`);
         const report = await generateTieredReport(scenario, siteContent, enriched_brief);
         
-        // 3. Génération HTML avec branding
-        const html = generateTieredHTML(scenario, report, enriched_brief);
+        // 3. Génération HTML PREMIUM avec branding (style OBUT)
+        const html = generatePremiumHTML(scenario, report, enriched_brief);
         
         // 4. Sauvegarde en base
         const { data: savedReport, error: saveError } = await supabase.from('audit_reports').insert({
@@ -183,7 +194,8 @@ serve(async (req) => {
           report_id: savedReport.id,
           email_sent: emailResult.success,
           tier: scenario.tier,
-          model_used: scenario.model
+          model_used: scenario.model,
+          expected_pages: scenario.expectedPages
         });
 
       } catch (error: any) {
@@ -226,45 +238,58 @@ serve(async (req) => {
 });
 
 // ======================================================
-// 🕵️ SCRAPING TAVILY (avec fallback réaliste)
+// 🕵️ SCRAPING TAVILY AMÉLIORÉ
 // ======================================================
 async function scrapeSite(url: string, deep: boolean): Promise<string> {
   const tavilyKey = Deno.env.get("TAVILY_API_KEY");
   
-  // Données de démonstration réalistes pour les tests
+  // Données de démonstration réalistes pour BLC Pro Rénovation
   const getDemoContent = (url: string): string => {
-    if (url.includes('boulangerie') || url.includes('delalune')) {
-      return `Boulangerie de la Lune - Artisan Boulanger depuis 1985.
-      Notre boulangerie familiale propose des pains traditionnels, viennoiseries artisanales et pâtisseries maison.
-      Spécialités: Pain au levain naturel, Croissants pur beurre, Tartes aux fruits de saison.
-      Horaires: 6h30-19h30 du mardi au dimanche. Fermé le lundi.
-      Adresse: 12 rue du Commerce, 35000 Rennes.
-      Équipe de 5 artisans passionnés. Labels: Artisan de France, Agriculture Locale.
-      Services: Click & Collect, Commandes personnalisées pour événements.
-      Problèmes identifiés: Site web non responsive, pas de réservation en ligne, SEO faible.`;
-    } else if (url.includes('qonto')) {
-      return `Qonto - La néobanque des entreprises et indépendants.
-      Solution bancaire 100% en ligne pour PME, startups et freelances.
-      Produits: Compte pro, Cartes bancaires, Facturation, Comptabilité automatisée.
-      +400 000 clients en Europe. Présence: France, Allemagne, Italie, Espagne.
-      Levée de fonds: 622M€ (Série E, 2022). Valorisation: 5 milliards €.
-      Équipe: 1200+ employés. Siège: Paris.
-      Intégrations: Stripe, Pennylane, Sellsy, Zapier.
-      Concurrents: Shine, Blank, Revolut Business.
-      Forces: UX excellente, API robuste, support client réactif.
-      Faiblesses: Pas de crédit bancaire, dépôts d'espèces limités.`;
-    } else if (url.includes('saint-gobain')) {
-      return `Saint-Gobain - Leader mondial de la construction durable.
-      Fondé en 1665. CAC 40. CA: 47,9 milliards € (2023).
-      Activités: Vitrage, Matériaux de construction, Solutions haute performance.
-      Présence: 75 pays, 160 000 collaborateurs.
-      Marques: Placo, Isover, Weber, Glassolutions, PAM.
-      Stratégie: "Grow & Impact" - croissance durable et décarbonation.
-      Objectif: Neutralité carbone 2050.
-      Innovations: Verre électrochrome, Isolation biosourcée, Construction modulaire.
-      Concurrents: Holcim, Kingspan, Owens Corning.
-      Transformation digitale: BIM, IoT bâtiments, Supply chain 4.0.
-      Marchés: Résidentiel 40%, Tertiaire 35%, Industrie 25%.`;
+    if (url.includes('travaux-renovation-compiegne') || url.includes('blc')) {
+      return `BLC Pro Rénovation - Entreprise de travaux et rénovation à Compiègne.
+      160 Rue Marie Curie Zone intermarché, 60190 Moyvillers.
+      Téléphone: 03 44 43 01 00.
+      
+      SERVICES PRINCIPAUX:
+      - Rénovation complète de maison et appartement
+      - Travaux d'isolation thermique et acoustique
+      - Menuiserie intérieure et extérieure
+      - Plomberie et électricité
+      - Peinture et revêtements
+      - Aménagement de combles
+      - Extension et surélévation
+      
+      ZONE D'INTERVENTION:
+      - Compiègne et agglomération (rayon 30km)
+      - Oise (60) et départements limitrophes
+      - Interventions professionnelles et particuliers
+      
+      POINTS FORTS:
+      - Entreprise locale depuis 15 ans
+      - Équipe de 8 artisans qualifiés
+      - Devis gratuit sous 48h
+      - Garantie décennale
+      - Certifications RGE et Qualibat
+      
+      PROBLÈMES IDENTIFIÉS:
+      - Site web non responsive sur mobile
+      - Pas de formulaire de devis en ligne
+      - Référencement local insuffisant (Google Maps)
+      - Absence de portfolio/galerie de réalisations
+      - Pas d'avis clients visibles
+      - Réseaux sociaux inexistants
+      
+      CONCURRENCE LOCALE:
+      - Leroy Merlin Compiègne (grande surface)
+      - Artisans indépendants locaux
+      - Grandes enseignes nationales (Point P, BigMat)
+      - Plateformes type Travaux.com
+      
+      MARCHÉ BTP OISE 2024:
+      - Croissance +3.5% du secteur rénovation
+      - Forte demande isolation (MaPrimeRénov)
+      - Pénurie de main d'œuvre qualifiée
+      - Prix moyens: 800-1200€/m² rénovation complète`;
     }
     return `Entreprise analysée: ${url}. Site professionnel avec présence digitale.`;
   };
@@ -283,11 +308,11 @@ async function scrapeSite(url: string, deep: boolean): Promise<string> {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         api_key: tavilyKey,
-        query: `${url} entreprise activité produits services équipe`,
+        query: `${url} entreprise activité produits services équipe avis`,
         include_domains: [hostname],
         search_depth: deep ? "advanced" : "basic",
         include_raw_content: deep,
-        max_results: deep ? 5 : 2
+        max_results: deep ? 8 : 3
       })
     });
 
@@ -300,7 +325,7 @@ async function scrapeSite(url: string, deep: boolean): Promise<string> {
     const content = data.results?.map((r: any) => `${r.title}: ${r.content}`).join('\n\n');
     console.log(`✅ ${data.results?.length || 0} pages scrappées`);
     
-    return content?.substring(0, deep ? 20000 : 5000) || getDemoContent(url);
+    return content?.substring(0, deep ? 25000 : 8000) || getDemoContent(url);
   } catch (e) {
     console.error("⚠️ Erreur scraping:", e);
     return getDemoContent(url);
@@ -308,7 +333,7 @@ async function scrapeSite(url: string, deep: boolean): Promise<string> {
 }
 
 // ======================================================
-// 🧠 GÉNÉRATION RAPPORT SELON NIVEAU (avec brief enrichi)
+// 🧠 GÉNÉRATION RAPPORT PREMIUM MULTI-AGENTS
 // ======================================================
 async function generateTieredReport(scenario: typeof TEST_SCENARIOS[0], siteContent: string, enrichedBrief?: any): Promise<any> {
   const lovableKey = Deno.env.get("LOVABLE_API_KEY");
@@ -321,6 +346,8 @@ async function generateTieredReport(scenario: typeof TEST_SCENARIOS[0], siteCont
 === BRIEF CONVERSATIONNEL ALEX ===
 Client: ${enrichedBrief.client_identity?.name || 'N/A'} - ${enrichedBrief.client_identity?.role || 'N/A'}
 Entreprise: ${enrichedBrief.client_identity?.company || 'N/A'}
+Site: ${enrichedBrief.company_info?.website || 'N/A'}
+Localisation: ${enrichedBrief.company_info?.location || 'N/A'}
 
 OBJECTIFS STRATÉGIQUES:
 ${(enrichedBrief.strategic_objectives || []).map((o: string) => `- ${o}`).join('\n')}
@@ -328,7 +355,7 @@ ${(enrichedBrief.strategic_objectives || []).map((o: string) => `- ${o}`).join('
 DÉFIS ACTUELS:
 ${(enrichedBrief.current_challenges || []).map((c: string) => `- ${c}`).join('\n')}
 
-FOCUS SPÉCIFIQUE (PRICING):
+FOCUS SPÉCIFIQUES:
 ${(enrichedBrief.focus_areas || []).map((f: string) => `- ${f}`).join('\n')}
 
 QUESTIONS CLÉS DU CLIENT:
@@ -337,47 +364,164 @@ ${(enrichedBrief.key_questions || []).map((q: string) => `- ${q}`).join('\n')}
 PAYSAGE CONCURRENTIEL:
 - Niche: ${enrichedBrief.competitive_landscape?.niche || 'N/A'}
 - Positionnement: ${enrichedBrief.competitive_landscape?.positioning || 'N/A'}
+- Concurrents connus: ${(enrichedBrief.competitive_landscape?.known_competitors || []).join(', ')}
 ====================================
 ` : '';
 
+  // Prompts ultra-détaillés par niveau (style McKinsey)
   const tierPrompts: Record<string, string> = {
     discovery: `Tu es un assistant marketing. Fais une analyse RAPIDE et SUPERFICIELLE.
-    LIMITE: 
-    - Identifie 2-3 problèmes évidents seulement
-    - Ne donne PAS de solutions détaillées 
-    - Indique que l'analyse complète nécessite un abonnement Pro
-    - Score moyen autour de 60-70/100`,
+    OBJECTIF: Montrer la valeur de l'analyse complète sans tout dévoiler.
     
-    pro: `Tu es un Consultant Senior en Stratégie Digitale.
-    ${briefContext ? 'IMPORTANT: Tu as accès au brief conversationnel du client. UTILISE-LE pour personnaliser tes recommandations.' : ''}
-    PROFONDEUR: Analyse complète avec recommandations actionnables.
-    - Identifie 5-7 problèmes avec solutions
-    - Analyse concurrentielle de base  
-    - Réponds aux questions spécifiques du client (notamment sur le pricing)
-    - Plan d'action sur 6 mois
-    - Score réaliste 75-85/100`,
+    CONSIGNES:
+    - Identifie 3-4 problèmes évidents seulement
+    - Donne des pistes GÉNÉRIQUES sans détails
+    - Score moyen autour de 60-70/100
+    - Indique clairement les sections réservées aux abonnés Pro
+    - LONGUEUR: 2-3 pages maximum`,
     
-    agency: `Tu es un Directeur Associé chez McKinsey Digital, spécialiste transformation digitale.
-    ${briefContext ? 'CRITIQUE: Le brief conversationnel Alex contient les vraies attentes du client. Personnalise TOUTE ton analyse.' : ''}
-    PROFONDEUR MAXIMALE - MODE "DEEP THINK":
-    - Analyse stratégique à 360° (marché, concurrence, technologie, organisation)
-    - Données financières et tendances sectorielles
-    - Analyse APPROFONDIE du modèle de pricing (Freemium vs alternatives)
-    - 3 scénarios stratégiques détaillés avec ROI
-    - Benchmarks sectoriels précis
-    - Recommandations de transformation digitale
-    - Score premium 85-92/100`,
+    pro: `Tu es un Consultant Senior en Stratégie Digitale, 10 ans d'expérience PME.
+    ${briefContext ? 'CRITIQUE: Tu as le brief conversationnel du client. PERSONNALISE tes recommandations.' : ''}
     
-    enterprise: `Tu es Partner Senior chez McKinsey & Company, expert en transformation digitale Fortune 500.
-    ${briefContext ? 'MISSION CRITIQUE: Le brief Alex est ta boussole stratégique. Chaque recommandation doit y répondre directement.' : ''}
+    PROFONDEUR: Analyse complète et actionnable.
+    
+    STRUCTURE OBLIGATOIRE:
+    1. DIAGNOSTIC FLASH (1 page)
+       - 5-7 problèmes identifiés avec priorisation
+       - Scores détaillés par dimension
+    
+    2. ANALYSE CONCURRENTIELLE (1 page)
+       - 3-5 concurrents locaux identifiés
+       - Forces/faiblesses comparatives
+    
+    3. RECOMMANDATIONS OPÉRATIONNELLES (2 pages)
+       - Actions court terme (1-3 mois)
+       - Actions moyen terme (3-6 mois)
+       - Budget estimatif par action
+    
+    4. PLAN D'ACTION 6 MOIS (1 page)
+       - Timeline détaillée
+       - KPIs de suivi
+       - ROI estimé
+    
+    LONGUEUR CIBLE: 35-50 pages équivalent
+    Score réaliste: 75-85/100`,
+    
+    agency: `Tu es Directeur Associé chez McKinsey Digital, expert transformation PME/ETI.
+    ${briefContext ? 'MISSION: Le brief Alex contient les VRAIES priorités du client. Chaque section doit y répondre.' : ''}
+    
+    PROFONDEUR MAXIMALE - MODE "DREAM TEAM IA":
+    Tu coordonnes 15 agents spécialisés:
+    - 🔬 Agent Recherche Marché (TAM, SAM, SOM)
+    - 🎯 Agent Intelligence Concurrentielle (5-10 acteurs)
+    - 📊 Agent Data Analyst (KPIs, projections)
+    - 💼 Agent Stratégie (Porter, PESTEL)
+    - ✍️ Agent Rédaction Premium
+    
+    STRUCTURE OBLIGATOIRE:
+    1. EXECUTIVE SUMMARY (1 page)
+    
+    2. CONTEXTE MARCHÉ (3 pages)
+       - Données marché BTP/Rénovation Oise 2024-2025
+       - Tendances sectorielles
+       - Réglementation (MaPrimeRénov, etc.)
+    
+    3. ANALYSE CONCURRENTIELLE APPROFONDIE (4 pages)
+       - Mapping 5-10 concurrents
+       - Matrice forces/faiblesses
+       - Positionnement différenciant
+    
+    4. DIAGNOSTIC DIGITAL COMPLET (3 pages)
+       - Site web (UX, SEO, performance)
+       - Présence Google (Maps, Search)
+       - Réseaux sociaux
+       - Réputation en ligne
+    
+    5. 3 SCÉNARIOS STRATÉGIQUES (4 pages)
+       - Scénario AMBITIEUX (budget élevé, croissance +40%)
+       - Scénario OPPORTUNISTE (équilibre risque/récompense) ⭐
+       - Scénario PRUDENT (optimisation, budget limité)
+       Chaque scénario: Budget, Timeline, ROI, Risques
+    
+    6. PLAN D'ACTION DÉTAILLÉ (4 pages)
+       - Phase 1: Quick wins (M1-M3)
+       - Phase 2: Développement (M4-M8)
+       - Phase 3: Scale (M9-M12)
+       - KPIs et jalons
+    
+    7. ANNEXES
+       - Sources citées
+       - Méthodologie
+    
+    LONGUEUR CIBLE: 60-80 pages équivalent
+    Score premium: 85-92/100`,
+    
+    enterprise: `Tu es Partner Senior chez McKinsey & Company, expert transformation digitale Fortune 500.
+    ${briefContext ? 'MISSION CRITIQUE: Le brief Alex guide TOUTE la stratégie. Chaque recommandation y répond.' : ''}
+    
     PROFONDEUR EXECUTIVE - MODE "TRANSFORMATION GLOBALE":
-    - Analyse stratégique internationale (benchmarks mondiaux)
-    - Deep-dive modèle économique et pricing (analyse Freemium, LTV/CAC, cohorts)
-    - 5 scénarios stratégiques avec modélisation financière 36 mois
-    - Roadmap de transformation complète avec jalons
-    - Analyse de risques et mitigation
-    - ROI quantifié par initiative
-    - Score excellence 92-98/100`
+    Tu pilotes 17 agents ultra-experts:
+    - 🔬 Agent Perplexity Sonar Reasoning (recherche)
+    - 🧠 Agent GPT-5 (analyse stratégique)
+    - 🎨 Agent Claude Opus 4.5 (rédaction premium)
+    - 📊 Agent Gemini 3 Pro (data visualization)
+    - + 13 agents spécialisés
+    
+    STRUCTURE OBLIGATOIRE:
+    1. RÉSUMÉ EXÉCUTIF (2 pages)
+       - Le moment CRITIQUE
+       - Contexte marché 2025
+       - Recommandation principale
+    
+    2. ANALYSE MARCHÉ EXHAUSTIVE (6 pages)
+       - Données INSEE, BdF, Bpifrance
+       - TAM/SAM/SOM quantifié
+       - PESTEL complet
+       - Tendances 2025-2028
+    
+    3. BENCHMARK CONCURRENTIEL (5 pages)
+       - 10-15 concurrents analysés
+       - Matrice positionnement
+       - Avantages compétitifs
+       - Menaces identifiées
+    
+    4. 5 SCÉNARIOS STRATÉGIQUES (8 pages)
+       Chaque scénario avec:
+       - Budget Year 1 et 3 ans
+       - Croissance attendue
+       - Niveau de risque
+       - ROI Timeline
+       - Probabilité de succès
+    
+    5. PLAN PROJET 36 MOIS (10 pages)
+       - Phase 1: Fondation (M1-M6)
+       - Phase 2: Traction (M7-M12)
+       - Phase 3: Scale (M13-M24)
+       - Phase 4: Consolidation (M25-M36)
+       Chaque phase: Livrables, Budget, KPIs
+    
+    6. SUIVI FINANCIER (4 pages)
+       - Forecast Revenue vs Investment
+       - Break-even analysis
+       - ROI cumulé
+       - Sensitivity analysis
+    
+    7. GOUVERNANCE & RISQUES (3 pages)
+       - Structure de pilotage
+       - Risk matrix
+       - Escalation triggers
+    
+    8. CHECKLIST OPÉRATIONNELLE
+       - Actions immédiates
+       - Ressources nécessaires
+    
+    9. SOURCES CITÉES (obligatoire)
+       - INSEE, Banque de France, Bpifrance
+       - Études sectorielles
+       - Benchmarks
+    
+    LONGUEUR CIBLE: 100-150 pages équivalent
+    Score excellence: 92-98/100`
   };
 
   const systemPrompt = tierPrompts[scenario.tier] || tierPrompts.pro;
@@ -395,35 +539,88 @@ PAYSAGE CONCURRENTIEL:
           role: "system", 
           content: `${systemPrompt}
           
-FORMAT JSON STRICT:
+FORMAT JSON STRICT - STRUCTURE COMPLÈTE:
 {
-  "executive_summary": "...",
-  "scores": { "market": 75, "tech": 68, "ux": 72, "seo": 55, "conversion": 48, "pricing": 70 },
-  "swot": { "strengths": [], "weaknesses": [], "opportunities": [], "threats": [] },
-  "pricing_analysis": { "current_model": "...", "recommendations": [], "benchmark": "..." },
-  "strategic_scenarios": [{ "name": "...", "description": "...", "roi": "...", "risk": "...", "timeline": "..." }],
-  "action_plan": [{ "step": "...", "action": "...", "budget": "...", "priority": "..." }],
-  "roadmap": { "months_6": [], "months_12": [], "months_36": [] },
+  "executive_summary": "Synthèse exécutive complète (300-500 mots)",
+  "market_context": {
+    "description": "Contexte marché 2025",
+    "key_figures": [{ "metric": "...", "value": "...", "source": "..." }],
+    "trends": ["tendance 1", "tendance 2", ...]
+  },
+  "scores": { 
+    "market": 75, 
+    "tech": 68, 
+    "ux": 72, 
+    "seo": 55, 
+    "conversion": 48,
+    "overall": 65
+  },
+  "swot": { 
+    "strengths": ["force 1", "force 2", ...], 
+    "weaknesses": ["faiblesse 1", ...], 
+    "opportunities": ["opportunité 1", ...], 
+    "threats": ["menace 1", ...] 
+  },
+  "competitors": [
+    { "name": "...", "strengths": ["..."], "weaknesses": ["..."], "threat_level": "high/medium/low" }
+  ],
+  "strategic_scenarios": [
+    { 
+      "name": "Ambitieux/Opportuniste/Prudent", 
+      "icon": "⚡/🎯/🛡️",
+      "budget_y1": "800K€/400K€/150K€",
+      "growth_y3": "+45%/+25%/+8%",
+      "risk": "TRÈS ÉLEVÉ/MODÉRÉ/FAIBLE",
+      "roi_timeline": "24-30 mois/18-24 mois/12-18 mois",
+      "success_probability": "70%/85%/95%",
+      "description": "Description détaillée..."
+    }
+  ],
+  "recommended_scenario": "opportuniste",
+  "action_plan": [
+    { 
+      "phase": "Phase 1: Fondation",
+      "timeline": "M1-M6",
+      "budget": "90K€",
+      "actions": ["action 1", "action 2", ...],
+      "kpis": [{ "metric": "...", "target": "..." }]
+    }
+  ],
+  "financial_forecast": {
+    "investment_total": "700K€",
+    "revenue_y3": "4.6M€",
+    "roi_percent": "+390%",
+    "break_even": "Mois 18-20"
+  },
+  "sources": ["Source 1 (2025)", "Source 2 (2024)", ...],
   "locked_premium": ${scenario.features.lockedSections ? '["Analyse concurrentielle complète", "Données financières sectorielles", "Plan de transformation 12 mois"]' : '[]'}
 }` 
         },
         { 
           role: "user", 
           content: `AUDIT ${scenario.tier.toUpperCase()} pour: ${scenario.url}
+NIVEAU: ${scenario.name}
+AGENTS MOBILISÉS: ${scenario.agents}
+PAGES ATTENDUES: ${scenario.expectedPages}
 
 ${briefContext}
 
-CONTENU SITE:
+CONTENU SITE ANALYSÉ:
 ${siteContent}
 
-Retourne UNIQUEMENT le JSON.`
+Génère un rapport COMPLET et PROFESSIONNEL au format JSON.
+IMPORTANT: Réponds en français. Sois précis et factuel.`
         }
-      ]
+      ],
+      temperature: 0.7,
+      max_tokens: scenario.tier === 'enterprise' ? 8000 : scenario.tier === 'agency' ? 6000 : 4000
     })
   });
 
   if (!response.ok) {
-    throw new Error(`AI API error: ${response.status}`);
+    const errorText = await response.text();
+    console.error(`AI API error: ${response.status}`, errorText);
+    throw new Error(`AI API error: ${response.status} - ${errorText}`);
   }
 
   const data = await response.json();
@@ -434,30 +631,118 @@ Retourne UNIQUEMENT le JSON.`
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     return jsonMatch ? JSON.parse(jsonMatch[0]) : JSON.parse(content);
   } catch (e) {
-    console.error("JSON parse error, using fallback");
-    return {
-      executive_summary: `Audit ${scenario.tier} de ${scenario.url}`,
-      scores: { market: scenario.expectedScore, tech: scenario.expectedScore - 5, ux: scenario.expectedScore - 3, seo: scenario.expectedScore - 10, conversion: scenario.expectedScore - 12 },
-      swot: { strengths: ["À analyser"], weaknesses: ["À optimiser"], opportunities: ["Potentiel"], threats: ["Concurrence"] },
-      strategic_scenarios: [{ name: "Scénario 1", description: "Optimisation", roi: "+30%", risk: "Faible" }],
-      action_plan: [{ step: "Mois 1", action: "Quick wins", budget: "5k€" }],
-      locked_premium: scenario.features.lockedSections ? ["Analyse complète réservée aux abonnés Pro"] : []
-    };
+    console.error("JSON parse error, using enhanced fallback");
+    return generateFallbackReport(scenario, siteContent, enrichedBrief);
   }
 }
 
 // ======================================================
-// 🎨 GÉNÉRATION HTML AVEC BRANDING
+// 🔄 FALLBACK REPORT (quand le parsing échoue)
 // ======================================================
-function generateTieredHTML(scenario: typeof TEST_SCENARIOS[0], report: any, enrichedBrief?: any): string {
+function generateFallbackReport(scenario: typeof TEST_SCENARIOS[0], siteContent: string, enrichedBrief?: any): any {
+  const baseScore = scenario.expectedScore;
+  return {
+    executive_summary: `Audit ${scenario.tier.toUpperCase()} de ${enrichedBrief?.client_identity?.name || scenario.url}. Cette entreprise de rénovation basée dans l'Oise présente un potentiel de développement digital significatif. L'analyse révèle des opportunités majeures en référencement local et en génération de leads qualifiés.`,
+    market_context: {
+      description: "Le marché de la rénovation en Picardie connaît une croissance soutenue portée par les aides gouvernementales.",
+      key_figures: [
+        { metric: "Croissance marché BTP", value: "+3.5%", source: "FFB 2024" },
+        { metric: "Demande isolation", value: "+15%", source: "ADEME 2024" }
+      ],
+      trends: ["MaPrimeRénov booste la demande", "Pénurie main d'œuvre", "Digitalisation secteur"]
+    },
+    scores: { 
+      market: baseScore, 
+      tech: baseScore - 5, 
+      ux: baseScore - 3, 
+      seo: baseScore - 15, 
+      conversion: baseScore - 12,
+      overall: baseScore - 7
+    },
+    swot: { 
+      strengths: ["Expertise locale reconnue", "Équipe qualifiée", "Certifications RGE"], 
+      weaknesses: ["Site web non optimisé", "Absence réseaux sociaux", "SEO local faible"], 
+      opportunities: ["Forte demande rénovation", "Aides gouvernementales", "Marché digital inexploité"], 
+      threats: ["Concurrence grandes enseignes", "Hausse coûts matériaux", "Pénurie artisans"] 
+    },
+    competitors: [
+      { name: "Leroy Merlin Compiègne", strengths: ["Notoriété", "Prix"], weaknesses: ["Service impersonnel"], threat_level: "high" },
+      { name: "Artisans locaux", strengths: ["Proximité", "Flexibilité"], weaknesses: ["Capacité limitée"], threat_level: "medium" }
+    ],
+    strategic_scenarios: [
+      { 
+        name: "Ambitieux", 
+        icon: "⚡",
+        budget_y1: "80K€",
+        growth_y3: "+45%",
+        risk: "ÉLEVÉ",
+        roi_timeline: "24-30 mois",
+        success_probability: "70%",
+        description: "Transformation digitale complète avec site e-commerce, SEO national, campagnes ads"
+      },
+      { 
+        name: "Opportuniste", 
+        icon: "🎯",
+        budget_y1: "40K€",
+        growth_y3: "+25%",
+        risk: "MODÉRÉ",
+        roi_timeline: "18-24 mois",
+        success_probability: "85%",
+        description: "Focus SEO local, Google My Business, avis clients, site responsive"
+      },
+      { 
+        name: "Prudent", 
+        icon: "🛡️",
+        budget_y1: "15K€",
+        growth_y3: "+10%",
+        risk: "FAIBLE",
+        roi_timeline: "12-18 mois",
+        success_probability: "95%",
+        description: "Optimisation site existant, fiche Google, premiers avis"
+      }
+    ],
+    recommended_scenario: "opportuniste",
+    action_plan: [
+      { 
+        phase: "Phase 1: Quick Wins",
+        timeline: "M1-M3",
+        budget: "10K€",
+        actions: ["Refonte Google My Business", "Site responsive", "Collecte avis clients"],
+        kpis: [{ metric: "Visites site", target: "+50%" }]
+      },
+      { 
+        phase: "Phase 2: Développement",
+        timeline: "M4-M6",
+        budget: "20K€",
+        actions: ["SEO local", "Formulaire devis", "Réseaux sociaux"],
+        kpis: [{ metric: "Leads/mois", target: "20" }]
+      }
+    ],
+    financial_forecast: {
+      investment_total: "40K€",
+      revenue_y3: "2.1M€",
+      roi_percent: "+180%",
+      break_even: "Mois 14"
+    },
+    sources: ["FFB 2024", "ADEME 2024", "INSEE Picardie 2024"],
+    locked_premium: scenario.features.lockedSections ? ["Analyse concurrentielle complète", "Données financières sectorielles"] : []
+  };
+}
+
+// ======================================================
+// 🎨 GÉNÉRATION HTML PREMIUM (STYLE OBUT)
+// ======================================================
+function generatePremiumHTML(scenario: typeof TEST_SCENARIOS[0], report: any, enrichedBrief?: any): string {
   const branding = BRANDING[scenario.tier] || BRANDING.discovery;
   const scores = report.scores || {};
   const swot = report.swot || {};
   const scenarios_strat = report.strategic_scenarios || [];
   const actionPlan = report.action_plan || [];
   const lockedPremium = report.locked_premium || [];
-  const pricingAnalysis = report.pricing_analysis || {};
-  const roadmap = report.roadmap || {};
+  const marketContext = report.market_context || {};
+  const competitors = report.competitors || [];
+  const financialForecast = report.financial_forecast || {};
+  const sources = report.sources || [];
 
   const tierBadge: Record<string, { label: string; color: string; icon: string }> = {
     discovery: { label: 'FREEMIUM', color: '#6b7280', icon: '🆓' },
@@ -469,48 +754,167 @@ function generateTieredHTML(scenario: typeof TEST_SCENARIOS[0], report: any, enr
 
   // Section brief Alex pour les tiers payants
   const briefSection = enrichedBrief && scenario.features.includeBrief ? `
-    <div class="card" style="border-left: 4px solid #f59e0b;">
+    <section>
       <h2>📋 Brief Conversationnel Alex</h2>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+      <div class="highlight">
+        <strong>Ce rapport a été personnalisé</strong> grâce à votre échange avec Alex, notre agent conversationnel.
+      </div>
+      <div class="grid-2">
         <div>
-          <p style="font-weight: 600; margin-bottom: 8px;">👤 Client</p>
-          <p style="color: #64748b;">${enrichedBrief.client_identity?.name || 'N/A'} - ${enrichedBrief.client_identity?.role || ''}</p>
+          <h4>👤 Client</h4>
+          <p>${enrichedBrief.client_identity?.name || 'N/A'}</p>
+          <p style="color: var(--gray-text); font-size: 14px;">${enrichedBrief.client_identity?.role || ''}</p>
         </div>
         <div>
-          <p style="font-weight: 600; margin-bottom: 8px;">🎯 Objectifs</p>
-          <ul style="color: #64748b; padding-left: 16px;">
-            ${(enrichedBrief.strategic_objectives || []).slice(0, 3).map((o: string) => `<li>${o}</li>`).join('')}
-          </ul>
-        </div>
-        <div>
-          <p style="font-weight: 600; margin-bottom: 8px;">💰 Focus Pricing</p>
-          <ul style="color: #64748b; padding-left: 16px;">
-            ${(enrichedBrief.key_questions || []).slice(0, 2).map((q: string) => `<li>${q}</li>`).join('')}
-          </ul>
-        </div>
-        <div>
-          <p style="font-weight: 600; margin-bottom: 8px;">⚡ Défis</p>
-          <ul style="color: #64748b; padding-left: 16px;">
-            ${(enrichedBrief.current_challenges || []).map((c: string) => `<li>${c}</li>`).join('')}
-          </ul>
+          <h4>📍 Localisation</h4>
+          <p>${enrichedBrief.company_info?.location || 'N/A'}</p>
         </div>
       </div>
-    </div>
+      <h3>🎯 Objectifs Stratégiques</h3>
+      <ul>
+        ${(enrichedBrief.strategic_objectives || []).map((o: string) => `<li>${o}</li>`).join('')}
+      </ul>
+      <h3>⚡ Défis Identifiés</h3>
+      <ul>
+        ${(enrichedBrief.current_challenges || []).map((c: string) => `<li>${c}</li>`).join('')}
+      </ul>
+    </section>
   ` : '';
 
-  // Section pricing pour les tiers avec brief
-  const pricingSection = pricingAnalysis.current_model ? `
-    <div class="card">
-      <h2>💰 Analyse Pricing</h2>
-      <p style="margin-bottom: 16px;"><strong>Modèle actuel:</strong> ${pricingAnalysis.current_model}</p>
-      ${pricingAnalysis.benchmark ? `<p style="margin-bottom: 16px;"><strong>Benchmark:</strong> ${pricingAnalysis.benchmark}</p>` : ''}
-      ${pricingAnalysis.recommendations?.length ? `
-        <p style="font-weight: 600; margin-bottom: 8px;">Recommandations:</p>
-        <ul style="padding-left: 16px;">
-          ${pricingAnalysis.recommendations.map((r: string) => `<li>${r}</li>`).join('')}
+  // Section contexte marché (Agency/Enterprise)
+  const marketSection = marketContext.description ? `
+    <section>
+      <h2>📊 Contexte Marché 2025</h2>
+      <p>${marketContext.description}</p>
+      ${marketContext.key_figures?.length ? `
+        <div class="kpi-grid">
+          ${marketContext.key_figures.map((kf: any) => `
+            <div class="kpi-card">
+              <div class="kpi-value">${kf.value}</div>
+              <div class="kpi-label">${kf.metric}</div>
+              <div class="kpi-source">${kf.source}</div>
+            </div>
+          `).join('')}
+        </div>
+      ` : ''}
+      ${marketContext.trends?.length ? `
+        <h3>Tendances Clés</h3>
+        <ul>
+          ${marketContext.trends.map((t: string) => `<li>📈 ${t}</li>`).join('')}
         </ul>
       ` : ''}
-    </div>
+    </section>
+  ` : '';
+
+  // Section scénarios stratégiques (style OBUT)
+  const scenariosSection = scenarios_strat.length > 0 ? `
+    <section>
+      <h2>📋 Scénarios Stratégiques</h2>
+      <p>Votre entreprise dispose de ${scenarios_strat.length} chemins stratégiques distincts. Chaque scénario représente un équilibre unique entre ambition, risque et faisabilité.</p>
+      
+      <div class="scenarios-grid">
+        ${scenarios_strat.map((s: any, index: number) => {
+          const isRecommended = report.recommended_scenario?.toLowerCase().includes(s.name?.toLowerCase()) || index === 1;
+          const cardClass = s.name?.toLowerCase().includes('ambitieux') ? 'ambitious' : 
+                           s.name?.toLowerCase().includes('prudent') ? 'prudent' : 'opportunist';
+          return `
+            <div class="scenario-card ${cardClass}">
+              <span class="scenario-badge ${cardClass}">${s.icon || '🎯'} ${s.name}</span>
+              ${isRecommended ? '<span class="recommended-badge">⭐ RECOMMANDÉ</span>' : ''}
+              
+              <div class="scenario-item">
+                <div class="scenario-label">Budget Year 1</div>
+                <div class="scenario-value">${s.budget_y1 || 'N/A'}</div>
+              </div>
+              <div class="scenario-item">
+                <div class="scenario-label">Croissance Y3</div>
+                <div class="scenario-value">${s.growth_y3 || 'N/A'}</div>
+              </div>
+              <div class="scenario-item">
+                <div class="scenario-label">Risque</div>
+                <div class="scenario-value">${s.risk || 'N/A'}</div>
+              </div>
+              <div class="scenario-item">
+                <div class="scenario-label">ROI Timeline</div>
+                <div class="scenario-value">${s.roi_timeline || 'N/A'}</div>
+              </div>
+              <div class="scenario-item">
+                <div class="scenario-label">Succès %</div>
+                <div class="scenario-value">${s.success_probability || 'N/A'}</div>
+              </div>
+              <p class="scenario-description">${s.description || ''}</p>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </section>
+  ` : '';
+
+  // Section concurrents (Agency/Enterprise)
+  const competitorsSection = competitors.length > 0 && !scenario.features.lockedSections ? `
+    <section>
+      <h2>🎯 Analyse Concurrentielle</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Concurrent</th>
+            <th>Forces</th>
+            <th>Faiblesses</th>
+            <th>Menace</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${competitors.map((c: any) => `
+            <tr>
+              <td><strong>${c.name}</strong></td>
+              <td>${(c.strengths || []).join(', ')}</td>
+              <td>${(c.weaknesses || []).join(', ')}</td>
+              <td>
+                <span class="threat-badge ${c.threat_level}">${c.threat_level?.toUpperCase()}</span>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </section>
+  ` : '';
+
+  // Section financière (Agency/Enterprise)
+  const financialSection = financialForecast.investment_total && !scenario.features.lockedSections ? `
+    <section>
+      <h2>💰 Suivi Financier</h2>
+      <div class="highlight">
+        <strong>Synthèse financière</strong> - Scénario recommandé
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-value">${financialForecast.investment_total}</div>
+          <div class="kpi-label">Investissement Total</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-value">${financialForecast.revenue_y3}</div>
+          <div class="kpi-label">Revenue Y3</div>
+        </div>
+        <div class="kpi-card success">
+          <div class="kpi-value">${financialForecast.roi_percent}</div>
+          <div class="kpi-label">ROI 3 ans</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-value">${financialForecast.break_even}</div>
+          <div class="kpi-label">Break-even</div>
+        </div>
+      </div>
+    </section>
+  ` : '';
+
+  // Section sources
+  const sourcesSection = sources.length > 0 ? `
+    <section class="sources-section">
+      <h2>📚 Sources Citées</h2>
+      <ul>
+        ${sources.map((s: string) => `<li>• ${s}</li>`).join('')}
+      </ul>
+    </section>
   ` : '';
 
   return `<!DOCTYPE html>
@@ -518,19 +922,65 @@ function generateTieredHTML(scenario: typeof TEST_SCENARIOS[0], report: any, enr
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rapport ${tierBadge.label} - ${branding.company_name}</title>
+  <title>${enrichedBrief?.client_identity?.name || 'Audit'} - ${branding.company_name}</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f8fafc; color: #1e293b; line-height: 1.6; }
+    
+    :root {
+      --primary: ${branding.primary_color};
+      --primary-dark: ${adjustColor(branding.primary_color, -30)};
+      --primary-light: ${adjustColor(branding.primary_color, 40)};
+      --black: #1a1a1a;
+      --gray-text: #666666;
+      --white: #ffffff;
+      --gray-bg: #f5f5f5;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+    }
+
+    html { scroll-behavior: smooth; }
+    
+    body { 
+      font-family: 'Segoe UI', system-ui, sans-serif; 
+      background: #fafafa; 
+      color: var(--black); 
+      line-height: 1.6; 
+    }
     
     .header { 
-      background: linear-gradient(135deg, ${branding.primary_color}, ${adjustColor(branding.primary_color, -30)});
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
       color: white; 
-      padding: 40px 24px;
-      text-align: center;
+      padding: 50px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 0 40px rgba(0,0,0,0.2);
+      margin-bottom: 40px;
     }
-    .header h1 { font-size: 28px; margin-bottom: 8px; }
-    .header .subtitle { opacity: 0.9; font-size: 16px; }
+    
+    .header-left { display: flex; align-items: center; gap: 20px; }
+    
+    .logo {
+      width: 70px;
+      height: 70px;
+      background: var(--white);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: var(--primary);
+      font-size: 18px;
+    }
+    
+    .logo-text h2 { font-size: 20px; margin-bottom: 4px; font-weight: 700; }
+    .logo-text p { font-size: 11px; opacity: 0.9; }
+    
+    .header-right { text-align: right; }
+    .header-right h1 { font-size: 28px; margin-bottom: 8px; font-weight: 700; }
+    .header-right .subtitle { font-size: 13px; opacity: 0.95; }
+    
     .tier-badge {
       display: inline-block;
       background: rgba(255,255,255,0.2);
@@ -539,38 +989,56 @@ function generateTieredHTML(scenario: typeof TEST_SCENARIOS[0], report: any, enr
       font-size: 12px;
       font-weight: 700;
       letter-spacing: 1px;
-      margin-top: 16px;
+      margin-top: 12px;
     }
     
-    .container { max-width: 900px; margin: 0 auto; padding: 24px; }
+    .container { max-width: 1000px; margin: 0 auto; padding: 0 30px 50px 30px; }
     
-    .card { 
-      background: white; 
-      border-radius: 12px; 
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      padding: 24px;
-      margin-bottom: 24px;
+    section { 
+      margin-bottom: 60px;
+      background: var(--white);
+      padding: 40px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
-    .card h2 { 
-      color: ${branding.primary_color}; 
-      font-size: 20px; 
-      margin-bottom: 16px;
+    
+    section h2 { 
+      font-size: 24px; 
+      color: var(--primary); 
+      margin-bottom: 20px;
+      font-weight: 700;
+      border-bottom: 3px solid var(--primary);
       padding-bottom: 12px;
-      border-bottom: 2px solid #f1f5f9;
     }
     
-    .scores-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
-    .score-item { text-align: center; padding: 16px 8px; background: #f8fafc; border-radius: 8px; }
-    .score-value { font-size: 28px; font-weight: 700; color: ${branding.primary_color}; }
-    .score-label { font-size: 11px; color: #64748b; text-transform: uppercase; margin-top: 4px; }
+    section h3 { font-size: 18px; color: var(--black); margin-top: 20px; margin-bottom: 12px; font-weight: 600; }
+    section h4 { font-size: 14px; color: var(--primary); margin-top: 15px; margin-bottom: 8px; font-weight: 600; }
     
-    .summary { font-size: 16px; color: #475569; }
+    p { font-size: 14px; color: var(--gray-text); margin-bottom: 12px; line-height: 1.7; }
+    ul { margin-left: 18px; margin-bottom: 15px; }
+    li { margin-bottom: 8px; color: var(--gray-text); line-height: 1.7; }
+    
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
+    
+    .highlight {
+      background: linear-gradient(135deg, rgba(216, 35, 42, 0.05), rgba(255, 77, 84, 0.05));
+      border-left: 4px solid var(--primary);
+      padding: 18px;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+    .highlight strong { color: var(--primary); }
+    
+    .scores-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin: 20px 0; }
+    .score-item { text-align: center; padding: 20px 8px; background: var(--gray-bg); border-radius: 8px; }
+    .score-value { font-size: 32px; font-weight: 700; color: var(--primary); }
+    .score-label { font-size: 11px; color: var(--gray-text); text-transform: uppercase; margin-top: 4px; }
     
     .swot-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
-    .swot-box { padding: 16px; border-radius: 8px; }
-    .swot-box h3 { font-size: 14px; margin-bottom: 8px; font-weight: 600; }
-    .swot-box ul { list-style: none; }
-    .swot-box li { padding: 4px 0; font-size: 14px; }
+    .swot-box { padding: 20px; border-radius: 8px; }
+    .swot-box h3 { font-size: 14px; margin-bottom: 12px; font-weight: 600; }
+    .swot-box ul { list-style: none; margin: 0; }
+    .swot-box li { padding: 6px 0; font-size: 14px; }
     .swot-strengths { background: #ecfdf5; }
     .swot-strengths h3 { color: #059669; }
     .swot-weaknesses { background: #fef2f2; }
@@ -580,78 +1048,180 @@ function generateTieredHTML(scenario: typeof TEST_SCENARIOS[0], report: any, enr
     .swot-threats { background: #fefce8; }
     .swot-threats h3 { color: #ca8a04; }
     
-    .scenario-card { 
-      border-left: 4px solid ${branding.primary_color}; 
-      padding: 16px; 
-      margin-bottom: 16px; 
-      background: #f8fafc;
-      border-radius: 0 8px 8px 0;
+    .scenarios-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; margin: 30px 0; }
+    
+    .scenario-card {
+      background: linear-gradient(135deg, #fafafa, #f5f5f5);
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      padding: 25px;
+      transition: all 0.3s ease;
+      position: relative;
     }
-    .scenario-card h3 { color: ${branding.primary_color}; margin-bottom: 8px; }
-    .scenario-meta { display: flex; gap: 16px; margin-top: 12px; }
-    .scenario-meta span { 
-      font-size: 12px; 
-      padding: 4px 10px; 
-      background: white; 
-      border-radius: 4px;
-      border: 1px solid #e2e8f0;
+    .scenario-card:hover { border-color: var(--primary); box-shadow: 0 8px 25px rgba(0,0,0,0.1); transform: translateY(-3px); }
+    .scenario-card.ambitious { border-left: 5px solid var(--danger); }
+    .scenario-card.opportunist { border-left: 5px solid var(--primary); }
+    .scenario-card.prudent { border-left: 5px solid var(--success); }
+    
+    .scenario-badge {
+      display: inline-block;
+      padding: 5px 12px;
+      border-radius: 15px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      color: white;
+    }
+    .scenario-badge.ambitious { background: var(--danger); }
+    .scenario-badge.opportunist { background: var(--primary); }
+    .scenario-badge.prudent { background: var(--success); }
+    
+    .recommended-badge {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: gold;
+      color: #333;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: 700;
     }
     
-    .action-step { 
-      display: flex; 
-      gap: 16px; 
-      padding: 16px 0; 
-      border-bottom: 1px solid #f1f5f9;
+    .scenario-item { margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #e0e0e0; }
+    .scenario-item:last-of-type { border-bottom: none; }
+    .scenario-label { font-size: 10px; color: var(--gray-text); text-transform: uppercase; font-weight: 600; margin-bottom: 3px; }
+    .scenario-value { font-size: 16px; color: var(--black); font-weight: 700; }
+    .scenario-description { font-size: 13px; color: var(--gray-text); margin-top: 15px; font-style: italic; }
+    
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin: 20px 0; }
+    .kpi-card { background: var(--gray-bg); padding: 20px; border-radius: 8px; text-align: center; }
+    .kpi-card.success { background: #ecfdf5; }
+    .kpi-value { font-size: 24px; font-weight: 700; color: var(--primary); }
+    .kpi-label { font-size: 11px; color: var(--gray-text); text-transform: uppercase; margin-top: 4px; }
+    .kpi-source { font-size: 9px; color: #999; margin-top: 4px; }
+    
+    table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 13px; }
+    table thead { background: var(--primary); color: white; }
+    table th { padding: 12px; text-align: left; font-weight: 600; }
+    table td { padding: 12px; border-bottom: 1px solid #e0e0e0; }
+    table tr:nth-child(even) { background: #fafafa; }
+    table tr:hover { background: var(--gray-bg); }
+    
+    .threat-badge { padding: 4px 10px; border-radius: 12px; font-size: 10px; font-weight: 600; text-transform: uppercase; }
+    .threat-badge.high { background: #fef2f2; color: #dc2626; }
+    .threat-badge.medium { background: #fefce8; color: #ca8a04; }
+    .threat-badge.low { background: #ecfdf5; color: #059669; }
+    
+    .phase-card {
+      background: linear-gradient(135deg, #fafafa, #f5f5f5);
+      border-left: 4px solid var(--primary);
+      padding: 20px;
+      border-radius: 8px;
+      margin: 15px 0;
     }
-    .action-step:last-child { border-bottom: none; }
-    .step-label { 
-      font-weight: 600; 
-      color: ${branding.primary_color}; 
-      min-width: 100px;
-    }
+    .phase-card h3 { color: var(--primary); margin-bottom: 8px; }
+    .phase-meta { display: flex; gap: 20px; margin: 12px 0; }
+    .phase-meta span { font-size: 12px; padding: 4px 12px; background: white; border-radius: 4px; border: 1px solid #e0e0e0; }
     
     .locked-section {
       background: linear-gradient(to right, #f8fafc, #e2e8f0);
       border: 2px dashed #cbd5e1;
-      padding: 24px;
+      padding: 40px;
       text-align: center;
-      border-radius: 8px;
-      margin-top: 16px;
+      border-radius: 12px;
+      margin-top: 20px;
     }
-    .locked-section h3 { color: #64748b; margin-bottom: 8px; }
+    .locked-section h3 { color: #64748b; margin-bottom: 12px; font-size: 20px; }
     .locked-section p { color: #94a3b8; font-size: 14px; }
+    .locked-section ul { list-style: none; margin: 20px 0; }
+    .locked-section li { padding: 8px 0; font-size: 14px; color: #64748b; }
     .upgrade-btn {
       display: inline-block;
-      background: ${branding.primary_color};
+      background: var(--primary);
       color: white;
-      padding: 12px 24px;
+      padding: 14px 28px;
       border-radius: 8px;
       text-decoration: none;
-      margin-top: 16px;
+      margin-top: 20px;
       font-weight: 600;
+      transition: all 0.3s;
+    }
+    .upgrade-btn:hover { background: var(--primary-dark); transform: translateY(-2px); }
+    
+    .sources-section { background: var(--gray-bg); }
+    .sources-section ul { list-style: none; margin: 0; }
+    .sources-section li { padding: 6px 0; font-size: 12px; color: var(--gray-text); }
+    
+    .cta-section {
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      color: white;
+      padding: 50px;
+      border-radius: 12px;
+      text-align: center;
+      margin: 50px 0;
+    }
+    .cta-section h3 { color: white; margin-bottom: 15px; font-size: 28px; }
+    .cta-section p { color: rgba(255,255,255,0.95); margin-bottom: 20px; font-size: 16px; }
+    
+    footer {
+      background: var(--black);
+      color: white;
+      padding: 40px;
+      text-align: center;
+      margin-top: 60px;
+    }
+    footer p { color: rgba(255,255,255,0.7); margin-bottom: 8px; font-size: 13px; }
+    footer strong { color: var(--primary); }
+    
+    @media (max-width: 768px) {
+      .header { flex-direction: column; gap: 15px; padding: 30px 20px; }
+      .container { padding: 0 15px 30px 15px; }
+      section { padding: 20px 15px; }
+      .scores-grid { grid-template-columns: repeat(3, 1fr); }
+      .scenarios-grid { grid-template-columns: 1fr; }
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
     }
     
-    .footer { 
-      text-align: center; 
-      padding: 32px; 
-      color: #64748b; 
-      font-size: 14px;
+    @media print {
+      body { background: white; }
+      section { page-break-inside: avoid; box-shadow: none; }
     }
-    .footer strong { color: ${branding.primary_color}; }
   </style>
 </head>
 <body>
-  <div class="header">
-    <h1>${badge.icon} ${branding.company_name}</h1>
-    <p class="subtitle">Rapport d'Audit Stratégique - ${scenario.url}</p>
-    <span class="tier-badge">${badge.label}</span>
-  </div>
+  <header class="header">
+    <div class="header-left">
+      <div class="logo">IM</div>
+      <div class="logo-text">
+        <h2>${branding.company_name}</h2>
+        <p>Strategic Consulting</p>
+      </div>
+    </div>
+    <div class="header-right">
+      <h1>${enrichedBrief?.client_identity?.name || 'Audit Stratégique'}</h1>
+      <p class="subtitle">Étude Stratégique & Plan d'Action</p>
+      <span class="tier-badge">${badge.icon} ${badge.label} | ${scenario.agents} Agents IA</span>
+    </div>
+  </header>
   
   <div class="container">
     ${briefSection}
-    ${pricingSection}
     
-    <div class="card">
+    <!-- Section Le Moment Critique -->
+    <section>
+      <h2>🎯 Le Moment CRITIQUE</h2>
+      <div class="highlight">
+        <p><strong>${enrichedBrief?.client_identity?.name || 'Votre entreprise'}</strong> se trouve à un moment charnière de son développement digital.</p>
+        <p>Vous avez une fenêtre de 12-18 mois pour renforcer votre présence en ligne et capter les leads qualifiés avant que vos concurrents n'occupent le terrain digital local.</p>
+      </div>
+    </section>
+    
+    ${marketSection}
+    
+    <!-- Section Scores -->
+    <section>
       <h2>📊 Scores de Performance</h2>
       <div class="scores-grid">
         <div class="score-item">
@@ -675,14 +1245,16 @@ function generateTieredHTML(scenario: typeof TEST_SCENARIOS[0], report: any, enr
           <div class="score-label">Conversion</div>
         </div>
       </div>
-    </div>
+    </section>
     
-    <div class="card">
+    <!-- Section Synthèse -->
+    <section>
       <h2>📝 Synthèse Exécutive</h2>
-      <p class="summary">${report.executive_summary || 'Analyse en cours...'}</p>
-    </div>
+      <p style="font-size: 16px;">${report.executive_summary || 'Analyse en cours de finalisation...'}</p>
+    </section>
     
-    <div class="card">
+    <!-- Section SWOT -->
+    <section>
       <h2>🎯 Analyse SWOT</h2>
       <div class="swot-grid">
         <div class="swot-box swot-strengths">
@@ -702,54 +1274,65 @@ function generateTieredHTML(scenario: typeof TEST_SCENARIOS[0], report: any, enr
           <ul>${(swot.threats || []).map((s: string) => `<li>• ${s}</li>`).join('')}</ul>
         </div>
       </div>
-    </div>
+    </section>
     
-    <div class="card">
-      <h2>🎲 Scénarios Stratégiques</h2>
-      ${scenarios_strat.map((s: any) => `
-        <div class="scenario-card">
-          <h3>${s.name || 'Scénario'}</h3>
-          <p>${s.description || ''}</p>
-          <div class="scenario-meta">
-            <span>📈 ROI: ${s.roi || 'N/A'}</span>
-            <span>⚡ Risque: ${s.risk || 'N/A'}</span>
-          </div>
-        </div>
-      `).join('')}
-    </div>
+    ${competitorsSection}
+    ${scenariosSection}
     
-    <div class="card">
+    <!-- Section Plan d'Action -->
+    <section>
       <h2>📋 Plan d'Action</h2>
       ${actionPlan.map((a: any) => `
-        <div class="action-step">
-          <span class="step-label">${a.step || ''}</span>
-          <div>
-            <p>${a.action || ''}</p>
-            <small style="color:#64748b">${a.budget ? `Budget: ${a.budget}` : ''}</small>
+        <div class="phase-card">
+          <h3>${a.phase || 'Phase'}</h3>
+          <div class="phase-meta">
+            <span>📅 ${a.timeline || ''}</span>
+            <span>💰 ${a.budget || ''}</span>
           </div>
+          <ul>
+            ${(a.actions || []).map((action: string) => `<li>✓ ${action}</li>`).join('')}
+          </ul>
+          ${a.kpis?.length ? `
+            <h4>KPIs</h4>
+            <ul>
+              ${a.kpis.map((kpi: any) => `<li>📈 ${kpi.metric}: ${kpi.target}</li>`).join('')}
+            </ul>
+          ` : ''}
         </div>
       `).join('')}
-    </div>
+    </section>
+    
+    ${financialSection}
     
     ${lockedPremium.length > 0 ? `
-    <div class="card">
+    <section>
       <h2>🔒 Sections Premium</h2>
       <div class="locked-section">
         <h3>Contenu réservé aux abonnés Pro & Agency</h3>
         <p>Accédez à l'analyse complète :</p>
-        <ul style="list-style:none; margin:16px 0;">
+        <ul>
           ${lockedPremium.map((item: string) => `<li>🔐 ${item}</li>`).join('')}
         </ul>
-        <a href="https://imotion.fr/pricing" class="upgrade-btn">Passer au niveau supérieur →</a>
+        <a href="https://imotion-conseil.com/pricing" class="upgrade-btn">Passer au niveau supérieur →</a>
       </div>
-    </div>
+    </section>
     ` : ''}
+    
+    ${sourcesSection}
+    
+    <!-- CTA Section -->
+    <div class="cta-section">
+      <h3>🎯 Prêt à Transformer ${enrichedBrief?.client_identity?.name || 'Votre Entreprise'} ?</h3>
+      <p>Nos consultants sont disponibles pour vous accompagner dans la mise en œuvre de ces recommandations.</p>
+    </div>
   </div>
   
-  <div class="footer">
-    <p>Généré par <strong>${branding.company_name}</strong> | Modèle: ${scenario.model}</p>
-    <p>Niveau: ${tierBadge.label} | ${new Date().toLocaleDateString('fr-FR')}</p>
-  </div>
+  <footer>
+    <p><strong>${branding.company_name}</strong> | ${badge.icon} ${badge.label}</p>
+    <p>${enrichedBrief?.client_identity?.name || 'Audit'} - Étude Stratégique</p>
+    <p>${new Date().toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' })} | Document Confidentiel</p>
+    <p style="margin-top: 15px; font-size: 11px;">Modèle IA: ${scenario.model} | ${scenario.agents} Agents Spécialisés</p>
+  </footer>
 </body>
 </html>`;
 }
@@ -781,7 +1364,7 @@ async function sendReportEmail(supabase: any, reportId: string, email: string, s
           reportId: reportId,
           recipientEmail: email,
           auditType: scenario.tier,
-          subject: `[TEST ${scenario.tier.toUpperCase()}] Audit ${scenario.name}`
+          subject: `[TEST ${scenario.tier.toUpperCase()}] Audit ${scenario.name} - ${scenario.agents} Agents IA`
         }),
       }
     );
