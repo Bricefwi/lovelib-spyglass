@@ -80,3 +80,12 @@ verify_jwt = true
 
 [functions.orchestrate-multi-agent-v6]
 verify_jwt = true
+
+[functions.initiate-conversational-audit]
+verify_jwt = false
+
+[functions.verify-and-start-conversation]
+verify_jwt = false
+
+[functions.conversational-agent-alex]
+verify_jwt = false

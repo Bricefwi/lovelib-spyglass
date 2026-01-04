@@ -104,10 +104,9 @@ serve(async (req) => {
     const { data: audit, error: createError } = await supabaseClient
       .from('pre_audits')
       .insert({
-        target_url,
-        subscription_tier,
+        url: target_url,
+        ai_tier: subscription_tier,
         status: 'pending_verification',
-        progress: 0,
         user_email,
         user_name: user_name || null,
         email_verified: false,
