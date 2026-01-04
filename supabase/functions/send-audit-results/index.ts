@@ -47,8 +47,10 @@ function generateAuditEmailHTML(data: {
   companyName?: string;
   reportUrl: string;
   recipientName?: string;
+  followUpUrl?: string;
+  remainingMessages?: number;
 }): string {
-  const { auditType, websiteUrl, companyName, reportUrl, recipientName } = data;
+  const { auditType, websiteUrl, companyName, reportUrl, recipientName, followUpUrl, remainingMessages } = data;
   const tierConfig = TIER_LABELS[auditType] || TIER_LABELS['standard'];
   const auditTypeLabel = tierConfig.label;
   const isPremium = tierConfig.isPremium;
@@ -124,6 +126,20 @@ function generateAuditEmailHTML(data: {
                   </td>
                 </tr>
               </table>
+              ${followUpUrl && remainingMessages && remainingMessages > 0 ? `
+              <div style="background-color: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; padding: 20px; margin: 30px 0; text-align: center;">
+                <h3 style="color: #0369a1; margin: 0 0 10px; font-size: 16px; font-weight: 600;">
+                  💬 Besoin de préciser ou enrichir votre demande ?
+                </h3>
+                <p style="color: #1a1a1a; font-size: 14px; margin: 0 0 15px; line-height: 1.5;">
+                  Vous pouvez encore échanger avec Alex pour ajouter des informations à votre audit.<br/>
+                  <strong>${remainingMessages} message${remainingMessages > 1 ? 's' : ''} restant${remainingMessages > 1 ? 's' : ''}</strong> selon votre plan.
+                </p>
+                <a href="${followUpUrl}" style="display: inline-block; background: #0369a1; color: #ffffff; text-decoration: none; padding: 12px 30px; border-radius: 6px; font-size: 14px; font-weight: 600;">
+                  💬 Continuer avec Alex
+                </a>
+              </div>
+              ` : ''}
               <p style="color: #1a1a1a; font-size: 16px; line-height: 1.6; margin: 30px 0 0;">
                 Cordialement,<br/>
                 <strong style="color: ${IMOTION_BRAND.colors.primary};">L'équipe IMOTION</strong>
@@ -198,17 +214,31 @@ const handler = async (req: Request): Promise<Response> => {
     // Essayer de récupérer les infos du pre_audit si disponible
     let website = 'votre site';
     let companyName = '';
+    let followUpUrl: string | undefined;
+    let remainingMsgs: number | undefined;
     
     if (report.pre_audit_id) {
       const { data: preAudit } = await supabase
         .from('pre_audits')
-        .select('url, company_guess')
+        .select('url, company_guess, ai_tier, follow_up_messages_count, conversation_completed')
         .eq('id', report.pre_audit_id)
         .maybeSingle();
       
       if (preAudit) {
         website = preAudit.url || website;
         companyName = preAudit.company_guess || '';
+        
+        // Calcul messages restants pour le lien follow-up
+        const planTier = preAudit.ai_tier || 'discovery';
+        const maxMessages = planTier === 'enterprise' ? 30 : planTier === 'agency' ? 15 : planTier === 'pro' ? 5 : 3;
+        const usedMessages = preAudit.follow_up_messages_count || 0;
+        const remaining = Math.max(0, maxMessages - usedMessages);
+        
+        // Si la conversation est complète et il reste des messages, ajouter le lien
+        if (preAudit.conversation_completed && remaining > 0) {
+          followUpUrl = `https://7c6553ec-011c-44ef-a323-d4dbfc5215db.lovableproject.com/mes-audits`;
+          remainingMsgs = remaining;
+        }
       }
     }
     
@@ -229,6 +259,8 @@ const handler = async (req: Request): Promise<Response> => {
       websiteUrl: website,
       companyName,
       reportUrl,
+      followUpUrl,
+      remainingMessages: remainingMsgs,
     });
 
     const tierConfig = TIER_LABELS[auditType] || TIER_LABELS['standard'];
