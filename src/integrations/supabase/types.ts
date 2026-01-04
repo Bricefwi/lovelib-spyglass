@@ -1152,10 +1152,15 @@ export type Database = {
           company_siret: string | null
           confidence: number | null
           consolidated: Json | null
+          conversation_completed: boolean | null
+          conversation_completed_at: string | null
+          conversation_started_at: string | null
+          conversational_brief: Json | null
           created_at: string | null
           created_by: string | null
           current_phase: string | null
           domain: string | null
+          email_verified: boolean | null
           id: string
           interaction_step: string | null
           last_step: string | null
@@ -1168,6 +1173,11 @@ export type Database = {
           timeline: Json | null
           updated_at: string | null
           url: string
+          user_email: string | null
+          user_name: string | null
+          user_role: string | null
+          verification_token: string | null
+          verification_token_expires_at: string | null
         }
         Insert: {
           ai_tier?: string | null
@@ -1178,10 +1188,15 @@ export type Database = {
           company_siret?: string | null
           confidence?: number | null
           consolidated?: Json | null
+          conversation_completed?: boolean | null
+          conversation_completed_at?: string | null
+          conversation_started_at?: string | null
+          conversational_brief?: Json | null
           created_at?: string | null
           created_by?: string | null
           current_phase?: string | null
           domain?: string | null
+          email_verified?: boolean | null
           id?: string
           interaction_step?: string | null
           last_step?: string | null
@@ -1194,6 +1209,11 @@ export type Database = {
           timeline?: Json | null
           updated_at?: string | null
           url: string
+          user_email?: string | null
+          user_name?: string | null
+          user_role?: string | null
+          verification_token?: string | null
+          verification_token_expires_at?: string | null
         }
         Update: {
           ai_tier?: string | null
@@ -1204,10 +1224,15 @@ export type Database = {
           company_siret?: string | null
           confidence?: number | null
           consolidated?: Json | null
+          conversation_completed?: boolean | null
+          conversation_completed_at?: string | null
+          conversation_started_at?: string | null
+          conversational_brief?: Json | null
           created_at?: string | null
           created_by?: string | null
           current_phase?: string | null
           domain?: string | null
+          email_verified?: boolean | null
           id?: string
           interaction_step?: string | null
           last_step?: string | null
@@ -1220,6 +1245,11 @@ export type Database = {
           timeline?: Json | null
           updated_at?: string | null
           url?: string
+          user_email?: string | null
+          user_name?: string | null
+          user_role?: string | null
+          verification_token?: string | null
+          verification_token_expires_at?: string | null
         }
         Relationships: [
           {
