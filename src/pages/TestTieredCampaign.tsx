@@ -59,7 +59,7 @@ const SCENARIOS = [
     tier: 'discovery',
     url: TEST_URL,
     description: 'Analyse rapide avec sections cadenassées pour inciter à l\'upgrade',
-    model: 'google/gemini-2.5-flash-lite',
+    model: 'Claude Sonnet 4.5 + Gemini 2.5 Flash',
     icon: Zap,
     color: 'bg-slate-500',
     expectedFeatures: ['Analyse de surface', 'SWOT basique', 'Sections Premium verrouillées'],
@@ -71,7 +71,7 @@ const SCENARIOS = [
     tier: 'pro',
     url: TEST_URL,
     description: 'Audit complet + brief conversationnel + recommandations actionnables',
-    model: 'google/gemini-2.5-flash',
+    model: 'Claude Sonnet 4.5 + GPT-5 + Perplexity Pro',
     icon: Sparkles,
     color: 'bg-blue-500',
     expectedFeatures: ['Brief Alex intégré', 'Analyse SEO local', 'Concurrents identifiés', 'Plan d\'action 6 mois'],
@@ -83,7 +83,7 @@ const SCENARIOS = [
     tier: 'agency',
     url: TEST_URL,
     description: 'Dream Team IA + brief enrichi + benchmarks sectoriels BTP',
-    model: 'openai/gpt-5',
+    model: 'Claude Opus 4.5 + GPT-5.2 + Perplexity Deep',
     icon: Crown,
     color: 'bg-purple-500',
     expectedFeatures: ['Brief Alex complet', 'Analyse marché BTP', '3 scénarios stratégiques', 'ROI détaillé'],
@@ -95,7 +95,7 @@ const SCENARIOS = [
     tier: 'enterprise',
     url: TEST_URL,
     description: 'Analyse McKinsey-level + roadmap transformation + stratégie multi-canaux',
-    model: 'openai/gpt-5',
+    model: 'Claude Opus 4.5 + GPT-5.2 Pro + Perplexity Deep Research',
     icon: Building2,
     color: 'bg-amber-500',
     expectedFeatures: ['Brief Alex + Deep Research', 'Analyse marché régionale complète', 'Roadmap 12-36 mois', 'ROI quantifié', 'Benchmark concurrentiel'],
@@ -128,13 +128,14 @@ export default function TestTieredCampaign() {
       console.log("🚀 Lancement campagne enrichie pour:", user.email);
       console.log("📋 Brief conversationnel inclus:", ENRICHED_BRIEF);
 
-      const { data, error } = await supabase.functions.invoke('test-tiered-campaign', {
+      const { data, error } = await supabase.functions.invoke('orchestrate-multi-agent-v8', {
         body: { 
           recipient_email: user.email,
           run_all: runAll,
           scenario_id: scenarioId,
-          enriched_brief: ENRICHED_BRIEF, // Inclure le brief enrichi
-          use_imotion_url: true // Utiliser imotion-conseil.com pour tous
+          enriched_brief: ENRICHED_BRIEF,
+          use_imotion_url: true,
+          action: 'test_campaign'
         }
       });
 

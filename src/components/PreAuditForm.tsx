@@ -215,7 +215,7 @@ export const PreAuditForm = () => {
           setTimeout(() => reject(new Error('Timeout: L\'audit prend trop de temps à démarrer')), 30000)
         );
 
-        const orchPromise = supabase.functions.invoke('orchestrate-multi-agent', {
+        const orchPromise = supabase.functions.invoke('orchestrate-multi-agent-v8', {
           body: {
             audit_id: preAuditId,
             action: 'start'

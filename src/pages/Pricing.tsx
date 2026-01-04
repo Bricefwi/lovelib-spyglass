@@ -39,8 +39,11 @@ const Pricing = () => {
       description: "Découvrez la puissance de notre IA",
       auditsPerYear: 3,
       aiAgents: 7,
-      aiModel: "Gemini 2.5 Flash Lite",
-      aiModelsDetail: ["🧠 Gemini 2.5 Flash Lite"],
+      aiModel: "Claude Sonnet 4.5 + Gemini 2.5 Flash",
+      aiModelsDetail: [
+        "🧠 Claude Sonnet 4.5 (Analyse & Stratégie)",
+        "⚡ Gemini 2.5 Flash (Recherche rapide)"
+      ],
       features: {
         included: [
           "3 audits gratuits",
@@ -78,11 +81,11 @@ const Pricing = () => {
       description: "Pour professionnels et PME",
       auditsPerYear: 60,
       aiAgents: 12,
-      aiModel: "Gemini 3 Pro + Claude Sonnet 4 + Perplexity",
+      aiModel: "Claude Sonnet 4.5 + GPT-5 + Perplexity Pro",
       aiModelsDetail: [
-        "🔬 Perplexity Sonar Pro (Recherche)",
-        "🧠 Gemini 3 Pro (Analyse & Stratégie)",
-        "✍️ Claude Sonnet 4 (Rédaction)"
+        "🔬 Perplexity Sonar Pro (Recherche avec citations)",
+        "🧠 Claude Sonnet 4.5 (Analyse & Stratégie)",
+        "✍️ GPT-5 (Rédaction professionnelle)"
       ],
       features: {
         included: [
@@ -122,12 +125,12 @@ const Pricing = () => {
       description: "Pour agences et consultants",
       auditsPerYear: 240,
       aiAgents: 15,
-      aiModel: "Gemini 3 Pro + Claude Sonnet 4 + GPT-5 + Perplexity",
+      aiModel: "Claude Opus 4.5 + GPT-5.2 + Perplexity Deep",
       aiModelsDetail: [
-        "🔬 Perplexity Sonar Reasoning (Recherche)",
-        "🧠 Claude Sonnet 4 (Analyse)",
-        "📊 Gemini 3 Pro (Stratégie)",
-        "✍️ GPT-5 (Rédaction)"
+        "🔬 Perplexity Deep Research (Recherche approfondie)",
+        "🧠 Claude Opus 4.5 (Analyse stratégique)",
+        "📊 GPT-5.2 Pro (Stratégie & Insights)",
+        "✍️ Claude Opus 4.5 (Rédaction premium)"
       ],
       features: {
         included: [
@@ -167,17 +170,17 @@ const Pricing = () => {
       description: "Solution complète pour grandes organisations",
       auditsPerYear: 600,
       aiAgents: 17,
-      aiModel: "Claude Opus 4.5 + GPT-5 + Perplexity Reasoning",
+      aiModel: "Claude Opus 4.5 + GPT-5.2 Pro + Perplexity Deep Research",
       aiModelsDetail: [
-        "🔬 Perplexity Sonar Reasoning (Recherche)",
-        "🧠 GPT-5 (Analyse)",
-        "📊 Claude Opus 4.5 (Stratégie)",
-        "✍️ Claude Opus 4.5 (Rédaction)"
+        "🔬 Perplexity Deep Research (Recherche ultra-profonde)",
+        "🧠 Claude Opus 4.5 (Analyse McKinsey-level)",
+        "📊 GPT-5.2 Pro (Stratégie entreprise)",
+        "✍️ Claude Opus 4.5 (Rédaction exécutive)"
       ],
       features: {
         included: [
           "600 audits par an (50/mois)",
-          "17 agents IA ultra-experts",
+          "17 agents IA ultra-experts V8",
           "Rapports 100-150 pages",
           "7 scénarios stratégiques",
           "25 infographies sur-mesure",
