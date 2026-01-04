@@ -78,9 +78,26 @@ const ALL_AGENTS = [
     name: "Coordinator", 
     task: "Initialize audit and define scope", 
     minPlan: "freemium",
-    getPrompt: (url: string, plan: string) => {
+    getPrompt: (url: string, plan: string, conversationalBrief?: any) => {
       const depth = plan === 'freemium' ? 'basic overview' : plan === 'pro' ? 'detailed analysis' : plan === 'agency' ? 'strategic insights' : 'comprehensive transformation roadmap';
-      return `You are the Audit Coordinator. Your role is to initialize this comprehensive digital audit for ${url}.
+      
+      let briefSection = '';
+      if (conversationalBrief) {
+        briefSection = `
+
+CLIENT BRIEF (from conversational audit with Agent Alex):
+- Client Name: ${conversationalBrief.client_name || 'Not provided'}
+- Client Role: ${conversationalBrief.client_role || 'Not provided'}
+- Strategic Objectives: ${conversationalBrief.strategic_objectives?.join(', ') || 'Not specified'}
+- Current Challenges: ${conversationalBrief.current_challenges?.join(', ') || 'Not specified'}
+- Competitors: ${conversationalBrief.competitors?.join(', ') || 'Not specified'}
+- Specific Focus Areas: ${conversationalBrief.specific_focus_areas?.join(', ') || 'Not specified'}
+- Summary: ${conversationalBrief.conversation_summary || 'No summary available'}
+
+IMPORTANT: Use this client brief to tailor your analysis to their specific needs and context. Prioritize the focus areas they mentioned and address their stated challenges directly.`;
+      }
+      
+      return `You are the Audit Coordinator. Your role is to initialize this comprehensive digital audit for ${url}.${briefSection}
 
 CONTEXT:
 - Client Plan: ${plan.toUpperCase()}
@@ -89,7 +106,7 @@ CONTEXT:
 
 YOUR MISSION:
 1. Analyze the website's primary purpose and target audience
-2. Identify the key business objectives
+2. Identify the key business objectives (informed by client brief if available)
 3. Define the scope of analysis based on the ${plan} plan
 4. Set expectations for deliverables
 5. Establish success metrics
@@ -451,11 +468,20 @@ serve(async (req) => {
     const infographicsCount = INFOGRAPHICS_BY_PLAN[plan as keyof typeof INFOGRAPHICS_BY_PLAN] || 3;
     const lengthConfig = REPORT_LENGTH_BY_PLAN[plan as keyof typeof REPORT_LENGTH_BY_PLAN] || REPORT_LENGTH_BY_PLAN.freemium;
     
+    // Extract conversational brief if available
+    const conversationalBrief = audit.conversational_brief || null;
+    
     console.log(`📊 Plan: ${plan}`);
     console.log(`🤖 Agents to execute: ${agentsCount}/${ALL_AGENTS.length}`);
     console.log(`📝 Using premium prompts (500-1500 words per agent)`);
     console.log(`🎨 Infographics to generate: ${infographicsCount}`);
     console.log(`📊 Target report length: ${lengthConfig.target} pages (${lengthConfig.min}-${lengthConfig.max})`);
+    
+    if (conversationalBrief) {
+      console.log(`💬 Conversational brief available:`);
+      console.log(`   Client: ${conversationalBrief.client_name} (${conversationalBrief.client_role})`);
+      console.log(`   Objectives: ${conversationalBrief.strategic_objectives?.join(', ')}`);
+    }
 
     // Update status to in_progress
     await supabase
@@ -479,7 +505,9 @@ serve(async (req) => {
       console.log(`   Progress: ${progress}%`);
 
       // Generate premium prompt
-      const prompt = agent.getPrompt(audit.target_url, plan, agentResults);
+      // Pass conversationalBrief to Coordinator (agent 1), otherwise pass agentResults for context
+      const promptArg = (agent.id === 1 && conversationalBrief) ? conversationalBrief : agentResults;
+      const prompt = agent.getPrompt(audit.target_url, plan, promptArg);
       console.log(`   📝 Prompt length: ${prompt.length} characters`);
 
       // Update progress in database
