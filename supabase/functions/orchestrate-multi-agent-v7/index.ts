@@ -581,11 +581,12 @@ serve(async (req) => {
         agentResults.push(result);
 
       } catch (error) {
-        console.error(`   ❌ Erreur: ${error.message}`);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        console.error(`   ❌ Erreur: ${errorMessage}`);
         agentResults.push({
           agent: agent.name,
           task: agent.task,
-          analysis: `Erreur lors de l'analyse: ${error.message}`,
+          analysis: `Erreur lors de l'analyse: ${errorMessage}`,
           citations: [],
           wordCount: 0
         });
@@ -645,8 +646,9 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('❌ Error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500
