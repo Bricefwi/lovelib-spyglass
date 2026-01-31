@@ -281,6 +281,10 @@ const Dashboard = () => {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div>
+                    <p className="text-sm text-muted-foreground">Email</p>
+                    <p className="font-semibold">{profile.email}</p>
+                  </div>
+                  <div>
                     <p className="text-sm text-muted-foreground">Raison sociale</p>
                     <p className="font-semibold">{profile.company_legal_name}</p>
                   </div>
@@ -297,9 +301,9 @@ const Dashboard = () => {
                   {profile.company_website && (
                     <div>
                       <p className="text-sm text-muted-foreground">Site web</p>
-                      <a 
-                        href={profile.company_website} 
-                        target="_blank" 
+                      <a
+                        href={profile.company_website}
+                        target="_blank"
                         rel="noopener noreferrer"
                         className="text-sm text-primary hover:underline"
                       >
