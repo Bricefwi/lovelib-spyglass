@@ -1,4 +1,66 @@
-# Guide de Correction - Erreur OAuth Google (redirect_uri_mismatch)
+# Guide de Correction - Erreurs d'Authentification
+
+Ce guide couvre deux problemes :
+1. Erreur OAuth Google (redirect_uri_mismatch)
+2. Inscription par email qui ne fonctionne plus
+
+---
+
+# PROBLEME 1 : Inscription Email Non Fonctionnelle
+
+## Diagnostic
+
+Le code dans `src/pages/Auth.tsx` (lignes 134-144) bloque la connexion si `email_confirmed_at` est null :
+
+```typescript
+// Probleme : Ce code empeche la connexion si l'email n'est pas confirme
+if (!data.user.email_confirmed_at) {
+  await supabase.auth.signOut();
+  toast({
+    title: "Email non confirme",
+    description: "Veuillez confirmer votre adresse email...",
+    variant: "destructive"
+  });
+  return;
+}
+```
+
+## Causes Possibles
+
+1. **Emails de confirmation non envoyes** - Configuration SMTP/Resend manquante
+2. **URL de redirection non autorisee** - `emailRedirectTo` bloquee par Supabase
+3. **Mode auto-confirm desactive** - Necessite confirmation email mais emails non recus
+
+## Solutions
+
+### Solution A : Activer Auto-Confirm (Recommandee)
+
+1. Supabase Dashboard > Authentication > Providers > Email
+2. Desactivez "Confirm email" ou activez "Auto-confirm users"
+3. Supprimez le bloc de verification dans Auth.tsx (lignes 134-144)
+
+### Solution B : Corriger l'Envoi d'Emails
+
+1. Verifiez Supabase > Project Settings > Authentication > SMTP
+2. Si custom SMTP : verifiez les credentials
+3. Testez avec la page `/diagnostic-auth`
+
+### Solution C : Ajouter les URLs Autorisees
+
+Dans Supabase > Authentication > URL Configuration, ajoutez :
+
+```
+Site URL: https://novel-pathfinder-app.lovable.app
+
+Redirect URLs:
+https://novel-pathfinder-app.lovable.app/onboarding/company
+https://novel-pathfinder-app.lovable.app/auth
+https://novel-pathfinder-app.lovable.app/auth/callback
+```
+
+---
+
+# PROBLEME 2 : Erreur OAuth Google (redirect_uri_mismatch)
 
 ## Probleme Identifie
 
