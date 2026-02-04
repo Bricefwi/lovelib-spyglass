@@ -228,6 +228,188 @@ https://gzfrcshvrktpejctlgta.supabase.co/auth/v1/callback
 
 ---
 
+# PARTIE 3 : Connexion Google Complete mais Non Connecte
+
+## Probleme Identifie
+
+Apres l'authentification Google, l'utilisateur est redirige vers la page d'accueil sans etre connecte.
+
+**Cause : Le handler `onAuthStateChange` dans Auth.tsx (lignes 43-52) est VIDE :**
+
+```typescript
+useEffect(() => {
+  const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    if (session && event === "SIGNED_IN") {
+      setTimeout(() => {
+        // Trigger role check  <-- NE FAIT RIEN!
+      }, 500);
+    }
+  });
+  return () => subscription.unsubscribe();
+}, []);
+```
+
+**Race condition :**
+1. OAuth redirige vers `/onboarding/company`
+2. Onboarding verifie la session (pas encore prete)
+3. Redirige vers `/auth` puis vers `/` (Home)
+
+---
+
+## Prompt OAuth Callback 1 : Corriger le Handler onAuthStateChange (CRITIQUE)
+
+```
+PROBLEME CRITIQUE : La connexion Google s'authentifie mais l'utilisateur n'est pas connecte ensuite.
+
+Dans src/pages/Auth.tsx, le useEffect avec onAuthStateChange (lignes 43-52) a un callback VIDE qui ne fait rien apres la connexion OAuth.
+
+Corrige ce code pour :
+1. Detecter quand l'utilisateur se connecte via OAuth (event === "SIGNED_IN")
+2. Recuperer le role de l'utilisateur depuis user_roles
+3. Rediriger vers la bonne page :
+   - Admin -> /admin/audits
+   - Client -> /client/audits
+   - Nouveau utilisateur (pas de role) -> /onboarding/company
+
+Voici le code a remplacer (lignes 43-52) :
+
+useEffect(() => {
+  const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    if (session && event === "SIGNED_IN") {
+      // Recuperer le role
+      const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", session.user.id)
+        .single();
+
+      if (roleData?.role === 'admin') {
+        navigate("/admin/audits");
+      } else if (roleData?.role === 'client') {
+        navigate("/client/audits");
+      } else {
+        navigate("/onboarding/company");
+      }
+    }
+  });
+  return () => subscription.unsubscribe();
+}, [navigate]);
+```
+
+---
+
+## Prompt OAuth Callback 2 : Gerer la Race Condition dans Onboarding
+
+```
+Dans src/pages/Onboarding.tsx, il y a une race condition :
+La page redirige vers /auth si la session n'est pas immediatement disponible.
+
+Modifie le useEffect pour :
+1. Ajouter un etat de chargement (loading) pendant la verification de session
+2. Attendre que la session soit verifiee avant de rediriger
+3. Ne pas rediriger pendant le chargement initial
+
+Ajoute un delai ou utilise un state isInitializing pour eviter les redirections prematurees.
+```
+
+---
+
+## Prompt OAuth Callback 3 : Solution Alternative avec Callback Page
+
+```
+Cree une page de callback OAuth dediee pour gerer le retour apres authentification Google.
+
+1. Cree un nouveau fichier src/pages/AuthCallback.tsx
+2. Cette page doit :
+   - Attendre que la session Supabase soit etablie
+   - Afficher un loader pendant l'attente
+   - Recuperer le role utilisateur
+   - Rediriger vers la bonne destination
+
+3. Ajoute la route /auth/callback dans le router
+
+4. Modifie handleSocialLogin dans Auth.tsx pour utiliser :
+   redirectTo: `${window.location.origin}/auth/callback`
+
+Voici le code pour AuthCallback.tsx :
+
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Loader2 } from "lucide-react";
+
+export default function AuthCallback() {
+  const navigate = useNavigate();
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handleCallback = async () => {
+      try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+        if (sessionError) throw sessionError;
+
+        if (!session) {
+          // Attendre un peu et reessayer
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          const { data: { session: retrySession } } = await supabase.auth.getSession();
+
+          if (!retrySession) {
+            navigate("/auth");
+            return;
+          }
+        }
+
+        const currentSession = session || (await supabase.auth.getSession()).data.session;
+
+        if (currentSession) {
+          const { data: roleData } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", currentSession.user.id)
+            .single();
+
+          if (roleData?.role === 'admin') {
+            navigate("/admin/audits");
+          } else if (roleData?.role === 'client') {
+            navigate("/client/audits");
+          } else {
+            navigate("/onboarding/company");
+          }
+        }
+      } catch (err: any) {
+        setError(err.message);
+        setTimeout(() => navigate("/auth"), 3000);
+      }
+    };
+
+    handleCallback();
+  }, [navigate]);
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-500 mb-2">Erreur: {error}</p>
+          <p>Redirection vers la page de connexion...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+        <p>Connexion en cours...</p>
+      </div>
+    </div>
+  );
+}
+```
+
+---
+
 ## Resolution Rapide
 
 La solution la plus simple est souvent de **supprimer les identifiants Google personnalises** dans Supabase et d'utiliser le mode gere automatiquement. Cela evite les problemes de configuration redirect_uri.

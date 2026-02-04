@@ -1,8 +1,9 @@
 # Guide de Correction - Erreurs d'Authentification
 
-Ce guide couvre deux problemes :
+Ce guide couvre trois problemes :
 1. Erreur OAuth Google (redirect_uri_mismatch)
 2. Inscription par email qui ne fonctionne plus
+3. **NOUVEAU** : Connexion Google complete mais utilisateur non connecte
 
 ---
 
@@ -126,3 +127,74 @@ const handleSocialLogin = async (provider: 'google' | 'apple' | 'azure' | 'faceb
 ```
 
 Ce code est correct. Le probleme est purement de configuration cote Google Cloud Console.
+
+---
+
+# PROBLEME 3 : Connexion Google Complete mais Non Connecte (CRITIQUE)
+
+## Symptome
+
+Apres l'authentification Google :
+- Plus d'erreur 400
+- L'utilisateur est redirige vers la page d'accueil (Home)
+- Mais il n'est PAS connecte
+
+## Diagnostic
+
+Le handler `onAuthStateChange` dans `src/pages/Auth.tsx` (lignes 43-52) est **VIDE** :
+
+```typescript
+useEffect(() => {
+  const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    if (session && event === "SIGNED_IN") {
+      setTimeout(() => {
+        // Trigger role check  <-- NE FAIT RIEN!
+      }, 500);
+    }
+  });
+  return () => subscription.unsubscribe();
+}, []);
+```
+
+**Le callback ne fait rien apres la connexion OAuth !**
+
+## Race Condition
+
+1. OAuth redirige vers `/onboarding/company`
+2. Onboarding verifie la session (pas encore prete a cause du timing)
+3. Redirige vers `/auth`
+4. Auth verifie le role (pas de role) -> redirige vers `/` (Home)
+
+## Solution : Corriger le Handler
+
+Remplacer le code vide par :
+
+```typescript
+useEffect(() => {
+  const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    if (session && event === "SIGNED_IN") {
+      // Recuperer le role de l'utilisateur
+      const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", session.user.id)
+        .single();
+
+      // Rediriger selon le role
+      if (roleData?.role === 'admin') {
+        navigate("/admin/audits");
+      } else if (roleData?.role === 'client') {
+        navigate("/client/audits");
+      } else {
+        navigate("/onboarding/company");
+      }
+    }
+  });
+
+  return () => subscription.unsubscribe();
+}, [navigate]);
+```
+
+## Solution Alternative : Creer une Page Callback
+
+Creer `src/pages/AuthCallback.tsx` pour gerer le retour OAuth avec un loader et une gestion d'attente propre. Voir `PROMPTS_LOVABLE_OAUTH_FIX.md` pour le code complet.
