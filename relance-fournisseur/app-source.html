@@ -1,0 +1,2893 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Relance Fournisseur — IMOTION Conseil</title>
+<!-- ===== LIBRAIRIES EMBARQUÉES INLINE (aucune dépendance externe) ===== -->
+<script>/* __XLSX_INLINE__ */</script>
+<script>/* __PAPA_INLINE__ */</script>
+<script>/* __CHART_INLINE__ */</script>
+<style>
+/* ============================================================
+   VARIABLES CSS — THÈME IMOTION
+   ============================================================ */
+:root {
+  --bleu-fonce   : #1F4E78;
+  --bleu-moyen   : #2E75B6;
+  --bleu-clair   : #BDD7EE;
+  --blanc        : #FFFFFF;
+  --gris-clair   : #F4F6F9;
+  --gris-moyen   : #6C757D;
+  --rouge        : #C00000;
+  --rouge-clair  : #FFF0F0;
+  --orange       : #E65C00;
+  --orange-clair : #FFF4E8;
+  --jaune        : #D4A017;
+  --jaune-clair  : #FFFBE6;
+  --vert         : #2E7D32;
+  --vert-clair   : #F1F8E9;
+  --violet       : #5E35B1;
+  --badge-urgent   : linear-gradient(135deg, #C00000, #E53935);
+  --badge-relance1 : linear-gradient(135deg, #E65C00, #FB8C00);
+  --badge-relance2 : linear-gradient(135deg, #D4A017, #FDD835);
+  --badge-attente  : linear-gradient(135deg, #1565C0, #1E88E5);
+  --badge-resolu   : linear-gradient(135deg, #2E7D32, #43A047);
+  --badge-bloque   : linear-gradient(135deg, #424242, #757575);
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 14px; background: var(--gris-clair); color: #222; overflow-x: hidden; }
+button { cursor: pointer; }
+input, select, textarea { font-family: inherit; font-size: 13px; }
+
+/* ============================================================
+   SPLASH / MODAL D'ACCUEIL
+   ============================================================ */
+#splash {
+  position: fixed; inset: 0; background: rgba(31,78,120,0.97);
+  display: flex; align-items: center; justify-content: center; z-index: 9999;
+}
+.splash-card {
+  background: white; border-radius: 16px; padding: 40px 48px; width: 420px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.4); text-align: center;
+}
+.splash-logo { font-size: 36px; margin-bottom: 8px; }
+.splash-title { font-size: 20px; font-weight: 700; color: var(--bleu-fonce); margin-bottom: 4px; }
+.splash-sub { font-size: 13px; color: var(--gris-moyen); margin-bottom: 28px; }
+.splash-modes { text-align: left; margin-bottom: 20px; }
+.splash-mode-option { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: 8px; margin-bottom: 8px; cursor: pointer; border: 2px solid #e0e0e0; transition: border-color .2s; }
+.splash-mode-option:hover { border-color: var(--bleu-moyen); }
+.splash-mode-option.selected { border-color: var(--bleu-moyen); background: #EBF3FB; }
+.splash-mode-option input[type=radio] { accent-color: var(--bleu-moyen); width: 16px; height: 16px; }
+.splash-mode-label { font-weight: 600; font-size: 14px; }
+.splash-mode-desc { font-size: 12px; color: var(--gris-moyen); }
+#splash-initiales-wrap { margin: 0 0 20px 0; }
+#splash-initiales-wrap label { font-size: 13px; font-weight: 600; display: block; margin-bottom: 4px; }
+#splash-initiales { width: 100%; padding: 8px 12px; border: 1.5px solid #ccc; border-radius: 6px; }
+.btn-primary {
+  width: 100%; padding: 12px; background: var(--bleu-moyen); color: white;
+  border: none; border-radius: 8px; font-size: 15px; font-weight: 700; letter-spacing: .5px;
+  transition: background .2s;
+}
+.btn-primary:hover { background: var(--bleu-fonce); }
+
+/* ============================================================
+   NAVBAR
+   ============================================================ */
+#navbar {
+  position: sticky; top: 0; z-index: 100;
+  height: 56px; background: var(--bleu-fonce); display: flex; align-items: center;
+  padding: 0 20px; gap: 16px; box-shadow: 0 2px 8px rgba(0,0,0,.25);
+}
+.nav-brand { color: white; font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.nav-tabs { display: flex; gap: 4px; flex: 1; justify-content: center; }
+.nav-tab {
+  color: rgba(255,255,255,.75); padding: 6px 14px; border-radius: 6px; cursor: pointer;
+  font-size: 13px; font-weight: 500; border: none; background: transparent; transition: all .2s;
+  white-space: nowrap;
+}
+.nav-tab:hover { background: rgba(255,255,255,.15); color: white; }
+.nav-tab.active { background: rgba(255,255,255,.22); color: white; font-weight: 700; }
+.nav-right { display: flex; align-items: center; gap: 12px; }
+.nav-badge-mode {
+  padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; letter-spacing: .5px;
+}
+.nav-badge-mode.gestionnaire { background: #4CAF50; color: white; }
+.nav-badge-mode.consultation { background: #9E9E9E; color: white; }
+.nav-user { color: rgba(255,255,255,.85); font-size: 12px; }
+.nav-bell {
+  position: relative; background: transparent; border: none; color: white; font-size: 18px; cursor: pointer;
+}
+.nav-bell-count {
+  position: absolute; top: -4px; right: -6px; background: var(--rouge); color: white;
+  border-radius: 50%; width: 16px; height: 16px; font-size: 10px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.nav-data-info { color: rgba(255,255,255,.6); font-size: 11px; white-space: nowrap; }
+
+/* ============================================================
+   PAGES / ONGLETS
+   ============================================================ */
+.page { display: none; padding: 20px; min-height: calc(100vh - 56px); }
+.page.active { display: block; }
+
+/* ============================================================
+   KPI CARDS
+   ============================================================ */
+.kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+.kpi-card {
+  background: white; border-radius: 12px; padding: 20px 24px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.07); border-left: 5px solid var(--bleu-moyen);
+  display: flex; flex-direction: column; gap: 4px;
+}
+.kpi-card.urgent { border-left-color: var(--rouge); }
+.kpi-card.warning { border-left-color: var(--orange); }
+.kpi-card.info { border-left-color: var(--bleu-moyen); }
+.kpi-card.money { border-left-color: var(--vert); }
+.kpi-icon { font-size: 22px; }
+.kpi-label { font-size: 11px; font-weight: 600; color: var(--gris-moyen); text-transform: uppercase; letter-spacing: .5px; }
+.kpi-value { font-size: 32px; font-weight: 800; color: var(--bleu-fonce); line-height: 1; }
+.kpi-delta { font-size: 12px; color: var(--gris-moyen); }
+
+/* ============================================================
+   DASHBOARD GRID
+   ============================================================ */
+.dashboard-grid { display: grid; grid-template-columns: 1fr 1fr 320px; gap: 16px; }
+.card {
+  background: white; border-radius: 12px; padding: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.07);
+}
+.card-title { font-size: 14px; font-weight: 700; color: var(--bleu-fonce); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+.card-full { grid-column: 1 / -1; }
+
+/* Statut distribution */
+.statut-list { display: flex; flex-direction: column; gap: 8px; }
+.statut-row { display: flex; align-items: center; gap: 10px; }
+.statut-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.statut-name { flex: 1; font-size: 13px; }
+.statut-count { font-weight: 700; font-size: 14px; min-width: 40px; text-align: right; }
+.statut-bar-wrap { flex: 2; height: 6px; background: #eee; border-radius: 3px; }
+.statut-bar { height: 100%; border-radius: 3px; transition: width .8s ease; }
+
+/* Rappels */
+.rappel-list { display: flex; flex-direction: column; gap: 8px; }
+.rappel-item { padding: 10px 12px; border-radius: 8px; border-left: 3px solid var(--orange); background: var(--orange-clair); font-size: 12px; }
+.rappel-item.urgent { border-left-color: var(--rouge); background: var(--rouge-clair); }
+.rappel-item.normal { border-left-color: var(--bleu-moyen); background: #EBF3FB; }
+.rappel-fourn { font-weight: 700; }
+.rappel-detail { color: var(--gris-moyen); margin-top: 2px; }
+
+/* ============================================================
+   FILTRES
+   ============================================================ */
+.filtres-bar {
+  background: white; border-radius: 10px; padding: 12px 16px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 12px;
+  display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+}
+.filtres-bar select, .filtres-bar input {
+  padding: 6px 10px; border: 1.5px solid #ddd; border-radius: 6px;
+  font-size: 13px; background: white; min-width: 120px;
+}
+.filtres-bar select:focus, .filtres-bar input:focus { outline: none; border-color: var(--bleu-moyen); }
+.btn-reset { padding: 6px 12px; background: var(--gris-clair); border: 1.5px solid #ddd; border-radius: 6px; font-size: 12px; color: var(--gris-moyen); }
+.btn-reset:hover { background: #e0e0e0; }
+.filtres-summary {
+  background: #EBF3FB; border-radius: 8px; padding: 8px 16px;
+  font-size: 13px; color: var(--bleu-fonce); margin-bottom: 10px;
+  display: flex; flex-wrap: wrap; gap: 16px; align-items: center;
+}
+.filtres-summary strong { font-weight: 700; }
+
+/* ============================================================
+   TABLEAU PRINCIPAL
+   ============================================================ */
+.table-wrap { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.07); overflow: hidden; }
+.table-actions-bar {
+  padding: 10px 16px; border-bottom: 1px solid #eee;
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  background: #FAFAFA;
+}
+.table-scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead th {
+  background: var(--bleu-fonce); color: white; padding: 10px 12px;
+  text-align: left; white-space: nowrap; position: sticky; top: 56px;
+  cursor: pointer; user-select: none; font-weight: 600; font-size: 12px;
+}
+thead th:hover { background: var(--bleu-moyen); }
+thead th .sort-icon { margin-left: 4px; opacity: .6; font-size: 10px; }
+tbody tr { border-bottom: 1px solid #f0f0f0; cursor: pointer; transition: background .1s; }
+tbody tr:nth-child(even) { background: #FAFAFA; }
+tbody tr:hover { background: var(--bleu-clair) !important; }
+tbody tr.selected { border-left: 3px solid var(--bleu-moyen); }
+tbody tr.row-urgent { background: var(--rouge-clair) !important; }
+tbody tr.row-urgent:hover { background: #FFD6D6 !important; }
+tbody tr.row-attention { background: var(--orange-clair) !important; }
+tbody tr.row-attention:hover { background: #FFE0C0 !important; }
+tbody tr.row-resolu { background: var(--vert-clair) !important; }
+tbody tr.row-bloque { color: var(--gris-moyen); font-style: italic; }
+td { padding: 8px 12px; white-space: nowrap; }
+td.td-notes { max-width: 180px; overflow: hidden; text-overflow: ellipsis; }
+
+/* Badges statut */
+.badge {
+  display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px;
+  font-weight: 700; color: white; white-space: nowrap;
+}
+.badge-urgent    { background: var(--badge-urgent); }
+.badge-relance1  { background: var(--badge-relance1); }
+.badge-relance2  { background: var(--badge-relance2); color: #333; }
+.badge-attente   { background: var(--badge-attente); }
+.badge-resolu    { background: var(--badge-resolu); }
+.badge-bloque    { background: var(--badge-bloque); }
+.badge-arelancer { background: #9E9E9E; }
+
+/* Priorité */
+.prio-urgent  { color: var(--rouge); font-weight: 700; font-size: 12px; }
+.prio-attention { color: var(--orange); font-weight: 700; font-size: 12px; }
+.prio-normal  { color: var(--vert); font-size: 12px; }
+
+/* Pagination */
+.pagination {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; border-top: 1px solid #eee; background: #FAFAFA;
+  font-size: 13px;
+}
+.pagination-btns { display: flex; gap: 6px; }
+.pagination-btns button {
+  padding: 4px 10px; border: 1.5px solid #ddd; border-radius: 5px;
+  background: white; font-size: 12px; color: var(--bleu-fonce);
+}
+.pagination-btns button.active { background: var(--bleu-moyen); color: white; border-color: var(--bleu-moyen); }
+.pagination-btns button:disabled { opacity: .4; cursor: not-allowed; }
+
+/* Checkbox */
+.cb-select { width: 15px; height: 15px; cursor: pointer; accent-color: var(--bleu-moyen); }
+
+/* ============================================================
+   DRAWER (PANNEAU LATÉRAL)
+   ============================================================ */
+#drawer-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 200; display: none;
+}
+#drawer {
+  position: fixed; top: 56px; right: 0; bottom: 0; width: 420px;
+  background: white; z-index: 201; box-shadow: -4px 0 20px rgba(0,0,0,.15);
+  transform: translateX(100%); transition: transform .25s ease;
+  display: flex; flex-direction: column; overflow: hidden;
+}
+#drawer.open { transform: translateX(0); }
+.drawer-header {
+  background: var(--bleu-fonce); color: white; padding: 14px 16px;
+  display: flex; justify-content: space-between; align-items: flex-start;
+}
+.drawer-title { font-size: 14px; font-weight: 700; }
+.drawer-sub { font-size: 12px; opacity: .8; margin-top: 2px; }
+.drawer-close { background: transparent; border: none; color: white; font-size: 20px; cursor: pointer; line-height: 1; }
+.drawer-body { flex: 1; overflow-y: auto; padding: 16px; }
+.drawer-section { margin-bottom: 16px; }
+.drawer-section-title { font-size: 12px; font-weight: 700; color: var(--bleu-fonce); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid #eee; }
+.drawer-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.drawer-info-item { background: var(--gris-clair); border-radius: 6px; padding: 8px 10px; }
+.drawer-info-label { font-size: 11px; color: var(--gris-moyen); }
+.drawer-info-value { font-size: 14px; font-weight: 700; color: var(--bleu-fonce); }
+.form-row { margin-bottom: 10px; }
+.form-row label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 3px; color: #444; }
+.form-row select, .form-row input, .form-row textarea {
+  width: 100%; padding: 7px 10px; border: 1.5px solid #ddd; border-radius: 6px;
+  font-size: 13px; background: white;
+}
+.form-row select:focus, .form-row input:focus, .form-row textarea:focus { outline: none; border-color: var(--bleu-moyen); }
+.form-row textarea { resize: vertical; min-height: 60px; }
+.form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.drawer-footer { padding: 12px 16px; border-top: 1px solid #eee; display: flex; gap: 8px; }
+.btn-save { flex: 1; padding: 9px; background: var(--bleu-moyen); color: white; border: none; border-radius: 7px; font-weight: 700; font-size: 13px; }
+.btn-save:hover { background: var(--bleu-fonce); }
+.btn-cancel { padding: 9px 16px; background: var(--gris-clair); border: 1.5px solid #ddd; border-radius: 7px; font-size: 13px; color: var(--gris-moyen); }
+.btn-cancel:hover { background: #e0e0e0; }
+
+/* Historique dans drawer */
+.histo-list { display: flex; flex-direction: column; gap: 8px; }
+.histo-item { padding: 8px 10px; border-radius: 6px; background: var(--gris-clair); border-left: 3px solid var(--bleu-moyen); font-size: 12px; }
+.histo-meta { color: var(--gris-moyen); font-size: 11px; margin-bottom: 2px; }
+.histo-notes { color: #333; }
+.btn-link { background: none; border: none; color: var(--bleu-moyen); font-size: 12px; cursor: pointer; text-decoration: underline; padding: 0; }
+
+/* Consultation mode */
+.consultation-disabled { opacity: .5; pointer-events: none; }
+.tooltip-consult { position: relative; }
+.tooltip-consult::after { content: 'Mode consultation'; position: absolute; bottom: 110%; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity .2s; }
+.tooltip-consult:hover::after { opacity: 1; }
+
+/* ============================================================
+   MODAL HISTORIQUE COMPLET
+   ============================================================ */
+#modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 300; display: none; align-items: center; justify-content: center;
+}
+#modal-overlay.open { display: flex; }
+.modal {
+  background: white; border-radius: 14px; width: 600px; max-width: 95vw; max-height: 85vh;
+  display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,.3);
+}
+.modal-header { background: var(--bleu-fonce); color: white; padding: 16px 20px; border-radius: 14px 14px 0 0; display: flex; justify-content: space-between; align-items: center; }
+.modal-title { font-size: 15px; font-weight: 700; }
+.modal-close { background: transparent; border: none; color: white; font-size: 22px; cursor: pointer; }
+.modal-body { flex: 1; overflow-y: auto; padding: 20px; }
+.timeline { position: relative; padding-left: 24px; }
+.timeline::before { content: ''; position: absolute; left: 8px; top: 0; bottom: 0; width: 2px; background: #e0e0e0; }
+.timeline-item { position: relative; margin-bottom: 20px; }
+.timeline-dot { position: absolute; left: -20px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: var(--bleu-moyen); border: 2px solid white; box-shadow: 0 0 0 2px var(--bleu-moyen); }
+.timeline-date { font-size: 11px; color: var(--gris-moyen); margin-bottom: 4px; }
+.timeline-content { background: var(--gris-clair); border-radius: 8px; padding: 10px 12px; font-size: 13px; }
+.timeline-type { font-weight: 700; color: var(--bleu-fonce); }
+.timeline-notes { color: #444; margin-top: 4px; }
+
+/* ============================================================
+   MODAL EMAIL
+   ============================================================ */
+#modal-email .modal { width: 720px; }
+.email-type-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+.email-type-btn {
+  padding: 8px; border: 2px solid #ddd; border-radius: 8px; background: white;
+  font-size: 12px; font-weight: 600; cursor: pointer; text-align: center; transition: all .2s;
+}
+.email-type-btn.selected { border-color: var(--bleu-moyen); background: #EBF3FB; color: var(--bleu-fonce); }
+.email-preview {
+  border: 1.5px solid #ddd; border-radius: 8px; padding: 16px;
+  font-size: 13px; line-height: 1.6; background: #FAFAFA; max-height: 280px; overflow-y: auto;
+  white-space: pre-wrap; font-family: 'Segoe UI', Arial, sans-serif;
+}
+.email-preview-editable { min-height: 200px; outline: none; }
+.email-preview-editable:focus { border-color: var(--bleu-moyen); background: white; }
+.email-objet-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.email-objet-row label { font-size: 12px; font-weight: 600; white-space: nowrap; }
+.email-objet-row input { flex: 1; padding: 6px 10px; border: 1.5px solid #ddd; border-radius: 6px; font-size: 13px; }
+.modal-footer { padding: 14px 20px; border-top: 1px solid #eee; display: flex; gap: 8px; flex-wrap: wrap; }
+.btn-secondary { padding: 8px 16px; background: var(--gris-clair); border: 1.5px solid #ddd; border-radius: 7px; font-size: 13px; font-weight: 600; color: var(--bleu-fonce); }
+.btn-secondary:hover { background: #e0e0e0; }
+.btn-success { padding: 8px 16px; background: var(--vert); color: white; border: none; border-radius: 7px; font-size: 13px; font-weight: 700; }
+.btn-success:hover { background: #1B5E20; }
+.btn-danger { padding: 8px 16px; background: var(--rouge); color: white; border: none; border-radius: 7px; font-size: 13px; font-weight: 700; }
+
+/* ============================================================
+   VUE FOURNISSEUR
+   ============================================================ */
+.fourn-search-bar { display: flex; gap: 10px; align-items: center; margin-bottom: 20px; }
+.fourn-search-bar select { flex: 1; padding: 8px 12px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 14px; }
+.fourn-fiche {
+  background: white; border-radius: 12px; padding: 20px 24px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.07); margin-bottom: 20px;
+}
+.fourn-fiche-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 12px 0; }
+.fourn-stat { background: var(--gris-clair); border-radius: 8px; padding: 10px 14px; }
+.fourn-stat-label { font-size: 11px; color: var(--gris-moyen); text-transform: uppercase; }
+.fourn-stat-value { font-size: 20px; font-weight: 800; color: var(--bleu-fonce); }
+.fourn-contacts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+.fourn-contacts input { padding: 6px 10px; border: 1.5px solid #ddd; border-radius: 6px; font-size: 13px; width: 100%; }
+.fourn-actions-bar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+
+/* ============================================================
+   PAGE ANALYTIQUE
+   ============================================================ */
+.analytics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.analytics-grid .card-full { grid-column: 1 / -1; }
+.chart-container { position: relative; height: 280px; }
+.perf-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+.perf-card { background: white; border-radius: 10px; padding: 16px; box-shadow: 0 2px 6px rgba(0,0,0,.06); text-align: center; }
+.perf-value { font-size: 28px; font-weight: 800; color: var(--bleu-fonce); }
+.perf-label { font-size: 12px; color: var(--gris-moyen); margin-top: 4px; }
+
+/* Heatmap */
+.heatmap-wrap { overflow-x: auto; }
+.heatmap-table { border-collapse: collapse; font-size: 11px; }
+.heatmap-table th { background: var(--bleu-fonce); color: white; padding: 6px 10px; text-align: center; }
+.heatmap-table td { padding: 5px 8px; text-align: center; border: 1px solid #eee; min-width: 60px; }
+.hm-0 { background: white; }
+.hm-1 { background: #FFF9C4; }
+.hm-2 { background: #FFCC80; }
+.hm-3 { background: #EF9A9A; }
+.hm-4 { background: #E53935; color: white; font-weight: 700; }
+
+/* ============================================================
+   PAGE CONFIGURATION
+   ============================================================ */
+.config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.config-section { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,.07); }
+.config-section-title { font-size: 14px; font-weight: 700; color: var(--bleu-fonce); margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid var(--bleu-clair); }
+.config-field { margin-bottom: 12px; }
+.config-field label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px; color: #444; }
+.config-field input, .config-field textarea, .config-field select {
+  width: 100%; padding: 8px 10px; border: 1.5px solid #ddd; border-radius: 6px; font-size: 13px;
+}
+.config-field textarea { min-height: 80px; resize: vertical; }
+.config-field input:focus, .config-field textarea:focus { outline: none; border-color: var(--bleu-moyen); }
+.seuil-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.seuil-row label { font-size: 13px; flex: 1; }
+.seuil-row input { width: 70px; padding: 5px 8px; border: 1.5px solid #ddd; border-radius: 5px; text-align: center; }
+.template-tabs { display: flex; gap: 4px; margin-bottom: 10px; flex-wrap: wrap; }
+.template-tab { padding: 5px 10px; border: 1.5px solid #ddd; border-radius: 5px; font-size: 12px; cursor: pointer; background: white; }
+.template-tab.active { background: var(--bleu-moyen); color: white; border-color: var(--bleu-moyen); }
+.config-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.btn-outline { padding: 7px 14px; border: 1.5px solid var(--bleu-moyen); color: var(--bleu-moyen); background: white; border-radius: 7px; font-size: 13px; font-weight: 600; }
+.btn-outline:hover { background: #EBF3FB; }
+
+/* Source de données */
+.source-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,.07); margin-bottom: 16px; }
+.source-card-title { font-size: 14px; font-weight: 700; color: var(--bleu-fonce); margin-bottom: 12px; }
+.file-input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.file-input-row input[type=file] { flex: 1; padding: 6px; border: 1.5px dashed #ccc; border-radius: 6px; font-size: 13px; }
+.file-hint { font-size: 11px; color: var(--gris-moyen); margin-top: 4px; }
+.last-load { font-size: 12px; color: var(--gris-moyen); margin-top: 6px; }
+.btn-load { padding: 8px 16px; background: var(--bleu-moyen); color: white; border: none; border-radius: 7px; font-size: 13px; font-weight: 700; }
+.btn-load:hover { background: var(--bleu-fonce); }
+.btn-demo { padding: 8px 16px; background: var(--violet); color: white; border: none; border-radius: 7px; font-size: 13px; font-weight: 700; }
+.btn-demo:hover { background: #4527A0; }
+
+/* ============================================================
+   TOAST NOTIFICATIONS
+   ============================================================ */
+#toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+.toast {
+  padding: 12px 20px; border-radius: 8px; color: white; font-size: 13px; font-weight: 600;
+  box-shadow: 0 4px 16px rgba(0,0,0,.2); animation: slideInRight .3s ease;
+  max-width: 320px;
+}
+.toast-success { background: var(--vert); }
+.toast-error   { background: var(--rouge); }
+.toast-info    { background: var(--bleu-moyen); }
+.toast-warning { background: var(--orange); }
+@keyframes slideInRight { from { transform: translateX(100px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes fadeOut { to { opacity: 0; transform: translateY(10px); } }
+
+/* ============================================================
+   UTILITAIRES
+   ============================================================ */
+.flex { display: flex; }
+.gap-8 { gap: 8px; }
+.gap-12 { gap: 12px; }
+.mt-16 { margin-top: 16px; }
+.mb-16 { margin-bottom: 16px; }
+.text-right { text-align: right; }
+.text-center { text-align: center; }
+.text-muted { color: var(--gris-moyen); }
+.text-bold { font-weight: 700; }
+.text-small { font-size: 12px; }
+.empty-state { text-align: center; padding: 60px 20px; color: var(--gris-moyen); }
+.empty-state-icon { font-size: 48px; margin-bottom: 12px; }
+.empty-state-text { font-size: 14px; }
+.separator { height: 1px; background: #eee; margin: 12px 0; }
+
+/* ============================================================
+   RESPONSIVE MINIMAL
+   ============================================================ */
+@media (max-width: 1024px) {
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .dashboard-grid { grid-template-columns: 1fr 1fr; }
+  .analytics-grid { grid-template-columns: 1fr; }
+  .config-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 768px) {
+  #drawer { width: 100%; }
+  .kpi-grid { grid-template-columns: 1fr 1fr; }
+  .dashboard-grid { grid-template-columns: 1fr; }
+  .nav-tabs { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     SPLASH — SÉLECTION DU MODE
+     ============================================================ -->
+<div id="splash">
+  <div class="splash-card">
+    <div class="splash-logo">🔔</div>
+    <div class="splash-title">Relance Fournisseur</div>
+    <div class="splash-sub">IMOTION Conseil — Réseau RATP</div>
+    <div class="splash-modes">
+      <label class="splash-mode-option selected" id="opt-gestionnaire">
+        <input type="radio" name="mode" value="gestionnaire" checked>
+        <div>
+          <div class="splash-mode-label">Mode Gestionnaire</div>
+          <div class="splash-mode-desc">Accès complet — saisie d'actions, exports</div>
+        </div>
+      </label>
+      <label class="splash-mode-option" id="opt-consultation">
+        <input type="radio" name="mode" value="consultation">
+        <div>
+          <div class="splash-mode-label">Mode Consultation</div>
+          <div class="splash-mode-desc">Lecture seule — aucune modification</div>
+        </div>
+      </label>
+    </div>
+    <div id="splash-initiales-wrap">
+      <label for="splash-initiales">Vos initiales</label>
+      <input type="text" id="splash-initiales" maxlength="4" placeholder="ex : PD" style="text-transform:uppercase">
+    </div>
+    <button class="btn-primary" onclick="demarrerApp()">ACCÉDER À L'APPLICATION</button>
+  </div>
+</div>
+
+<!-- ============================================================
+     NAVBAR
+     ============================================================ -->
+<nav id="navbar" style="display:none">
+  <div class="nav-brand">🔔 RELANCE FOURNISSEUR</div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('accueil',this)">🏠 Accueil</button>
+    <button class="nav-tab" onclick="showPage('liste',this)">📋 Liste Relances</button>
+    <button class="nav-tab" onclick="showPage('fournisseur',this)">🏢 Vue Fournisseur</button>
+    <button class="nav-tab" onclick="showPage('analytique',this)">📊 Analytique</button>
+    <button class="nav-tab" onclick="showPage('configuration',this)">⚙️ Configuration</button>
+  </div>
+  <div class="nav-right">
+    <span class="nav-data-info" id="nav-data-info">Aucune donnée</span>
+    <span class="nav-badge-mode gestionnaire" id="nav-badge-mode">GESTIONNAIRE</span>
+    <span class="nav-user" id="nav-user"></span>
+    <button class="nav-bell" onclick="showPage('accueil',document.querySelector('.nav-tab'))">
+      🔔<span class="nav-bell-count" id="nav-bell-count" style="display:none">0</span>
+    </button>
+  </div>
+</nav>
+
+<!-- ============================================================
+     PAGE ACCUEIL / KPIs
+     ============================================================ -->
+<div id="page-accueil" class="page active" style="display:none">
+  <div class="kpi-grid">
+    <div class="kpi-card urgent">
+      <div class="kpi-icon">🔴</div>
+      <div class="kpi-label">Lignes à relancer</div>
+      <div class="kpi-value" id="kpi-total">0</div>
+      <div class="kpi-delta" id="kpi-total-delta"></div>
+    </div>
+    <div class="kpi-card warning">
+      <div class="kpi-icon">🟠</div>
+      <div class="kpi-label">Relances en cours</div>
+      <div class="kpi-value" id="kpi-encours">0</div>
+    </div>
+    <div class="kpi-card info">
+      <div class="kpi-icon">📊</div>
+      <div class="kpi-label">Fournisseurs concernés</div>
+      <div class="kpi-value" id="kpi-fournisseurs">0</div>
+    </div>
+    <div class="kpi-card money">
+      <div class="kpi-icon">💰</div>
+      <div class="kpi-label">Valeur en attente</div>
+      <div class="kpi-value" id="kpi-valeur">0 €</div>
+    </div>
+  </div>
+
+  <div class="dashboard-grid">
+    <div class="card">
+      <div class="card-title">📊 Répartition par statut</div>
+      <div style="position:relative;height:220px;margin-bottom:16px">
+        <canvas id="chart-donut"></canvas>
+      </div>
+      <div class="statut-list" id="statut-list"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🏆 Top 10 Fournisseurs en retard</div>
+      <div style="position:relative;height:300px">
+        <canvas id="chart-top10"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📅 Rappels du jour</div>
+      <div class="rappel-list" id="rappel-list">
+        <div class="empty-state">
+          <div class="empty-state-icon">📭</div>
+          <div class="empty-state-text">Aucun rappel pour aujourd'hui</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     PAGE LISTE RELANCES
+     ============================================================ -->
+<div id="page-liste" class="page" style="display:none">
+  <div class="filtres-bar">
+    <select id="f-typemag" onchange="appliquerFiltres()">
+      <option value="">Type Mag. ▾</option>
+      <option>CT</option><option>Track</option><option>TDE</option>
+      <option>GIGP</option><option>ESO</option><option>REBUT</option>
+    </select>
+    <select id="f-magasin" onchange="appliquerFiltres()">
+      <option value="">Magasin ▾</option>
+    </select>
+    <input type="text" id="f-fourn" placeholder="🔍 Fournisseur" oninput="appliquerFiltres()" style="min-width:160px">
+    <select id="f-statut" onchange="appliquerFiltres()">
+      <option value="">Statut ▾</option>
+      <option value="A_RELANCER">À relancer</option>
+      <option value="RELANCE_1">1ère relance</option>
+      <option value="RELANCE_2">2ème relance</option>
+      <option value="ATTENTE_LIVR">Attente livraison</option>
+      <option value="RESOLU">Résolu</option>
+      <option value="BLOQUE">Bloqué</option>
+    </select>
+    <select id="f-priorite" onchange="appliquerFiltres()">
+      <option value="">Priorité ▾</option>
+      <option value="URGENT">URGENT</option>
+      <option value="ATTENTION">ATTENTION</option>
+      <option value="NORMAL">NORMAL</option>
+    </select>
+    <input type="number" id="f-retard-min" placeholder="Retard min (j)" oninput="appliquerFiltres()" style="width:120px">
+    <button class="btn-reset" onclick="reinitialiserFiltres()">↺ Réinitialiser</button>
+  </div>
+
+  <div class="filtres-summary" id="filtres-summary">
+    <span>📊 Chargez des données pour commencer</span>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-actions-bar" id="table-actions-bar">
+      <span id="selection-count" style="font-size:13px;color:var(--gris-moyen)">Aucune sélection</span>
+      <div id="actions-groupees" style="display:none;gap:8px;display:none">
+        <select id="bulk-statut" style="padding:5px 8px;border:1.5px solid #ddd;border-radius:5px;font-size:12px">
+          <option value="">Changer statut...</option>
+          <option value="A_RELANCER">À relancer</option>
+          <option value="RELANCE_1">1ère relance</option>
+          <option value="RELANCE_2">2ème relance</option>
+          <option value="ATTENTE_LIVR">Attente livraison</option>
+          <option value="RESOLU">Résolu</option>
+          <option value="BLOQUE">Bloqué</option>
+        </select>
+        <button class="btn-outline" onclick="appliquerBulkStatut()" style="font-size:12px;padding:5px 10px">Appliquer</button>
+        <button class="btn-outline" onclick="ouvrirEmailGroupé()" style="font-size:12px;padding:5px 10px">📧 Email groupé</button>
+        <button class="btn-outline" onclick="exporterSelection()" style="font-size:12px;padding:5px 10px">📥 Export sélection</button>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:8px">
+        <button class="btn-outline" onclick="exporterJSON()" style="font-size:12px;padding:5px 10px">💾 Export JSON</button>
+        <button class="btn-outline" onclick="exporterExcelActions()" style="font-size:12px;padding:5px 10px">📥 Export Excel</button>
+      </div>
+    </div>
+    <div class="table-scroll">
+      <table id="table-relances">
+        <thead>
+          <tr>
+            <th><input type="checkbox" id="cb-all" class="cb-select" onchange="toggleSelectAll(this)"></th>
+            <th onclick="trierTableau('priorite')">Priorité <span class="sort-icon">⇅</span></th>
+            <th onclick="trierTableau('libelleFournisseur')">Fournisseur <span class="sort-icon">⇅</span></th>
+            <th onclick="trierTableau('numBC')">N°BC <span class="sort-icon">⇅</span></th>
+            <th onclick="trierTableau('article')">Article <span class="sort-icon">⇅</span></th>
+            <th onclick="trierTableau('libelleArticle')">Libellé</th>
+            <th onclick="trierTableau('magasin')">Mag. <span class="sort-icon">⇅</span></th>
+            <th onclick="trierTableau('dateRequise')">Date Req. <span class="sort-icon">⇅</span></th>
+            <th onclick="trierTableau('dateFournisseur')">Date Fourn. <span class="sort-icon">⇅</span></th>
+            <th onclick="trierTableau('reliquat')">Reliquat <span class="sort-icon">⇅</span></th>
+            <th onclick="trierTableau('retardJours')">Retard <span class="sort-icon">⇅</span></th>
+            <th onclick="trierTableau('valeurLigne')">Valeur € <span class="sort-icon">⇅</span></th>
+            <th onclick="trierTableau('statut')">Statut <span class="sort-icon">⇅</span></th>
+            <th>Dernière action</th>
+            <th>Rappel</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-relances">
+          <tr><td colspan="15" class="empty-state" style="padding:40px">
+            <div class="empty-state-icon">📂</div>
+            <div class="empty-state-text">Chargez un fichier de commandes en retard pour commencer</div>
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="pagination" id="pagination"></div>
+  </div>
+</div>
+
+<!-- ============================================================
+     PAGE VUE FOURNISSEUR
+     ============================================================ -->
+<div id="page-fournisseur" class="page" style="display:none">
+  <div class="fourn-search-bar">
+    <select id="fourn-select" onchange="chargerFournisseur(this.value)" style="flex:1;padding:10px 14px;border:1.5px solid #ddd;border-radius:8px;font-size:14px">
+      <option value="">-- Sélectionner un fournisseur --</option>
+    </select>
+  </div>
+
+  <div id="fourn-content" style="display:none">
+    <div class="fourn-fiche">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div style="font-size:18px;font-weight:800;color:var(--bleu-fonce)" id="fourn-nom">—</div>
+          <div style="font-size:13px;color:var(--gris-moyen)" id="fourn-code">—</div>
+        </div>
+        <div id="fourn-prio-badge"></div>
+      </div>
+      <div class="fourn-fiche-grid">
+        <div class="fourn-stat"><div class="fourn-stat-label">Lignes en retard</div><div class="fourn-stat-value" id="fourn-stat-lignes">0</div></div>
+        <div class="fourn-stat"><div class="fourn-stat-label">Valeur totale</div><div class="fourn-stat-value" id="fourn-stat-valeur">0 €</div></div>
+        <div class="fourn-stat"><div class="fourn-stat-label">BC concernés</div><div class="fourn-stat-value" id="fourn-stat-bc">0</div></div>
+        <div class="fourn-stat"><div class="fourn-stat-label">Retard moyen</div><div class="fourn-stat-value" id="fourn-stat-retard">0 j</div></div>
+        <div class="fourn-stat"><div class="fourn-stat-label">Magasins impactés</div><div class="fourn-stat-value" id="fourn-stat-mags">0</div></div>
+        <div class="fourn-stat"><div class="fourn-stat-label">Dernière relance</div><div class="fourn-stat-value" id="fourn-stat-derniere" style="font-size:14px">—</div></div>
+      </div>
+      <div style="font-size:12px;font-weight:600;color:#444;margin-bottom:6px">Contacts fournisseur</div>
+      <div class="fourn-contacts">
+        <input type="text" id="fourn-contact-nom" placeholder="Nom contact">
+        <input type="text" id="fourn-contact-tel" placeholder="Téléphone">
+        <input type="email" id="fourn-contact-email" placeholder="Email">
+      </div>
+    </div>
+
+    <div class="fourn-actions-bar">
+      <button class="btn-primary" style="width:auto;padding:8px 16px" onclick="ouvrirEmailFournisseur()">📧 Générer Email Relance</button>
+      <button class="btn-outline" onclick="exporterExcelFournisseur()">📥 Export Excel Fournisseur</button>
+      <button class="btn-outline" onclick="copierResumeFournisseur()">📋 Copier résumé</button>
+    </div>
+
+    <div class="table-wrap">
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Priorité</th><th>N°BC</th><th>Article</th><th>Libellé</th>
+              <th>Mag.</th><th>Date Req.</th><th>Retard</th><th>Valeur €</th><th>Statut</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-fourn"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     PAGE ANALYTIQUE
+     ============================================================ -->
+<div id="page-analytique" class="page" style="display:none">
+  <div class="perf-grid">
+    <div class="perf-card"><div class="perf-value" id="perf-taux-resolution">—</div><div class="perf-label">Taux de résolution</div></div>
+    <div class="perf-card"><div class="perf-value" id="perf-delai-moyen">—</div><div class="perf-label">Retard moyen global (j)</div></div>
+    <div class="perf-card"><div class="perf-value" id="perf-nb-actions">—</div><div class="perf-label">Actions enregistrées</div></div>
+    <div class="perf-card"><div class="perf-value" id="perf-recidivistes">—</div><div class="perf-label">Fournisseurs récidivistes</div></div>
+  </div>
+
+  <div class="analytics-grid">
+    <div class="card">
+      <div class="card-title">📊 Top 20 Fournisseurs — Lignes en retard</div>
+      <div class="chart-container"><canvas id="chart-top20"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">🍩 Répartition par type de magasin</div>
+      <div class="chart-container"><canvas id="chart-typemag"></canvas></div>
+    </div>
+    <div class="card card-full">
+      <div class="card-title">🌡️ Heatmap Fournisseur × Magasin (retard moyen en jours)</div>
+      <div class="heatmap-wrap" id="heatmap-container">
+        <div class="empty-state"><div class="empty-state-text">Chargez des données pour afficher la heatmap</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">📈 Répartition par statut (barres empilées)</div>
+      <div class="chart-container"><canvas id="chart-statut-fourn"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">⚡ Efficacité par type d'action</div>
+      <div class="chart-container"><canvas id="chart-efficacite"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     PAGE CONFIGURATION
+     ============================================================ -->
+<div id="page-configuration" class="page" style="display:none">
+
+  <!-- Sources de données -->
+  <div class="source-card">
+    <div class="source-card-title">📂 Source de données — Commandes en retard</div>
+    <div class="file-input-row">
+      <input type="file" id="file-commandes" accept=".xlsx,.xls,.csv">
+      <button class="btn-load" onclick="chargerFichierCommandes()">📥 Charger les données</button>
+      <button class="btn-demo" onclick="chargerDemoData()">🎯 Charger données de démonstration</button>
+    </div>
+    <div class="file-hint">Formats acceptés : .xlsx, .xls, .csv (UTF-8) — Chemin réseau : \\SERVEUR\IMOTION\Stock\BC_Retard</div>
+    <div class="last-load" id="last-load-commandes">Dernière actualisation : —</div>
+  </div>
+
+  <div class="source-card">
+    <div class="source-card-title">💾 Base des actions (persistance)</div>
+    <div class="file-input-row">
+      <input type="file" id="file-actions" accept=".json,.xlsx,.xls">
+      <button class="btn-load" onclick="chargerFichierActions()">📂 Charger actions</button>
+      <button class="btn-load" onclick="chargerFichierFusion()" style="background:var(--violet)">🔀 Fusionner un 2ème fichier</button>
+    </div>
+    <div class="file-hint">Formats acceptés : .json (recommandé) ou .xlsx</div>
+    <div class="last-load" id="last-load-actions">Actions chargées : —</div>
+  </div>
+
+  <div class="config-grid">
+    <!-- Paramètres généraux -->
+    <div class="config-section">
+      <div class="config-section-title">⚙️ Paramètres généraux</div>
+      <div class="config-field">
+        <label>Nom / Initiales gestionnaire</label>
+        <input type="text" id="cfg-initiales" placeholder="ex : PD — Patrice Dupont">
+      </div>
+      <div class="config-field">
+        <label>Service / Entité</label>
+        <input type="text" id="cfg-service" value="IMOTION Conseil">
+      </div>
+      <div class="config-field">
+        <label>Signature email</label>
+        <textarea id="cfg-signature" placeholder="Cordialement,&#10;Patrice Dupont&#10;Gestionnaire Économique de Stock&#10;IMOTION Conseil — Réseau RATP"></textarea>
+      </div>
+      <div class="config-field">
+        <label>Chemin réseau BC (indicatif)</label>
+        <input type="text" id="cfg-chemin-bc" value="\\SERVEUR\IMOTION\Stock\BC_Retard.xlsx">
+      </div>
+      <div class="config-field">
+        <label>Chemin réseau Actions (indicatif)</label>
+        <input type="text" id="cfg-chemin-actions" value="\\SERVEUR\IMOTION\Relances\Actions\">
+      </div>
+      <div class="config-actions">
+        <button class="btn-outline" onclick="sauvegarderConfig()">💾 Sauvegarder</button>
+        <button class="btn-outline" onclick="exporterConfig()">📥 Exporter config</button>
+        <input type="file" id="file-config" accept=".json" style="display:none" onchange="importerConfig(this)">
+        <button class="btn-outline" onclick="document.getElementById('file-config').click()">📂 Importer config</button>
+      </div>
+    </div>
+
+    <!-- Seuils de priorité -->
+    <div class="config-section">
+      <div class="config-section-title">🎯 Seuils de priorité</div>
+      <div class="seuil-row">
+        <span>🔴</span><label>Priorité URGENT : retard ></label>
+        <input type="number" id="seuil-urgent" value="30"> jours
+      </div>
+      <div class="seuil-row">
+        <span>🟠</span><label>Priorité ATTENTION : retard ></label>
+        <input type="number" id="seuil-attention" value="15"> jours
+      </div>
+      <div class="seuil-row">
+        <span>🟢</span><label>Priorité NORMALE : retard ≤ 15 jours</label>
+      </div>
+      <div class="separator"></div>
+      <div class="config-section-title">📧 Templates email</div>
+      <div class="template-tabs" id="template-tabs">
+        <button class="template-tab active" onclick="changerTemplate('relance1',this)">1ère Relance</button>
+        <button class="template-tab" onclick="changerTemplate('relance2',this)">2ème Relance</button>
+        <button class="template-tab" onclick="changerTemplate('formelle',this)">Formelle</button>
+        <button class="template-tab" onclick="changerTemplate('accuse',this)">Accusé réception</button>
+        <button class="template-tab" onclick="changerTemplate('perso',this)">Personnalisé</button>
+      </div>
+      <div class="config-field">
+        <label>Objet</label>
+        <input type="text" id="template-objet">
+      </div>
+      <div class="config-field">
+        <label>Corps (variables : {{FOURNISSEUR}}, {{NB_LIGNES}}, {{VALEUR_TOTALE}}, {{DATE}}, {{SIGNATURE}})</label>
+        <textarea id="template-corps" style="min-height:140px"></textarea>
+      </div>
+      <div class="config-actions">
+        <button class="btn-outline" onclick="sauvegarderTemplate()">💾 Sauvegarder template</button>
+        <button class="btn-outline" onclick="reinitialiserTemplate()">↺ Réinitialiser</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     DRAWER PANNEAU LATÉRAL
+     ============================================================ -->
+<div id="drawer-overlay" onclick="fermerDrawer()"></div>
+<div id="drawer">
+  <div class="drawer-header">
+    <div>
+      <div class="drawer-title" id="drawer-title">—</div>
+      <div class="drawer-sub" id="drawer-sub">—</div>
+    </div>
+    <button class="drawer-close" onclick="fermerDrawer()">✖</button>
+  </div>
+  <div class="drawer-body">
+    <div class="drawer-info-grid" id="drawer-info-grid"></div>
+    <div class="drawer-section" id="drawer-form-section">
+      <div class="drawer-section-title">NOUVELLE ACTION</div>
+      <div class="form-row-2">
+        <div class="form-row">
+          <label>Type d'action</label>
+          <select id="d-type">
+            <option value="EMAIL">Email</option>
+            <option value="APPEL">Appel téléphonique</option>
+            <option value="RELANCE_FORMELLE">Relance formelle</option>
+            <option value="VISITE">Visite</option>
+            <option value="AUTRE">Autre</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>Nouveau statut</label>
+          <select id="d-statut">
+            <option value="A_RELANCER">À relancer</option>
+            <option value="RELANCE_1">1ère relance</option>
+            <option value="RELANCE_2">2ème relance</option>
+            <option value="ATTENTE_LIVR">Attente livraison</option>
+            <option value="RESOLU">Résolu</option>
+            <option value="BLOQUE">Bloqué</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row-2">
+        <div class="form-row">
+          <label>Date de rappel</label>
+          <input type="date" id="d-rappel">
+        </div>
+        <div class="form-row">
+          <label>Promesse fournisseur</label>
+          <input type="date" id="d-promesse">
+        </div>
+      </div>
+      <div class="form-row">
+        <label>Notes</label>
+        <textarea id="d-notes" placeholder="Détails de l'action effectuée..."></textarea>
+      </div>
+    </div>
+    <div class="drawer-section">
+      <div class="drawer-section-title">HISTORIQUE (<span id="histo-count">0</span> actions)</div>
+      <div class="histo-list" id="histo-list"></div>
+      <button class="btn-link" onclick="ouvrirModalHistorique()" style="margin-top:8px">Voir historique complet →</button>
+    </div>
+  </div>
+  <div class="drawer-footer" id="drawer-footer">
+    <button class="btn-save" onclick="enregistrerAction()">💾 Enregistrer</button>
+    <button class="btn-cancel" onclick="fermerDrawer()">✖ Annuler</button>
+    <button class="btn-outline" onclick="ouvrirEmailLigne()" style="margin-left:auto;font-size:12px;padding:7px 10px">📧 Email</button>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL HISTORIQUE COMPLET
+     ============================================================ -->
+<div id="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-histo-title">Historique complet</div>
+      <button class="modal-close" onclick="fermerModal()">✖</button>
+    </div>
+    <div class="modal-body">
+      <div class="timeline" id="modal-timeline"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL EMAIL
+     ============================================================ -->
+<div id="modal-email" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;display:none;align-items:center;justify-content:center">
+  <div class="modal" style="width:720px">
+    <div class="modal-header">
+      <div class="modal-title" id="email-modal-title">📧 Génération Email Relance</div>
+      <button class="modal-close" onclick="fermerModalEmail()">✖</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px">Type de relance :</div>
+      <div class="email-type-grid">
+        <button class="email-type-btn selected" onclick="selectionnerTypeEmail('relance1',this)">1ère Relance</button>
+        <button class="email-type-btn" onclick="selectionnerTypeEmail('relance2',this)">2ème Relance</button>
+        <button class="email-type-btn" onclick="selectionnerTypeEmail('formelle',this)">Relance Formelle</button>
+        <button class="email-type-btn" onclick="selectionnerTypeEmail('accuse',this)">Accusé réception</button>
+        <button class="email-type-btn" onclick="selectionnerTypeEmail('perso',this)">Personnalisé</button>
+      </div>
+      <div class="email-objet-row">
+        <label>Objet :</label>
+        <input type="text" id="email-objet">
+      </div>
+      <div style="font-size:12px;font-weight:600;margin-bottom:4px">Corps de l'email :</div>
+      <div class="email-preview email-preview-editable" id="email-corps" contenteditable="true"></div>
+      <div style="margin-top:10px;display:flex;align-items:center;gap:8px">
+        <input type="checkbox" id="email-joindre-excel" checked>
+        <label for="email-joindre-excel" style="font-size:13px">Joindre le fichier Excel des lignes concernées</label>
+        <span id="email-nom-fichier" style="font-size:12px;color:var(--gris-moyen)"></span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="copierEmailPressePapier()">📋 Copier dans le presse-papier</button>
+      <button class="btn-secondary" onclick="telechargerEML()">📥 Télécharger .eml</button>
+      <button class="btn-success" onclick="genererExcelJoint()">📥 Générer Excel joint</button>
+      <button class="btn-danger" onclick="fermerModalEmail()">✖ Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     TOAST CONTAINER
+     ============================================================ -->
+<div id="toast-container"></div>
+
+<!-- ============================================================
+     JAVASCRIPT — LOGIQUE APPLICATIVE
+     ============================================================ -->
+<script>
+/* ============================================================
+   SECTION DATA — État global de l'application
+   ============================================================ */
+
+/** @type {Object} Configuration de l'application */
+const CFG = {
+  mode: 'gestionnaire',
+  initiales: 'PD',
+  service: 'IMOTION Conseil',
+  signature: 'Cordialement,\nVotre Gestionnaire Économique de Stock\nIMOTION Conseil — Réseau RATP',
+  cheminBC: '\\\\SERVEUR\\IMOTION\\Stock\\BC_Retard.xlsx',
+  cheminActions: '\\\\SERVEUR\\IMOTION\\Relances\\Actions\\',
+  seuilUrgent: 30,
+  seuilAttention: 15,
+  templates: {
+    relance1: {
+      objet: 'Suivi commandes — {{FOURNISSEUR}}',
+      corps: 'Madame, Monsieur,\n\nNous revenons vers vous concernant {{NB_LIGNES}} commande(s) dont les délais de livraison sont dépassés, pour un montant total de {{VALEUR_TOTALE}} €.\n\nCommandes concernées :\n{{LISTE_COMMANDES}}\n\nNous vous remercions de bien vouloir nous confirmer les dates de livraison prévisionnelles dans les meilleurs délais.\n\n{{SIGNATURE}}'
+    },
+    relance2: {
+      objet: 'RELANCE — Commandes en attente {{FOURNISSEUR}}',
+      corps: 'Madame, Monsieur,\n\nSauf erreur de notre part, nous n\'avons pas reçu de réponse à notre précédente relance concernant {{NB_LIGNES}} commande(s) en attente.\n\nCommandes concernées :\n{{LISTE_COMMANDES}}\n\nNous vous prions de bien vouloir nous apporter une réponse urgente sur ces livraisons.\n\n{{SIGNATURE}}'
+    },
+    formelle: {
+      objet: 'URGENT — Commandes non livrées {{FOURNISSEUR}}',
+      corps: 'Madame, Monsieur,\n\nMalgré nos relances précédentes, {{NB_LIGNES}} commande(s) restent non livrées à ce jour, représentant {{VALEUR_TOTALE}} € de marchandises attendues.\n\nCette situation impacte directement notre taux de service sur le réseau RATP.\n\nNous vous demandons de nous communiquer impérativement sous 48h les dates de livraison fermes pour les commandes suivantes :\n{{LISTE_COMMANDES}}\n\nÀ défaut de réponse, nous serons contraints de prendre les mesures appropriées.\n\n{{SIGNATURE}}'
+    },
+    accuse: {
+      objet: 'Confirmation réception partielle — {{FOURNISSEUR}}',
+      corps: 'Madame, Monsieur,\n\nNous accusons réception de votre livraison partielle. Les articles suivants restent en attente :\n{{LISTE_COMMANDES}}\n\nMerci de nous confirmer la date de livraison du solde.\n\n{{SIGNATURE}}'
+    },
+    perso: {
+      objet: 'Relance commandes — {{FOURNISSEUR}}',
+      corps: '{{SIGNATURE}}'
+    }
+  }
+};
+
+/** @type {Array} Données des commandes en retard (source BC) */
+let DATA_COMMANDES = [];
+
+/** @type {Object} Actions enregistrées, indexées par clé BC */
+let DATA_ACTIONS = {};
+
+/** @type {Array} Données filtrées et triées pour le tableau */
+let DATA_FILTREES = [];
+
+/** @type {Array} Lignes sélectionnées (checkboxes) */
+let SELECTION = [];
+
+/** @type {string|null} Clé BC de la ligne ouverte dans le drawer */
+let DRAWER_CLE = null;
+
+/** @type {Object} État de tri du tableau */
+let SORT_STATE = { col: 'retardJours', dir: 'desc' };
+
+/** @type {number} Page courante du tableau */
+let PAGE_COURANTE = 1;
+const LIGNES_PAR_PAGE = 50;
+
+/** @type {Object} Instances Chart.js */
+let CHARTS = {};
+
+/** @type {string} Type email sélectionné dans le modal */
+let EMAIL_TYPE_COURANT = 'relance1';
+
+/** @type {Array} Lignes concernées par l'email en cours */
+let EMAIL_LIGNES = [];
+
+/** @type {string} Fournisseur courant dans la vue fournisseur */
+let FOURN_COURANT = '';
+
+/* ============================================================
+   SECTION BUSINESS LOGIC — Calculs et transformations
+   ============================================================ */
+
+/**
+ * Calcule le retard en jours entre aujourd'hui et la date requise.
+ * @param {Date|string} dateRequise
+ * @returns {number}
+ */
+function calculerRetard(dateRequise) {
+  if (!dateRequise) return 0;
+  const d = dateRequise instanceof Date ? dateRequise : new Date(dateRequise);
+  if (isNaN(d)) return 0;
+  return Math.max(0, Math.round((new Date() - d) / 86400000));
+}
+
+/**
+ * Détermine la priorité selon le retard et les seuils configurés.
+ * @param {number} retardJours
+ * @returns {string} 'URGENT' | 'ATTENTION' | 'NORMAL'
+ */
+function calculerPriorite(retardJours) {
+  if (retardJours > CFG.seuilUrgent) return 'URGENT';
+  if (retardJours > CFG.seuilAttention) return 'ATTENTION';
+  return 'NORMAL';
+}
+
+/**
+ * Normalise le code magasin vers un type (CT, Track, TDE, GIGP, ESO, REBUT).
+ * @param {string} codeMag
+ * @returns {string}
+ */
+function normaliserTypeMag(codeMag) {
+  if (!codeMag) return 'Autre';
+  const c = String(codeMag).toUpperCase();
+  if (c.startsWith('CT')) return 'CT';
+  if (c.startsWith('TR') || c.includes('TRACK')) return 'Track';
+  if (c.startsWith('TDE')) return 'TDE';
+  if (c.includes('GIGP')) return 'GIGP';
+  if (c.startsWith('ESO')) return 'ESO';
+  if (c.includes('REBUT')) return 'REBUT';
+  return 'Autre';
+}
+
+/**
+ * Génère une clé unique pour une ligne de commande.
+ * @param {Object} ligne
+ * @returns {string}
+ */
+function genererCle(ligne) {
+  return [ligne.fournisseur, ligne.numBC, ligne.article, ligne.magasin]
+    .map(v => String(v || '').trim().toUpperCase())
+    .join('|');
+}
+
+/**
+ * Mappe les colonnes du fichier source vers les champs internes.
+ * Insensible à la casse et aux espaces.
+ * @param {string} nomColonne
+ * @returns {string|null}
+ */
+function mapperColonne(nomColonne) {
+  const n = String(nomColonne).toLowerCase().replace(/[\s_]/g, '');
+  const MAP = {
+    fournisseur: ['fournisseur','fourn','codefourn'],
+    libelleFournisseur: ['libellefournisseur','libellefourn','nomfournisseur','libfourn'],
+    numBC: ['n°bc','numbc','bc','n°commande','numcommande'],
+    article: ['article','codeart','ref','reference'],
+    libelleArticle: ['libelle','libart','designation'],
+    magasin: ['magasin','mag','codemag'],
+    dateRequise: ['daterequise','datereq','datelivraisonsouhaitee','daterequisee'],
+    dateFournisseur: ['datefourn','datepromesse','datelivraisonprevue','datefournisseur'],
+    quantiteCommandee: ['qtecmd','qtecommandee','quantite','quantitecommandee'],
+    reliquat: ['reliquat','qterestante','qteenattente'],
+    prixUnitaire: ['pu','prixunit','coutunitaire','prixunitaire']
+  };
+  for (const [champ, alias] of Object.entries(MAP)) {
+    if (alias.includes(n)) return champ;
+  }
+  return null;
+}
+
+/**
+ * Transforme une ligne brute du fichier source en objet normalisé.
+ * @param {Object} ligneRaw
+ * @param {Object} mapping - {nomColonneSource: champInterne}
+ * @returns {Object}
+ */
+function normaliserLigne(ligneRaw, mapping) {
+  const ligne = {};
+  for (const [src, dest] of Object.entries(mapping)) {
+    ligne[dest] = ligneRaw[src];
+  }
+  // Conversions de types
+  ligne.quantiteCommandee = parseFloat(ligne.quantiteCommandee) || 0;
+  ligne.reliquat = parseFloat(ligne.reliquat) || ligne.quantiteCommandee;
+  ligne.prixUnitaire = parseFloat(ligne.prixUnitaire) || 0;
+  ligne.dateRequise = parseDate(ligne.dateRequise);
+  ligne.dateFournisseur = parseDate(ligne.dateFournisseur);
+  // Calculs dérivés
+  ligne.retardJours = calculerRetard(ligne.dateRequise);
+  ligne.valeurLigne = ligne.reliquat * ligne.prixUnitaire;
+  ligne.priorite = calculerPriorite(ligne.retardJours);
+  ligne.typeMagasin = normaliserTypeMag(ligne.magasin);
+  ligne.cle = genererCle(ligne);
+  // Statut depuis les actions chargées
+  const action = DATA_ACTIONS[ligne.cle];
+  ligne.statut = action ? action.statut : 'A_RELANCER';
+  return ligne;
+}
+
+/**
+ * Parse une date depuis divers formats (Excel serial, ISO, FR).
+ * @param {*} val
+ * @returns {Date|null}
+ */
+function parseDate(val) {
+  if (!val) return null;
+  if (val instanceof Date) return val;
+  if (typeof val === 'number') {
+    // Excel serial date
+    const d = new Date(Math.round((val - 25569) * 86400 * 1000));
+    return isNaN(d) ? null : d;
+  }
+  const s = String(val).trim();
+  // Format DD/MM/YYYY
+  const fr = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (fr) return new Date(parseInt(fr[3]), parseInt(fr[2]) - 1, parseInt(fr[1]));
+  const d = new Date(s);
+  return isNaN(d) ? null : d;
+}
+
+/**
+ * Formate une date en DD/MM/YYYY.
+ * @param {Date|null} d
+ * @returns {string}
+ */
+function formatDate(d) {
+  if (!d || !(d instanceof Date) || isNaN(d)) return '—';
+  return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+}
+
+/**
+ * Formate un montant en euros.
+ * @param {number} val
+ * @returns {string}
+ */
+function formatEuros(val) {
+  if (!val || isNaN(val)) return '0 €';
+  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(val);
+}
+
+/**
+ * Génère un UUID v4 simple.
+ * @returns {string}
+ */
+function uuid() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0;
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  });
+}
+
+/**
+ * Retourne le libellé lisible d'un statut.
+ * @param {string} statut
+ * @returns {string}
+ */
+function libelleStatut(statut) {
+  const MAP = {
+    A_RELANCER: 'À relancer', RELANCE_1: '1ère relance', RELANCE_2: '2ème relance',
+    ATTENTE_LIVR: 'Attente livr.', RESOLU: 'Résolu', BLOQUE: 'Bloqué'
+  };
+  return MAP[statut] || statut;
+}
+
+/**
+ * Retourne la classe CSS du badge de statut.
+ * @param {string} statut
+ * @returns {string}
+ */
+function classeStatut(statut) {
+  const MAP = {
+    A_RELANCER: 'badge-arelancer', RELANCE_1: 'badge-relance1', RELANCE_2: 'badge-relance2',
+    ATTENTE_LIVR: 'badge-attente', RESOLU: 'badge-resolu', BLOQUE: 'badge-bloque'
+  };
+  return MAP[statut] || 'badge-arelancer';
+}
+
+/**
+ * Retourne la classe CSS de la ligne selon priorité/statut.
+ * @param {Object} ligne
+ * @returns {string}
+ */
+function classeLigne(ligne) {
+  if (ligne.statut === 'RESOLU') return 'row-resolu';
+  if (ligne.statut === 'BLOQUE') return 'row-bloque';
+  if (ligne.priorite === 'URGENT' && ligne.statut === 'A_RELANCER') return 'row-urgent';
+  if (ligne.priorite === 'ATTENTION') return 'row-attention';
+  return '';
+}
+
+/**
+ * Récupère la dernière action d'une ligne.
+ * @param {string} cle
+ * @returns {Object|null}
+ */
+function derniereAction(cle) {
+  const entry = DATA_ACTIONS[cle];
+  if (!entry || !entry.actions || entry.actions.length === 0) return null;
+  return entry.actions[entry.actions.length - 1];
+}
+
+/**
+ * Compte les rappels du jour et en retard.
+ * @returns {Array}
+ */
+function getRappelsJour() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const rappels = [];
+  for (const [cle, entry] of Object.entries(DATA_ACTIONS)) {
+    const derniere = entry.actions && entry.actions[entry.actions.length - 1];
+    if (derniere && derniere.dateRappel) {
+      const dr = new Date(derniere.dateRappel);
+      if (!isNaN(dr) && dr <= today) {
+        const ligne = DATA_COMMANDES.find(l => l.cle === cle);
+        rappels.push({ cle, ligne, action: derniere, retard: dr < today });
+      }
+    }
+  }
+  return rappels;
+}
+
+/* ============================================================
+   SECTION DATA — Import de données
+   ============================================================ */
+
+/**
+ * Charge le fichier de commandes sélectionné (Excel ou CSV).
+ */
+function chargerFichierCommandes() {
+  const input = document.getElementById('file-commandes');
+  if (!input.files.length) { afficherToast('Sélectionnez un fichier', 'warning'); return; }
+  const file = input.files[0];
+  const ext = file.name.split('.').pop().toLowerCase();
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      let rows;
+      if (ext === 'csv') {
+        const result = Papa.parse(e.target.result, { header: true, skipEmptyLines: true, encoding: 'UTF-8' });
+        rows = result.data;
+      } else {
+        const wb = XLSX.read(e.target.result, { type: 'array', cellDates: true });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+      }
+      traiterDonneesCommandes(rows);
+    } catch(err) {
+      afficherToast('Erreur lors du chargement : ' + err.message, 'error');
+    }
+  };
+  if (ext === 'csv') reader.readAsText(file, 'UTF-8');
+  else reader.readAsArrayBuffer(file);
+}
+
+/**
+ * Traite les lignes brutes du fichier de commandes.
+ * @param {Array} rows
+ */
+function traiterDonneesCommandes(rows) {
+  if (!rows || rows.length === 0) { afficherToast('Fichier vide ou non reconnu', 'error'); return; }
+
+  // Détecter le mapping des colonnes
+  const colonnes = Object.keys(rows[0]);
+  const mapping = {};
+  const champsManquants = [];
+  const champsRequis = ['fournisseur', 'numBC', 'article', 'magasin'];
+
+  for (const col of colonnes) {
+    const champ = mapperColonne(col);
+    if (champ) mapping[col] = champ;
+  }
+
+  for (const champ of champsRequis) {
+    if (!Object.values(mapping).includes(champ)) champsManquants.push(champ);
+  }
+  if (champsManquants.length > 0) {
+    afficherToast(`Colonnes manquantes : ${champsManquants.join(', ')}`, 'warning');
+  }
+
+  // Filtrage et normalisation
+  const EXCLUSIONS_TYPE = ['SERVICE', 'MATERIAL'];
+  DATA_COMMANDES = rows
+    .filter(r => {
+      const type = String(r.TYPE_COMMANDE || r.TYPE || '').toUpperCase();
+      const statut = String(r.STATUT || '').toUpperCase();
+      return !EXCLUSIONS_TYPE.includes(type) && !statut.includes('RÉCEPTIONNÉ COMPLET');
+    })
+    .map(r => normaliserLigne(r, mapping))
+    .filter(l => l.retardJours > 0);
+
+  // Mise à jour des statuts depuis les actions
+  for (const ligne of DATA_COMMANDES) {
+    const entry = DATA_ACTIONS[ligne.cle];
+    if (entry) ligne.statut = entry.statut;
+  }
+
+  const now = new Date();
+  document.getElementById('last-load-commandes').textContent =
+    `Dernière actualisation : ${formatDate(now)} ${now.toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'})} — ${DATA_COMMANDES.length} lignes chargées`;
+  document.getElementById('nav-data-info').textContent =
+    `${formatDate(now)} ${now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}`;
+
+  afficherToast(`${DATA_COMMANDES.length} lignes chargées avec succès`, 'success');
+  rafraichirTout();
+}
+
+/**
+ * Charge le fichier d'actions (JSON ou Excel).
+ */
+function chargerFichierActions() {
+  const input = document.getElementById('file-actions');
+  if (!input.files.length) { afficherToast('Sélectionnez un fichier d\'actions', 'warning'); return; }
+  const file = input.files[0];
+  const ext = file.name.split('.').pop().toLowerCase();
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      if (ext === 'json') {
+        const data = JSON.parse(e.target.result);
+        DATA_ACTIONS = data.relances || {};
+        afficherToast(`Actions chargées : ${Object.keys(DATA_ACTIONS).length} entrées`, 'success');
+      } else {
+        const wb = XLSX.read(e.target.result, { type: 'array' });
+        const ws = wb.Sheets['Actions'] || wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+        DATA_ACTIONS = {};
+        for (const row of rows) {
+          const cle = String(row.CleBC || '');
+          if (!cle) continue;
+          if (!DATA_ACTIONS[cle]) DATA_ACTIONS[cle] = { statut: row.Statut || 'A_RELANCER', actions: [] };
+          DATA_ACTIONS[cle].actions.push({
+            id: uuid(), date: row.DateAction, operateur: row.Operateur,
+            type: row.TypeAction, statut: row.Statut, notes: row.Notes,
+            dateRappel: row.DateRappel, datePromesseFourn: row.DatePromesse
+          });
+          DATA_ACTIONS[cle].statut = row.Statut || DATA_ACTIONS[cle].statut;
+        }
+        afficherToast(`Actions Excel chargées : ${Object.keys(DATA_ACTIONS).length} entrées`, 'success');
+      }
+      // Mettre à jour les statuts dans DATA_COMMANDES
+      for (const ligne of DATA_COMMANDES) {
+        const entry = DATA_ACTIONS[ligne.cle];
+        if (entry) ligne.statut = entry.statut;
+      }
+      document.getElementById('last-load-actions').textContent =
+        `Actions chargées : ${Object.keys(DATA_ACTIONS).length} entrées`;
+      rafraichirTout();
+    } catch(err) {
+      afficherToast('Erreur chargement actions : ' + err.message, 'error');
+    }
+  };
+  if (ext === 'json') reader.readAsText(file, 'UTF-8');
+  else reader.readAsArrayBuffer(file);
+}
+
+/**
+ * Fusionne un second fichier d'actions (multi-opérateurs).
+ */
+function chargerFichierFusion() {
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = '.json';
+  input.onchange = function() {
+    if (!input.files.length) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const data = JSON.parse(e.target.result);
+        const relances2 = data.relances || {};
+        let nouvelles = 0, conflits = 0;
+        for (const [cle, entry2] of Object.entries(relances2)) {
+          if (!DATA_ACTIONS[cle]) {
+            DATA_ACTIONS[cle] = entry2;
+            nouvelles++;
+          } else {
+            // Fusionner les actions, la plus récente gagne pour le statut
+            const actions1 = DATA_ACTIONS[cle].actions || [];
+            const actions2 = entry2.actions || [];
+            const ids1 = new Set(actions1.map(a => a.id));
+            for (const a of actions2) {
+              if (!ids1.has(a.id)) { actions1.push(a); nouvelles++; }
+            }
+            // Trier par date, la plus récente définit le statut
+            actions1.sort((a, b) => new Date(a.date) - new Date(b.date));
+            DATA_ACTIONS[cle].actions = actions1;
+            DATA_ACTIONS[cle].statut = actions1[actions1.length - 1]?.statut || DATA_ACTIONS[cle].statut;
+            conflits++;
+          }
+        }
+        afficherToast(`Fusion : ${nouvelles} nouvelles actions, ${conflits} conflits résolus`, 'success');
+        rafraichirTout();
+      } catch(err) {
+        afficherToast('Erreur fusion : ' + err.message, 'error');
+      }
+    };
+    reader.readAsText(input.files[0], 'UTF-8');
+  };
+  input.click();
+}
+
+/* ============================================================
+   SECTION DATA — Données de démonstration
+   ============================================================ */
+
+/**
+ * Injecte 50 lignes de données de démonstration réalistes (réseau RATP).
+ */
+function chargerDemoData() {
+  const fournisseurs = [
+    { code: 'ALM', lib: 'ALPHAMED' }, { code: 'BRT', lib: 'BERTRAND FOURNITURES' },
+    { code: 'CDS', lib: 'CODIS SÉCURITÉ' }, { code: 'DPT', lib: 'DEPOT PLUS' },
+    { code: 'ELM', lib: 'ELMED EQUIPEMENTS' }, { code: 'FRT', lib: 'FRANCE TECHNIQUE' },
+    { code: 'GLS', lib: 'GLOBAL SUPPLY' }, { code: 'HYG', lib: 'HYGECO SERVICES' },
+    { code: 'IND', lib: 'INDUSTRIE DIRECT' }, { code: 'JMT', lib: 'JM TECHNIQUE' }
+  ];
+  const magasins = ['CT001','CT002','CT003','TR001','TR002','TDE01','TDE02','GIGP1','ESO01','CT004','TR003','CT005'];
+  const articles = [
+    ['ART-001','Gants de protection T9 (boîte 100)'],['ART-002','Casque de sécurité blanc'],
+    ['ART-003','Chaussures sécurité S3 T42'],['ART-004','Gilet haute visibilité'],
+    ['ART-005','Masque FFP2 (boîte 20)'],['ART-006','Lunettes de protection'],
+    ['ART-007','Harnais de sécurité'],['ART-008','Bouchons oreilles (boîte 200)'],
+    ['ART-009','Combinaison jetable T.L'],['ART-010','Genouillères de protection'],
+    ['ART-011','Détecteur de gaz CO'],['ART-012','Lampe frontale LED'],
+    ['ART-013','Sac de premiers secours'],['ART-014','Extincteur CO2 2kg'],
+    ['ART-015','Panneau signalisation danger']
+  ];
+
+  DATA_COMMANDES = [];
+  let bcNum = 10000;
+
+  for (let i = 0; i < 50; i++) {
+    const fourn = fournisseurs[i % fournisseurs.length];
+    const art = articles[i % articles.length];
+    const mag = magasins[i % magasins.length];
+    const retardBase = Math.floor(Math.random() * 55) + 1;
+    const dateRequise = new Date();
+    dateRequise.setDate(dateRequise.getDate() - retardBase);
+    const qte = Math.floor(Math.random() * 50) + 5;
+    const pu = Math.round((Math.random() * 80 + 5) * 100) / 100;
+
+    const ligne = {
+      fournisseur: fourn.code,
+      libelleFournisseur: fourn.lib,
+      numBC: `BC-${bcNum + i}`,
+      article: art[0],
+      libelleArticle: art[1],
+      magasin: mag,
+      dateRequise: dateRequise,
+      dateFournisseur: null,
+      quantiteCommandee: qte,
+      reliquat: Math.floor(qte * (0.5 + Math.random() * 0.5)),
+      prixUnitaire: pu,
+      retardJours: retardBase,
+      typeMagasin: normaliserTypeMag(mag)
+    };
+    ligne.valeurLigne = ligne.reliquat * ligne.prixUnitaire;
+    ligne.priorite = calculerPriorite(ligne.retardJours);
+    ligne.cle = genererCle(ligne);
+    ligne.statut = 'A_RELANCER';
+    DATA_COMMANDES.push(ligne);
+  }
+
+  // Injecter quelques actions de démonstration
+  const cles = DATA_COMMANDES.slice(0, 15).map(l => l.cle);
+  const statuts = ['RELANCE_1','RELANCE_2','ATTENTE_LIVR','RESOLU','BLOQUE'];
+  cles.forEach((cle, idx) => {
+    const statut = statuts[idx % statuts.length];
+    DATA_ACTIONS[cle] = {
+      statut: statut,
+      actions: [{
+        id: uuid(), date: new Date(Date.now() - (idx+1)*86400000*2).toISOString(),
+        operateur: CFG.initiales, type: idx % 2 === 0 ? 'EMAIL' : 'APPEL',
+        statut: statut, notes: 'Action de démonstration — ' + libelleStatut(statut),
+        dateRappel: idx < 3 ? new Date().toISOString().split('T')[0] : null,
+        datePromesseFourn: null
+      }]
+    };
+    DATA_COMMANDES[idx].statut = statut;
+  });
+
+  const now = new Date();
+  document.getElementById('last-load-commandes').textContent =
+    `Données de démonstration chargées — ${DATA_COMMANDES.length} lignes`;
+  document.getElementById('nav-data-info').textContent = `Démo — ${formatDate(now)}`;
+
+  afficherToast('50 lignes de démonstration chargées !', 'success');
+  rafraichirTout();
+}
+
+/* ============================================================
+   SECTION RENDER — Affichage du tableau
+   ============================================================ */
+
+/**
+ * Applique les filtres et rafraîchit le tableau.
+ */
+function appliquerFiltres() {
+  const typemag = document.getElementById('f-typemag').value;
+  const magasin = document.getElementById('f-magasin').value;
+  const fourn = document.getElementById('f-fourn').value.toLowerCase();
+  const statut = document.getElementById('f-statut').value;
+  const priorite = document.getElementById('f-priorite').value;
+  const retardMin = parseInt(document.getElementById('f-retard-min').value) || 0;
+
+  DATA_FILTREES = DATA_COMMANDES.filter(l => {
+    if (typemag && l.typeMagasin !== typemag) return false;
+    if (magasin && l.magasin !== magasin) return false;
+    if (fourn && !l.libelleFournisseur?.toLowerCase().includes(fourn) && !l.fournisseur?.toLowerCase().includes(fourn)) return false;
+    if (statut && l.statut !== statut) return false;
+    if (priorite && l.priorite !== priorite) return false;
+    if (l.retardJours < retardMin) return false;
+    return true;
+  });
+
+  // Tri
+  DATA_FILTREES.sort((a, b) => {
+    let va = a[SORT_STATE.col], vb = b[SORT_STATE.col];
+    if (va === null || va === undefined) va = '';
+    if (vb === null || vb === undefined) vb = '';
+    if (typeof va === 'string') va = va.toLowerCase();
+    if (typeof vb === 'string') vb = vb.toLowerCase();
+    if (va < vb) return SORT_STATE.dir === 'asc' ? -1 : 1;
+    if (va > vb) return SORT_STATE.dir === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  PAGE_COURANTE = 1;
+  rendreTableau();
+  rendreSummary();
+}
+
+/**
+ * Réinitialise tous les filtres.
+ */
+function reinitialiserFiltres() {
+  ['f-typemag','f-magasin','f-statut','f-priorite'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f-fourn').value = '';
+  document.getElementById('f-retard-min').value = '';
+  appliquerFiltres();
+}
+
+/**
+ * Trie le tableau par colonne.
+ * @param {string} col
+ */
+function trierTableau(col) {
+  if (SORT_STATE.col === col) {
+    SORT_STATE.dir = SORT_STATE.dir === 'asc' ? 'desc' : 'asc';
+  } else {
+    SORT_STATE.col = col;
+    SORT_STATE.dir = 'asc';
+  }
+  appliquerFiltres();
+}
+
+/**
+ * Rend le tableau paginé.
+ */
+function rendreTableau() {
+  const tbody = document.getElementById('tbody-relances');
+  const debut = (PAGE_COURANTE - 1) * LIGNES_PAR_PAGE;
+  const fin = debut + LIGNES_PAR_PAGE;
+  const page = DATA_FILTREES.slice(debut, fin);
+
+  if (page.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="15" class="empty-state" style="padding:40px">
+      <div class="empty-state-icon">🔍</div>
+      <div class="empty-state-text">Aucune ligne ne correspond aux filtres</div>
+    </td></tr>`;
+    rendrePagination();
+    return;
+  }
+
+  const today = new Date(); today.setHours(0,0,0,0);
+  tbody.innerHTML = page.map(l => {
+    const da = derniereAction(l.cle);
+    const rappelIcon = da?.dateRappel && new Date(da.dateRappel) <= today ? '📅' : '';
+    const selected = SELECTION.includes(l.cle) ? 'selected' : '';
+    const rowClass = classeLigne(l);
+    return `<tr class="${rowClass} ${selected}" onclick="ouvrirDrawer('${l.cle}')" ondblclick="ouvrirModalHistorique('${l.cle}')">
+      <td onclick="event.stopPropagation()">
+        <input type="checkbox" class="cb-select" data-cle="${l.cle}" ${SELECTION.includes(l.cle)?'checked':''} onchange="toggleSelection('${l.cle}',this)">
+      </td>
+      <td><span class="prio-${l.priorite.toLowerCase()}">${l.priorite === 'URGENT' ? '🔴' : l.priorite === 'ATTENTION' ? '🟠' : '🟢'} ${l.priorite}</span></td>
+      <td><strong>${l.libelleFournisseur || l.fournisseur || '—'}</strong></td>
+      <td>${l.numBC || '—'}</td>
+      <td>${l.article || '—'}</td>
+      <td class="td-notes" title="${l.libelleArticle || ''}">${l.libelleArticle || '—'}</td>
+      <td>${l.magasin || '—'}</td>
+      <td>${formatDate(l.dateRequise)}</td>
+      <td>${formatDate(l.dateFournisseur)}</td>
+      <td>${l.reliquat}</td>
+      <td><strong style="color:${l.retardJours > CFG.seuilUrgent ? 'var(--rouge)' : l.retardJours > CFG.seuilAttention ? 'var(--orange)' : 'var(--vert)'}">${l.retardJours}j</strong></td>
+      <td>${formatEuros(l.valeurLigne)}</td>
+      <td><span class="badge ${classeStatut(l.statut)}">${libelleStatut(l.statut)}</span></td>
+      <td class="td-notes text-small text-muted">${da ? `${da.operateur} — ${da.type}` : '—'}</td>
+      <td>${rappelIcon}</td>
+    </tr>`;
+  }).join('');
+
+  rendrePagination();
+}
+
+/**
+ * Rend la pagination du tableau.
+ */
+function rendrePagination() {
+  const total = DATA_FILTREES.length;
+  const nbPages = Math.ceil(total / LIGNES_PAR_PAGE);
+  const pag = document.getElementById('pagination');
+  if (nbPages <= 1) { pag.innerHTML = `<span class="text-muted text-small">${total} ligne(s)</span>`; return; }
+
+  const debut = (PAGE_COURANTE - 1) * LIGNES_PAR_PAGE + 1;
+  const fin = Math.min(PAGE_COURANTE * LIGNES_PAR_PAGE, total);
+  let btns = '';
+  for (let p = Math.max(1, PAGE_COURANTE - 2); p <= Math.min(nbPages, PAGE_COURANTE + 2); p++) {
+    btns += `<button class="${p === PAGE_COURANTE ? 'active' : ''}" onclick="allerPage(${p})">${p}</button>`;
+  }
+  pag.innerHTML = `
+    <span class="text-muted text-small">Lignes ${debut}–${fin} sur ${total}</span>
+    <div class="pagination-btns">
+      <button onclick="allerPage(1)" ${PAGE_COURANTE===1?'disabled':''}>«</button>
+      <button onclick="allerPage(${PAGE_COURANTE-1})" ${PAGE_COURANTE===1?'disabled':''}>‹</button>
+      ${btns}
+      <button onclick="allerPage(${PAGE_COURANTE+1})" ${PAGE_COURANTE===nbPages?'disabled':''}>›</button>
+      <button onclick="allerPage(${nbPages})" ${PAGE_COURANTE===nbPages?'disabled':''}>»</button>
+    </div>`;
+}
+
+/**
+ * Navigue vers une page du tableau.
+ * @param {number} p
+ */
+function allerPage(p) {
+  PAGE_COURANTE = p;
+  rendreTableau();
+}
+
+/**
+ * Rend le résumé analytique des filtres.
+ */
+function rendreSummary() {
+  const total = DATA_FILTREES.length;
+  const valeur = DATA_FILTREES.reduce((s, l) => s + (l.valeurLigne || 0), 0);
+  const retardMoyen = total ? Math.round(DATA_FILTREES.reduce((s, l) => s + l.retardJours, 0) / total) : 0;
+  const urgent = DATA_FILTREES.filter(l => l.priorite === 'URGENT').length;
+  const attention = DATA_FILTREES.filter(l => l.priorite === 'ATTENTION').length;
+  const normal = DATA_FILTREES.filter(l => l.priorite === 'NORMAL').length;
+  document.getElementById('filtres-summary').innerHTML = `
+    <strong>📊 Affichage de ${total} / ${DATA_COMMANDES.length} lignes</strong>
+    | Valeur affichée : <strong>${formatEuros(valeur)}</strong>
+    | Retard moyen : <strong>${retardMoyen} jours</strong>
+    | Répartition : 🔴 URGENT : <strong>${urgent}</strong> | 🟠 ATTENTION : <strong>${attention}</strong> | 🟢 NORMAL : <strong>${normal}</strong>`;
+}
+
+/**
+ * Peuple les dropdowns de filtres (magasins).
+ */
+function peupleDropdownsMagasins() {
+  const mags = [...new Set(DATA_COMMANDES.map(l => l.magasin).filter(Boolean))].sort();
+  const sel = document.getElementById('f-magasin');
+  sel.innerHTML = '<option value="">Magasin ▾</option>' +
+    mags.map(m => `<option value="${m}">${m}</option>`).join('');
+}
+
+/**
+ * Peuple le dropdown fournisseurs de la vue fournisseur.
+ */
+function peupleDropdownFournisseurs() {
+  const fourns = [...new Map(DATA_COMMANDES.map(l => [l.fournisseur, l.libelleFournisseur || l.fournisseur]))].sort((a,b) => a[1].localeCompare(b[1]));
+  const sel = document.getElementById('fourn-select');
+  sel.innerHTML = '<option value="">-- Sélectionner un fournisseur --</option>' +
+    fourns.map(([code, lib]) => `<option value="${code}">${lib} (${code})</option>`).join('');
+}
+
+/* ============================================================
+   SECTION RENDER — Dashboard KPIs
+   ============================================================ */
+
+/**
+ * Met à jour les KPIs du tableau de bord.
+ */
+function rendreKPIs() {
+  const total = DATA_COMMANDES.length;
+  const enCours = DATA_COMMANDES.filter(l => ['RELANCE_1','RELANCE_2','ATTENTE_LIVR'].includes(l.statut)).length;
+  const fourns = new Set(DATA_COMMANDES.map(l => l.fournisseur)).size;
+  const valeur = DATA_COMMANDES.reduce((s, l) => s + (l.valeurLigne || 0), 0);
+
+  animerCompteur('kpi-total', total);
+  animerCompteur('kpi-encours', enCours);
+  animerCompteur('kpi-fournisseurs', fourns);
+  document.getElementById('kpi-valeur').textContent = formatEuros(valeur);
+
+  // Rappels
+  const rappels = getRappelsJour();
+  const bellCount = document.getElementById('nav-bell-count');
+  if (rappels.length > 0) {
+    bellCount.textContent = rappels.length;
+    bellCount.style.display = 'flex';
+  } else {
+    bellCount.style.display = 'none';
+  }
+  rendreRappels(rappels);
+}
+
+/**
+ * Anime un compteur de 0 à la valeur cible.
+ * @param {string} id
+ * @param {number} cible
+ */
+function animerCompteur(id, cible) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const duree = 800;
+  const debut = performance.now();
+  const start = parseInt(el.textContent) || 0;
+  function step(now) {
+    const t = Math.min((now - debut) / duree, 1);
+    const ease = t < 0.5 ? 2*t*t : -1+(4-2*t)*t;
+    el.textContent = Math.round(start + (cible - start) * ease);
+    if (t < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+/**
+ * Rend la liste des rappels du jour.
+ * @param {Array} rappels
+ */
+function rendreRappels(rappels) {
+  const container = document.getElementById('rappel-list');
+  if (rappels.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📭</div><div class="empty-state-text">Aucun rappel pour aujourd'hui</div></div>`;
+    return;
+  }
+  container.innerHTML = rappels.slice(0, 10).map(r => {
+    const ligne = r.ligne;
+    const cls = r.retard ? 'urgent' : 'normal';
+    return `<div class="rappel-item ${cls}" onclick="ouvrirDrawer('${r.cle}');showPage('liste',document.querySelectorAll('.nav-tab')[1])">
+      <div class="rappel-fourn">${ligne?.libelleFournisseur || r.cle}</div>
+      <div class="rappel-detail">${ligne?.numBC || ''} — ${r.action.notes || 'Rappel'}</div>
+    </div>`;
+  }).join('');
+}
+
+/**
+ * Rend la distribution par statut.
+ */
+function rendreStatutDistribution() {
+  const STATUTS = [
+    { key: 'A_RELANCER', label: 'À relancer', color: '#9E9E9E' },
+    { key: 'RELANCE_1', label: '1ère relance', color: '#FB8C00' },
+    { key: 'RELANCE_2', label: '2ème relance', color: '#FDD835' },
+    { key: 'ATTENTE_LIVR', label: 'Attente livr.', color: '#1E88E5' },
+    { key: 'RESOLU', label: 'Résolu', color: '#43A047' },
+    { key: 'BLOQUE', label: 'Bloqué', color: '#757575' }
+  ];
+  const total = DATA_COMMANDES.length;
+  const counts = {};
+  for (const s of STATUTS) counts[s.key] = DATA_COMMANDES.filter(l => l.statut === s.key).length;
+
+  const list = document.getElementById('statut-list');
+  list.innerHTML = STATUTS.map(s => {
+    const pct = total ? Math.round(counts[s.key] / total * 100) : 0;
+    return `<div class="statut-row">
+      <div class="statut-dot" style="background:${s.color}"></div>
+      <div class="statut-name">${s.label}</div>
+      <div class="statut-count">${counts[s.key]}</div>
+      <div class="statut-bar-wrap"><div class="statut-bar" style="width:${pct}%;background:${s.color}"></div></div>
+    </div>`;
+  }).join('');
+
+  // Graphique donut
+  const ctx = document.getElementById('chart-donut');
+  if (CHARTS.donut) CHARTS.donut.destroy();
+  CHARTS.donut = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: STATUTS.map(s => s.label),
+      datasets: [{ data: STATUTS.map(s => counts[s.key]), backgroundColor: STATUTS.map(s => s.color), borderWidth: 2 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'right', labels: { font: { size: 11 } } } }
+    }
+  });
+}
+
+/**
+ * Rend le graphique Top 10 fournisseurs.
+ */
+function rendreTop10() {
+  const ctx = document.getElementById('chart-top10');
+  const fourns = {};
+  for (const l of DATA_COMMANDES) {
+    const k = l.libelleFournisseur || l.fournisseur;
+    if (!fourns[k]) fourns[k] = { count: 0, valeur: 0, prio: 'NORMAL' };
+    fourns[k].count++;
+    fourns[k].valeur += l.valeurLigne || 0;
+    if (l.priorite === 'URGENT') fourns[k].prio = 'URGENT';
+    else if (l.priorite === 'ATTENTION' && fourns[k].prio !== 'URGENT') fourns[k].prio = 'ATTENTION';
+  }
+  const top10 = Object.entries(fourns).sort((a,b) => b[1].count - a[1].count).slice(0, 10);
+  const colors = top10.map(([,v]) => v.prio === 'URGENT' ? '#E53935' : v.prio === 'ATTENTION' ? '#FB8C00' : '#43A047');
+
+  if (CHARTS.top10) CHARTS.top10.destroy();
+  CHARTS.top10 = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: top10.map(([k]) => k.length > 20 ? k.substring(0,18)+'…' : k),
+      datasets: [{ data: top10.map(([,v]) => v.count), backgroundColor: colors, borderRadius: 4 }]
+    },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => `${ctx.raw} lignes — ${formatEuros(top10[ctx.dataIndex][1].valeur)}` } }
+      },
+      scales: { x: { grid: { display: false } }, y: { ticks: { font: { size: 11 } } } },
+      onClick: (e, els) => {
+        if (els.length) {
+          const fourn = top10[els[0].index][0];
+          const code = DATA_COMMANDES.find(l => (l.libelleFournisseur || l.fournisseur) === fourn)?.fournisseur;
+          if (code) { document.getElementById('fourn-select').value = code; chargerFournisseur(code); showPage('fournisseur', document.querySelectorAll('.nav-tab')[2]); }
+        }
+      }
+    }
+  });
+}
+
+/* ============================================================
+   SECTION RENDER — Page Analytique
+   ============================================================ */
+
+/**
+ * Rend tous les graphiques de la page analytique.
+ */
+function rendreAnalytique() {
+  if (DATA_COMMANDES.length === 0) return;
+
+  // KPIs de performance
+  const total = DATA_COMMANDES.length;
+  const resolus = DATA_COMMANDES.filter(l => l.statut === 'RESOLU').length;
+  const tauxResolution = total ? Math.round(resolus / total * 100) : 0;
+  const retardMoyen = total ? Math.round(DATA_COMMANDES.reduce((s,l) => s+l.retardJours, 0) / total) : 0;
+  const nbActions = Object.values(DATA_ACTIONS).reduce((s, e) => s + (e.actions?.length || 0), 0);
+
+  // Fournisseurs récidivistes (> 3 lignes en retard)
+  const fournsCount = {};
+  for (const l of DATA_COMMANDES) { fournsCount[l.fournisseur] = (fournsCount[l.fournisseur] || 0) + 1; }
+  const recidivistes = Object.values(fournsCount).filter(c => c > 3).length;
+
+  document.getElementById('perf-taux-resolution').textContent = tauxResolution + '%';
+  document.getElementById('perf-delai-moyen').textContent = retardMoyen + 'j';
+  document.getElementById('perf-nb-actions').textContent = nbActions;
+  document.getElementById('perf-recidivistes').textContent = recidivistes;
+
+  // Top 20 fournisseurs
+  const fourns20 = {};
+  for (const l of DATA_COMMANDES) {
+    const k = l.libelleFournisseur || l.fournisseur;
+    fourns20[k] = (fourns20[k] || 0) + 1;
+  }
+  const top20 = Object.entries(fourns20).sort((a,b) => b[1]-a[1]).slice(0,20);
+  const ctx20 = document.getElementById('chart-top20');
+  if (CHARTS.top20) CHARTS.top20.destroy();
+  CHARTS.top20 = new Chart(ctx20, {
+    type: 'bar',
+    data: {
+      labels: top20.map(([k]) => k.length>18?k.substring(0,16)+'…':k),
+      datasets: [{ data: top20.map(([,v]) => v), backgroundColor: '#2E75B6', borderRadius: 4 }]
+    },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { x: { grid: { display: false } }, y: { ticks: { font: { size: 10 } } } }
+    }
+  });
+
+  // Donut type magasin
+  const typeMags = {};
+  for (const l of DATA_COMMANDES) { typeMags[l.typeMagasin] = (typeMags[l.typeMagasin] || 0) + 1; }
+  const ctxTM = document.getElementById('chart-typemag');
+  if (CHARTS.typemag) CHARTS.typemag.destroy();
+  CHARTS.typemag = new Chart(ctxTM, {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(typeMags),
+      datasets: [{ data: Object.values(typeMags), backgroundColor: ['#1F4E78','#2E75B6','#BDD7EE','#E65C00','#2E7D32','#5E35B1','#9E9E9E'], borderWidth: 2 }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { font: { size: 11 } } } } }
+  });
+
+  // Barres empilées statut par fournisseur (top
+ 8)
+  const top8Fourns = Object.entries(fourns20).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([k])=>k);
+  const STATUTS_KEYS = ['A_RELANCER','RELANCE_1','RELANCE_2','ATTENTE_LIVR','RESOLU','BLOQUE'];
+  const STATUTS_COLORS = ['#9E9E9E','#FB8C00','#FDD835','#1E88E5','#43A047','#757575'];
+  const datasets = STATUTS_KEYS.map((sk, i) => ({
+    label: libelleStatut(sk),
+    data: top8Fourns.map(f => DATA_COMMANDES.filter(l => (l.libelleFournisseur||l.fournisseur)===f && l.statut===sk).length),
+    backgroundColor: STATUTS_COLORS[i]
+  }));
+  const ctxSF = document.getElementById('chart-statut-fourn');
+  if (CHARTS.statutFourn) CHARTS.statutFourn.destroy();
+  CHARTS.statutFourn = new Chart(ctxSF, {
+    type: 'bar',
+    data: { labels: top8Fourns.map(k=>k.length>15?k.substring(0,13)+'…':k), datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { font: { size: 10 } } } },
+      scales: { x: { stacked: true }, y: { stacked: true } }
+    }
+  });
+
+  // Efficacité par type d'action
+  const typeActions = {};
+  for (const entry of Object.values(DATA_ACTIONS)) {
+    for (const a of (entry.actions || [])) {
+      if (!typeActions[a.type]) typeActions[a.type] = 0;
+      typeActions[a.type]++;
+    }
+  }
+  const ctxEff = document.getElementById('chart-efficacite');
+  if (CHARTS.efficacite) CHARTS.efficacite.destroy();
+  if (Object.keys(typeActions).length > 0) {
+    CHARTS.efficacite = new Chart(ctxEff, {
+      type: 'bar',
+      data: {
+        labels: Object.keys(typeActions),
+        datasets: [{ data: Object.values(typeActions), backgroundColor: '#1F4E78', borderRadius: 4 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { x: { grid: { display: false } } }
+      }
+    });
+  }
+
+  // Heatmap Fournisseur × Magasin
+  rendreHeatmap();
+}
+
+/**
+ * Rend la heatmap Fournisseur × Magasin.
+ */
+function rendreHeatmap() {
+  const container = document.getElementById('heatmap-container');
+  if (DATA_COMMANDES.length === 0) return;
+
+  // Top 8 fournisseurs, top 8 magasins
+  const fournsCount = {};
+  const magsCount = {};
+  for (const l of DATA_COMMANDES) {
+    fournsCount[l.fournisseur] = (fournsCount[l.fournisseur] || 0) + 1;
+    magsCount[l.magasin] = (magsCount[l.magasin] || 0) + 1;
+  }
+  const topFourns = Object.entries(fournsCount).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([k])=>k);
+  const topMags = Object.entries(magsCount).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([k])=>k);
+
+  // Calculer retard moyen par cellule
+  const heatData = {};
+  for (const l of DATA_COMMANDES) {
+    const k = `${l.fournisseur}|${l.magasin}`;
+    if (!heatData[k]) heatData[k] = { sum: 0, count: 0 };
+    heatData[k].sum += l.retardJours;
+    heatData[k].count++;
+  }
+
+  // Trouver le max pour la colorisation
+  let maxVal = 0;
+  for (const v of Object.values(heatData)) {
+    const avg = v.sum / v.count;
+    if (avg > maxVal) maxVal = avg;
+  }
+
+  const libsFourns = topFourns.map(f => {
+    const l = DATA_COMMANDES.find(x => x.fournisseur === f);
+    return l?.libelleFournisseur || f;
+  });
+
+  let html = '<table class="heatmap-table"><thead><tr><th>Fournisseur</th>';
+  for (const m of topMags) html += `<th>${m}</th>`;
+  html += '</tr></thead><tbody>';
+
+  for (let i = 0; i < topFourns.length; i++) {
+    html += `<tr><td style="font-weight:600;text-align:left;padding:5px 10px">${libsFourns[i]}</td>`;
+    for (const m of topMags) {
+      const k = `${topFourns[i]}|${m}`;
+      const d = heatData[k];
+      if (!d) { html += '<td class="hm-0">—</td>'; continue; }
+      const avg = Math.round(d.sum / d.count);
+      const level = avg > 30 ? 4 : avg > 20 ? 3 : avg > 10 ? 2 : avg > 0 ? 1 : 0;
+      html += `<td class="hm-${level}" title="${d.count} ligne(s), retard moy. ${avg}j">${avg}j</td>`;
+    }
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+/* ============================================================
+   SECTION RENDER — Vue Fournisseur
+   ============================================================ */
+
+/**
+ * Charge et affiche la fiche d'un fournisseur.
+ * @param {string} codeFourn
+ */
+function chargerFournisseur(codeFourn) {
+  FOURN_COURANT = codeFourn;
+  const content = document.getElementById('fourn-content');
+  if (!codeFourn) { content.style.display = 'none'; return; }
+
+  const lignes = DATA_COMMANDES.filter(l => l.fournisseur === codeFourn);
+  if (lignes.length === 0) { content.style.display = 'none'; return; }
+
+  content.style.display = 'block';
+  const lib = lignes[0].libelleFournisseur || codeFourn;
+  document.getElementById('fourn-nom').textContent = lib;
+  document.getElementById('fourn-code').textContent = `Code : ${codeFourn}`;
+
+  const valeur = lignes.reduce((s,l) => s + (l.valeurLigne||0), 0);
+  const bcs = new Set(lignes.map(l => l.numBC)).size;
+  const retardMoyen = Math.round(lignes.reduce((s,l) => s+l.retardJours, 0) / lignes.length);
+  const mags = new Set(lignes.map(l => l.magasin)).size;
+
+  // Dernière relance
+  let derniereRelance = '—';
+  for (const l of lignes) {
+    const da = derniereAction(l.cle);
+    if (da?.date) {
+      const d = new Date(da.date);
+      if (!isNaN(d)) derniereRelance = `${formatDate(d)} — ${da.operateur || ''}`;
+    }
+  }
+
+  // Priorité dominante
+  const prios = lignes.map(l => l.priorite);
+  const prioDom = prios.includes('URGENT') ? 'URGENT' : prios.includes('ATTENTION') ? 'ATTENTION' : 'NORMAL';
+  const prioClass = prioDom === 'URGENT' ? 'badge-urgent' : prioDom === 'ATTENTION' ? 'badge-relance1' : 'badge-resolu';
+  document.getElementById('fourn-prio-badge').innerHTML = `<span class="badge ${prioClass}">${prioDom}</span>`;
+
+  document.getElementById('fourn-stat-lignes').textContent = lignes.length;
+  document.getElementById('fourn-stat-valeur').textContent = formatEuros(valeur);
+  document.getElementById('fourn-stat-bc').textContent = bcs;
+  document.getElementById('fourn-stat-retard').textContent = retardMoyen + ' j';
+  document.getElementById('fourn-stat-mags').textContent = mags;
+  document.getElementById('fourn-stat-derniere').textContent = derniereRelance;
+
+  // Tableau des lignes
+  const tbody = document.getElementById('tbody-fourn');
+  tbody.innerHTML = lignes.sort((a,b) => b.retardJours - a.retardJours).map(l => `
+    <tr class="${classeLigne(l)}" onclick="ouvrirDrawer('${l.cle}')">
+      <td><span class="prio-${l.priorite.toLowerCase()}">${l.priorite === 'URGENT' ? '🔴' : l.priorite === 'ATTENTION' ? '🟠' : '🟢'} ${l.priorite}</span></td>
+      <td>${l.numBC}</td>
+      <td>${l.article}</td>
+      <td class="td-notes" title="${l.libelleArticle||''}">${l.libelleArticle||'—'}</td>
+      <td>${l.magasin}</td>
+      <td>${formatDate(l.dateRequise)}</td>
+      <td><strong style="color:${l.retardJours>CFG.seuilUrgent?'var(--rouge)':l.retardJours>CFG.seuilAttention?'var(--orange)':'var(--vert)'}">${l.retardJours}j</strong></td>
+      <td>${formatEuros(l.valeurLigne)}</td>
+      <td><span class="badge ${classeStatut(l.statut)}">${libelleStatut(l.statut)}</span></td>
+    </tr>`).join('');
+}
+
+/**
+ * Copie un résumé fournisseur dans le presse-papier.
+ */
+function copierResumeFournisseur() {
+  const lignes = DATA_COMMANDES.filter(l => l.fournisseur === FOURN_COURANT);
+  if (!lignes.length) return;
+  const lib = lignes[0].libelleFournisseur || FOURN_COURANT;
+  const valeur = lignes.reduce((s,l) => s+(l.valeurLigne||0), 0);
+  const retardMoyen = Math.round(lignes.reduce((s,l) => s+l.retardJours, 0) / lignes.length);
+  const texte = `RÉSUMÉ FOURNISSEUR — ${lib}\n` +
+    `Lignes en retard : ${lignes.length} | Valeur : ${formatEuros(valeur)} | Retard moyen : ${retardMoyen}j\n` +
+    `BC concernés : ${new Set(lignes.map(l=>l.numBC)).size} | Magasins : ${new Set(lignes.map(l=>l.magasin)).size}`;
+  navigator.clipboard.writeText(texte).then(() => afficherToast('Résumé copié !', 'success'));
+}
+
+/* ============================================================
+   SECTION RENDER — Drawer (panneau latéral)
+   ============================================================ */
+
+/**
+ * Ouvre le drawer pour une ligne donnée.
+ * @param {string} cle
+ */
+function ouvrirDrawer(cle) {
+  DRAWER_CLE = cle;
+  const ligne = DATA_COMMANDES.find(l => l.cle === cle);
+  if (!ligne) return;
+
+  document.getElementById('drawer-title').textContent = `${ligne.libelleFournisseur || ligne.fournisseur} | BC ${ligne.numBC}`;
+  document.getElementById('drawer-sub').textContent = `Article : ${ligne.article} | Mag : ${ligne.magasin}`;
+
+  document.getElementById('drawer-info-grid').innerHTML = `
+    <div class="drawer-info-item"><div class="drawer-info-label">Retard</div><div class="drawer-info-value" style="color:${ligne.retardJours>CFG.seuilUrgent?'var(--rouge)':ligne.retardJours>CFG.seuilAttention?'var(--orange)':'var(--vert)'}">${ligne.retardJours} jours</div></div>
+    <div class="drawer-info-item"><div class="drawer-info-label">Valeur</div><div class="drawer-info-value">${formatEuros(ligne.valeurLigne)}</div></div>
+    <div class="drawer-info-item"><div class="drawer-info-label">Reliquat</div><div class="drawer-info-value">${ligne.reliquat}</div></div>
+    <div class="drawer-info-item"><div class="drawer-info-label">Date requise</div><div class="drawer-info-value">${formatDate(ligne.dateRequise)}</div></div>`;
+
+  // Pré-remplir le statut courant
+  const entry = DATA_ACTIONS[cle];
+  document.getElementById('d-statut').value = entry?.statut || 'A_RELANCER';
+  document.getElementById('d-type').value = 'EMAIL';
+  document.getElementById('d-rappel').value = '';
+  document.getElementById('d-promesse').value = '';
+  document.getElementById('d-notes').value = '';
+
+  rendreHistoriqueDrawer(cle);
+
+  // Mode consultation
+  const formSection = document.getElementById('drawer-form-section');
+  const footer = document.getElementById('drawer-footer');
+  if (CFG.mode === 'consultation') {
+    formSection.classList.add('consultation-disabled');
+    footer.classList.add('consultation-disabled');
+  } else {
+    formSection.classList.remove('consultation-disabled');
+    footer.classList.remove('consultation-disabled');
+  }
+
+  document.getElementById('drawer-overlay').style.display = 'block';
+  document.getElementById('drawer').classList.add('open');
+}
+
+/**
+ * Ferme le drawer.
+ */
+function fermerDrawer() {
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('drawer-overlay').style.display = 'none';
+  DRAWER_CLE = null;
+}
+
+/**
+ * Rend l'historique dans le drawer.
+ * @param {string} cle
+ */
+function rendreHistoriqueDrawer(cle) {
+  const entry = DATA_ACTIONS[cle];
+  const actions = entry?.actions || [];
+  document.getElementById('histo-count').textContent = actions.length;
+  const list = document.getElementById('histo-list');
+  if (actions.length === 0) {
+    list.innerHTML = '<div class="text-muted text-small">Aucune action enregistrée</div>';
+    return;
+  }
+  list.innerHTML = [...actions].reverse().slice(0, 3).map(a => `
+    <div class="histo-item">
+      <div class="histo-meta">${formatDate(new Date(a.date))} — ${a.operateur} — ${a.type}</div>
+      <div class="histo-notes">${a.notes || '—'}</div>
+    </div>`).join('');
+}
+
+/* ============================================================
+   SECTION BUSINESS LOGIC — Enregistrement d'actions
+   ============================================================ */
+
+/**
+ * Enregistre une nouvelle action pour la ligne courante du drawer.
+ */
+function enregistrerAction() {
+  if (CFG.mode === 'consultation') { afficherToast('Mode consultation — aucune modification', 'warning'); return; }
+  if (!DRAWER_CLE) return;
+
+  const action = {
+    id: uuid(),
+    date: new Date().toISOString(),
+    operateur: CFG.initiales,
+    type: document.getElementById('d-type').value,
+    statut: document.getElementById('d-statut').value,
+    notes: document.getElementById('d-notes').value.trim(),
+    dateRappel: document.getElementById('d-rappel').value || null,
+    datePromesseFourn: document.getElementById('d-promesse').value || null
+  };
+
+  if (!DATA_ACTIONS[DRAWER_CLE]) {
+    DATA_ACTIONS[DRAWER_CLE] = { statut: action.statut, actions: [] };
+  }
+  DATA_ACTIONS[DRAWER_CLE].actions.push(action);
+  DATA_ACTIONS[DRAWER_CLE].statut = action.statut;
+
+  // Mettre à jour le statut dans DATA_COMMANDES
+  const ligne = DATA_COMMANDES.find(l => l.cle === DRAWER_CLE);
+  if (ligne) ligne.statut = action.statut;
+
+  afficherToast('Action enregistrée avec succès', 'success');
+  rendreHistoriqueDrawer(DRAWER_CLE);
+  appliquerFiltres();
+  rendreKPIs();
+  rendreStatutDistribution();
+}
+
+/**
+ * Applique un statut en masse sur les lignes sélectionnées.
+ */
+function appliquerBulkStatut() {
+  if (CFG.mode === 'consultation') { afficherToast('Mode consultation', 'warning'); return; }
+  const statut = document.getElementById('bulk-statut').value;
+  if (!statut || SELECTION.length === 0) return;
+  for (const cle of SELECTION) {
+    const action = { id: uuid(), date: new Date().toISOString(), operateur: CFG.initiales, type: 'AUTRE', statut, notes: 'Mise à jour groupée', dateRappel: null, datePromesseFourn: null };
+    if (!DATA_ACTIONS[cle]) DATA_ACTIONS[cle] = { statut, actions: [] };
+    DATA_ACTIONS[cle].actions.push(action);
+    DATA_ACTIONS[cle].statut = statut;
+    const ligne = DATA_COMMANDES.find(l => l.cle === cle);
+    if (ligne) ligne.statut = statut;
+  }
+  afficherToast(`${SELECTION.length} lignes mises à jour`, 'success');
+  SELECTION = [];
+  appliquerFiltres();
+  rendreKPIs();
+}
+
+/* ============================================================
+   SECTION RENDER — Sélection multiple
+   ============================================================ */
+
+/**
+ * Bascule la sélection d'une ligne.
+ * @param {string} cle
+ * @param {HTMLInputElement} cb
+ */
+function toggleSelection(cle, cb) {
+  if (cb.checked) {
+    if (!SELECTION.includes(cle)) SELECTION.push(cle);
+  } else {
+    SELECTION = SELECTION.filter(c => c !== cle);
+  }
+  mettreAJourBarreSelection();
+}
+
+/**
+ * Sélectionne/désélectionne toutes les lignes de la page.
+ * @param {HTMLInputElement} cb
+ */
+function toggleSelectAll(cb) {
+  const debut = (PAGE_COURANTE - 1) * LIGNES_PAR_PAGE;
+  const pageLignes = DATA_FILTREES.slice(debut, debut + LIGNES_PAR_PAGE);
+  if (cb.checked) {
+    for (const l of pageLignes) { if (!SELECTION.includes(l.cle)) SELECTION.push(l.cle); }
+  } else {
+    const clesPage = pageLignes.map(l => l.cle);
+    SELECTION = SELECTION.filter(c => !clesPage.includes(c));
+  }
+  rendreTableau();
+  mettreAJourBarreSelection();
+}
+
+/**
+ * Met à jour la barre d'actions groupées.
+ */
+function mettreAJourBarreSelection() {
+  const count = SELECTION.length;
+  const span = document.getElementById('selection-count');
+  const bar = document.getElementById('actions-groupees');
+  span.textContent = count > 0 ? `☑ ${count} ligne(s) sélectionnée(s)` : 'Aucune sélection';
+  bar.style.display = count > 0 ? 'flex' : 'none';
+}
+
+/* ============================================================
+   SECTION RENDER — Modal Historique
+   ============================================================ */
+
+/**
+ * Ouvre le modal d'historique complet.
+ * @param {string} [cle]
+ */
+function ouvrirModalHistorique(cle) {
+  const c = cle || DRAWER_CLE;
+  if (!c) return;
+  const ligne = DATA_COMMANDES.find(l => l.cle === c);
+  const entry = DATA_ACTIONS[c];
+  const actions = entry?.actions || [];
+
+  document.getElementById('modal-histo-title').textContent =
+    `Historique — ${ligne?.libelleFournisseur || c} | BC ${ligne?.numBC || ''}`;
+
+  const timeline = document.getElementById('modal-timeline');
+  if (actions.length === 0) {
+    timeline.innerHTML = '<div class="text-muted text-small text-center">Aucune action enregistrée</div>';
+  } else {
+    timeline.innerHTML = [...actions].reverse().map(a => `
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-date">${new Date(a.date).toLocaleString('fr-FR')} — ${a.operateur}</div>
+        <div class="timeline-content">
+          <div class="timeline-type">${a.type} → <span class="badge ${classeStatut(a.statut)}">${libelleStatut(a.statut)}</span></div>
+          ${a.notes ? `<div class="timeline-notes">${a.notes}</div>` : ''}
+          ${a.dateRappel ? `<div class="text-small text-muted mt-4">📅 Rappel : ${a.dateRappel}</div>` : ''}
+          ${a.datePromesseFourn ? `<div class="text-small text-muted">🤝 Promesse : ${a.datePromesseFourn}</div>` : ''}
+        </div>
+      </div>`).join('');
+  }
+
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+/**
+ * Ferme le modal principal.
+ */
+function fermerModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+}
+
+/* ============================================================
+   SECTION BUSINESS LOGIC — Génération d'emails
+   ============================================================ */
+
+/**
+ * Ouvre le modal email pour le fournisseur courant (vue fournisseur).
+ */
+function ouvrirEmailFournisseur() {
+  EMAIL_LIGNES = DATA_COMMANDES.filter(l => l.fournisseur === FOURN_COURANT);
+  if (!EMAIL_LIGNES.length) { afficherToast('Aucune ligne pour ce fournisseur', 'warning'); return; }
+  ouvrirModalEmail(EMAIL_LIGNES);
+}
+
+/**
+ * Ouvre le modal email pour la ligne courante du drawer.
+ */
+function ouvrirEmailLigne() {
+  if (!DRAWER_CLE) return;
+  EMAIL_LIGNES = DATA_COMMANDES.filter(l => l.cle === DRAWER_CLE);
+  ouvrirModalEmail(EMAIL_LIGNES);
+}
+
+/**
+ * Ouvre le modal email pour les lignes sélectionnées.
+ */
+function ouvrirEmailGroupé() {
+  EMAIL_LIGNES = DATA_COMMANDES.filter(l => SELECTION.includes(l.cle));
+  if (!EMAIL_LIGNES.length) { afficherToast('Sélectionnez des lignes', 'warning'); return; }
+  ouvrirModalEmail(EMAIL_LIGNES);
+}
+
+/**
+ * Ouvre le modal email avec les lignes données.
+ * @param {Array} lignes
+ */
+function ouvrirModalEmail(lignes) {
+  if (!lignes.length) return;
+  const fourn = lignes[0].libelleFournisseur || lignes[0].fournisseur;
+  document.getElementById('email-modal-title').textContent = `📧 Génération Email Relance — ${fourn}`;
+  document.getElementById('email-nom-fichier').textContent = `Relance_${lignes[0].fournisseur}_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.xlsx`;
+  EMAIL_TYPE_COURANT = 'relance1';
+  // Sélectionner le premier bouton
+  document.querySelectorAll('.email-type-btn').forEach((b,i) => b.classList.toggle('selected', i===0));
+  genererCorpsEmail(lignes, 'relance1');
+  document.getElementById('modal-email').style.display = 'flex';
+}
+
+/**
+ * Sélectionne un type d'email et régénère le corps.
+ * @param {string} type
+ * @param {HTMLElement} btn
+ */
+function selectionnerTypeEmail(type, btn) {
+  EMAIL_TYPE_COURANT = type;
+  document.querySelectorAll('.email-type-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  genererCorpsEmail(EMAIL_LIGNES, type);
+}
+
+/**
+ * Génère le corps de l'email à partir du template et des lignes.
+ * @param {Array} lignes
+ * @param {string} type
+ */
+function genererCorpsEmail(lignes, type) {
+  const tpl = CFG.templates[type] || CFG.templates.relance1;
+  const fourn = lignes[0]?.libelleFournisseur || lignes[0]?.fournisseur || '';
+  const valeur = lignes.reduce((s,l) => s+(l.valeurLigne||0), 0);
+  const listeCommandes = lignes.map(l =>
+    `• BC ${l.numBC} — Art. ${l.article} — ${l.libelleArticle||''} — Retard : ${l.retardJours}j — Mag. ${l.magasin}`
+  ).join('\n');
+
+  const objet = tpl.objet
+    .replace('{{FOURNISSEUR}}', fourn)
+    .replace('{{NB_LIGNES}}', lignes.length)
+    .replace('{{VALEUR_TOTALE}}', formatEuros(valeur))
+    .replace('{{DATE}}', formatDate(new Date()))
+    .replace('{{SIGNATURE}}', CFG.signature);
+
+  const corps = tpl.corps
+    .replace('{{FOURNISSEUR}}', fourn)
+    .replace('{{NB_LIGNES}}', lignes.length)
+    .replace('{{VALEUR_TOTALE}}', formatEuros(valeur))
+    .replace('{{DATE}}', formatDate(new Date()))
+    .replace('{{LISTE_COMMANDES}}', listeCommandes)
+    .replace('{{SIGNATURE}}', CFG.signature);
+
+  document.getElementById('email-objet').value = objet;
+  document.getElementById('email-corps').textContent = corps;
+}
+
+/**
+ * Ferme le modal email.
+ */
+function fermerModalEmail() {
+  document.getElementById('modal-email').style.display = 'none';
+}
+
+/**
+ * Copie l'email dans le presse-papier.
+ */
+function copierEmailPressePapier() {
+  const objet = document.getElementById('email-objet').value;
+  const corps = document.getElementById('email-corps').textContent;
+  const texte = `Objet : ${objet}\n\n${corps}`;
+  navigator.clipboard.writeText(texte).then(() => afficherToast('Email copié dans le presse-papier !', 'success'));
+}
+
+/**
+ * Génère et télécharge un fichier .eml compatible Outlook.
+ */
+function telechargerEML() {
+  const objet = document.getElementById('email-objet').value;
+  const corps = document.getElementById('email-corps').textContent;
+  const fourn = EMAIL_LIGNES[0]?.libelleFournisseur || '';
+  const emailDest = document.getElementById('fourn-contact-email')?.value || '';
+
+  const listeHTML = EMAIL_LIGNES.map(l =>
+    `<tr><td style="padding:4px 8px;border:1px solid #ddd">${l.numBC}</td>
+     <td style="padding:4px 8px;border:1px solid #ddd">${l.article}</td>
+     <td style="padding:4px 8px;border:1px solid #ddd">${l.libelleArticle||''}</td>
+     <td style="padding:4px 8px;border:1px solid #ddd">${l.magasin}</td>
+     <td style="padding:4px 8px;border:1px solid #ddd;text-align:right">${l.retardJours}j</td>
+     <td style="padding:4px 8px;border:1px solid #ddd;text-align:right">${formatEuros(l.valeurLigne)}</td></tr>`
+  ).join('');
+
+  const corpsHTML = `<html><body style="font-family:Calibri,Arial,sans-serif;font-size:14px">
+    <p>${corps.replace(/\n/g,'<br>')}</p>
+    <table style="border-collapse:collapse;margin-top:16px;font-size:12px">
+      <thead><tr style="background:#1F4E78;color:white">
+        <th style="padding:6px 10px">N°BC</th><th style="padding:6px 10px">Article</th>
+        <th style="padding:6px 10px">Désignation</th><th style="padding:6px 10px">Magasin</th>
+        <th style="padding:6px 10px">Retard</th><th style="padding:6px 10px">Valeur</th>
+      </tr></thead><tbody>${listeHTML}</tbody>
+    </table>
+  </body></html>`;
+
+  const eml = `From: ${CFG.initiales} <${CFG.initiales.toLowerCase()}@imotion-conseil.fr>
+To: ${emailDest}
+Subject: ${objet}
+MIME-Version: 1.0
+Content-Type: text/html; charset=UTF-8
+Date: ${new Date().toUTCString()}
+
+${corpsHTML}`;
+
+  const blob = new Blob([eml], { type: 'message/rfc822' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Relance_${EMAIL_LIGNES[0]?.fournisseur || 'FOURN'}_${new Date().toISOString().slice(0,10)}.eml`;
+  a.click();
+  URL.revokeObjectURL(url);
+  afficherToast('Fichier .eml généré !', 'success');
+}
+
+/**
+ * Génère et télécharge l'Excel joint de l'email.
+ */
+function genererExcelJoint() {
+  const lignes = EMAIL_LIGNES;
+  if (!lignes.length) return;
+  const wb = XLSX.utils.book_new();
+
+  // Feuille 1 : commandes
+  const data1 = [['N°BC','Article','Désignation','Magasin','Qté','Date requise','Date fournisseur','Retard (j)','Valeur €']];
+  for (const l of lignes) {
+    data1.push([l.numBC, l.article, l.libelleArticle||'', l.magasin, l.reliquat, formatDate(l.dateRequise), formatDate(l.dateFournisseur), l.retardJours, l.valeurLigne]);
+  }
+  const ws1 = XLSX.utils.aoa_to_sheet(data1);
+  XLSX.utils.book_append_sheet(wb, ws1, 'Commandes en attente');
+
+  // Feuille 2 : résumé
+  const fourn = lignes[0].libelleFournisseur || lignes[0].fournisseur;
+  const valeur = lignes.reduce((s,l) => s+(l.valeurLigne||0), 0);
+  const data2 = [
+    ['Fournisseur', fourn],
+    ['Lignes en retard', lignes.length],
+    ['Valeur totale', valeur],
+    ['Retard moyen (j)', Math.round(lignes.reduce((s,l) => s+l.retardJours, 0) / lignes.length)],
+    ['Date de génération', formatDate(new Date())]
+  ];
+  const ws2 = XLSX.utils.aoa_to_sheet(data2);
+  XLSX.utils.book_append_sheet(wb, ws2, 'Résumé');
+
+  const nom = `Relance_${lignes[0].fournisseur}_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.xlsx`;
+  XLSX.writeFile(wb, nom);
+  afficherToast('Excel joint généré !', 'success');
+}
+
+/* ============================================================
+   SECTION BUSINESS LOGIC — Export des données
+   ============================================================ */
+
+/**
+ * Exporte les actions en JSON horodaté.
+ */
+function exporterJSON() {
+  const data = {
+    version: '1.0',
+    exportDate: new Date().toISOString(),
+    exportedBy: CFG.initiales,
+    relances: DATA_ACTIONS,
+    metadata: {
+      totalRelances: Object.keys(DATA_ACTIONS).length,
+      totalActions: Object.values(DATA_ACTIONS).reduce((s,e) => s+(e.actions?.length||0), 0)
+    }
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const ts = new Date().toISOString().slice(0,16).replace(/[-:T]/g, (c) => c === 'T' ? '_' : c);
+  a.download = `Actions_Relances_${ts}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  afficherToast('Export JSON téléchargé', 'success');
+}
+
+/**
+ * Exporte les actions en Excel.
+ */
+function exporterExcelActions() {
+  const wb = XLSX.utils.book_new();
+  const data = [['CleBC','Fournisseur','NumBC','Article','Magasin','Statut','DateAction','Operateur','TypeAction','Notes','DateRappel','DatePromesse']];
+  for (const [cle, entry] of Object.entries(DATA_ACTIONS)) {
+    for (const a of (entry.actions || [])) {
+      const ligne = DATA_COMMANDES.find(l => l.cle === cle);
+      data.push([cle, ligne?.libelleFournisseur||'', ligne?.numBC||'', ligne?.article||'', ligne?.magasin||'', a.statut, a.date, a.operateur, a.type, a.notes||'', a.dateRappel||'', a.datePromesseFourn||'']);
+    }
+  }
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  XLSX.utils.book_append_sheet(wb, ws, 'Actions');
+  XLSX.writeFile(wb, `Actions_Relances_${new Date().toISOString().slice(0,10)}.xlsx`);
+  afficherToast('Export Excel téléchargé', 'success');
+}
+
+/**
+ * Exporte les lignes sélectionnées en Excel.
+ */
+function exporterSelection() {
+  const lignes = DATA_COMMANDES.filter(l => SELECTION.includes(l.cle));
+  if (!lignes.length) { afficherToast('Aucune ligne sélectionnée', 'warning'); return; }
+  const wb = XLSX.utils.book_new();
+  const data = [['Fournisseur','N°BC','Article','Libellé','Magasin','Date requise','Retard (j)','Valeur €','Statut']];
+  for (const l of lignes) {
+    data.push([l.libelleFournisseur||l.fournisseur, l.numBC, l.article, l.libelleArticle||'', l.magasin, formatDate(l.dateRequise), l.retardJours, l.valeurLigne, libelleStatut(l.statut)]);
+  }
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  XLSX.utils.book_append_sheet(wb, ws, 'Sélection');
+  XLSX.writeFile(wb, `Selection_Relances_${new Date().toISOString().slice(0,10)}.xlsx`);
+  afficherToast('Export sélection téléchargé', 'success');
+}
+
+/**
+ * Exporte les lignes d'un fournisseur en Excel.
+ */
+function exporterExcelFournisseur() {
+  const lignes = DATA_COMMANDES.filter(l => l.fournisseur === FOURN_COURANT);
+  if (!lignes.length) return;
+  EMAIL_LIGNES = lignes;
+  genererExcelJoint();
+}
+
+/* ============================================================
+   SECTION BUSINESS LOGIC — Configuration
+   ============================================================ */
+
+/**
+ * Sauvegarde la configuration en mémoire.
+ */
+function sauvegarderConfig() {
+  CFG.initiales = document.getElementById('cfg-initiales').value || CFG.initiales;
+  CFG.service = document.getElementById('cfg-service').value;
+  CFG.signature = document.getElementById('cfg-signature').value;
+  CFG.cheminBC = document.getElementById('cfg-chemin-bc').value;
+  CFG.cheminActions = document.getElementById('cfg-chemin-actions').value;
+  CFG.seuilUrgent = parseInt(document.getElementById('seuil-urgent').value) || 30;
+  CFG.seuilAttention = parseInt(document.getElementById('seuil-attention').value) || 15;
+  afficherToast('Configuration sauvegardée', 'success');
+  // Recalculer les priorités
+  for (const l of DATA_COMMANDES) l.priorite = calculerPriorite(l.retardJours);
+  rafraichirTout();
+}
+
+/**
+ * Exporte la configuration en JSON.
+ */
+function exporterConfig() {
+  const blob = new Blob([JSON.stringify(CFG, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'Config_RelanceFournisseur.json'; a.click();
+  URL.revokeObjectURL(url);
+  afficherToast('Configuration exportée', 'success');
+}
+
+/**
+ * Importe une configuration depuis un fichier JSON.
+ * @param {HTMLInputElement} input
+ */
+function importerConfig(input) {
+  if (!input.files.length) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      Object.assign(CFG, data);
+      chargerConfigDansUI();
+      afficherToast('Configuration importée', 'success');
+    } catch(err) {
+      afficherToast('Erreur import config : ' + err.message, 'error');
+    }
+  };
+  reader.readAsText(input.files[0], 'UTF-8');
+}
+
+/**
+ * Charge la configuration dans les champs UI.
+ */
+function chargerConfigDansUI() {
+  document.getElementById('cfg-initiales').value = CFG.initiales;
+  document.getElementById('cfg-service').value = CFG.service;
+  document.getElementById('cfg-signature').value = CFG.signature;
+  document.getElementById('cfg-chemin-bc').value = CFG.cheminBC;
+  document.getElementById('cfg-chemin-actions').value = CFG.cheminActions;
+  document.getElementById('seuil-urgent').value = CFG.seuilUrgent;
+  document.getElementById('seuil-attention').value = CFG.seuilAttention;
+  changerTemplate('relance1', document.querySelector('.template-tab'));
+}
+
+/** Template courant affiché */
+let TEMPLATE_COURANT = 'relance1';
+
+/**
+ * Affiche un template dans l'éditeur.
+ * @param {string} type
+ * @param {HTMLElement} btn
+ */
+function changerTemplate(type, btn) {
+  TEMPLATE_COURANT = type;
+  document.querySelectorAll('.template-tab').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  const tpl = CFG.templates[type] || { objet: '', corps: '' };
+  document.getElementById('template-objet').value = tpl.objet;
+  document.getElementById('template-corps').value = tpl.corps;
+}
+
+/**
+ * Sauvegarde le template courant.
+ */
+function sauvegarderTemplate() {
+  if (!CFG.templates[TEMPLATE_COURANT]) CFG.templates[TEMPLATE_COURANT] = {};
+  CFG.templates[TEMPLATE_COURANT].objet = document.getElementById('template-objet').value;
+  CFG.templates[TEMPLATE_COURANT].corps = document.getElementById('template-corps').value;
+  afficherToast('Template sauvegardé', 'success');
+}
+
+/**
+ * Réinitialise le template courant aux valeurs par défaut.
+ */
+function reinitialiserTemplate() {
+  const DEFAULTS = {
+    relance1: { objet: 'Suivi commandes — {{FOURNISSEUR}}', corps: 'Madame, Monsieur,\n\nNous revenons vers vous concernant {{NB_LIGNES}} commande(s) dont les délais de livraison sont dépassés, pour un montant total de {{VALEUR_TOTALE}} €.\n\nCommandes concernées :\n{{LISTE_COMMANDES}}\n\nNous vous remercions de bien vouloir nous confirmer les dates de livraison prévisionnelles dans les meilleurs délais.\n\n{{SIGNATURE}}' },
+    relance2: { objet: 'RELANCE — Commandes en attente {{FOURNISSEUR}}', corps: 'Madame, Monsieur,\n\nSauf erreur de notre part, nous n\'avons pas reçu de réponse à notre précédente relance concernant {{NB_LIGNES}} commande(s) en attente.\n\nCommandes concernées :\n{{LISTE_COMMANDES}}\n\nNous vous prions de bien vouloir nous apporter une réponse urgente sur ces livraisons.\n\n{{SIGNATURE}}' },
+    formelle: { objet: 'URGENT — Commandes non livrées {{FOURNISSEUR}}', corps: 'Madame, Monsieur,\n\nMalgré nos relances précédentes, {{NB_LIGNES}} commande(s) restent non livrées à ce jour, représentant {{VALEUR_TOTALE}} € de marchandises attendues.\n\nNous vous demandons de nous communiquer impérativement sous 48h les dates de livraison fermes :\n{{LISTE_COMMANDES}}\n\n{{SIGNATURE}}' },
+    accuse: { objet: 'Confirmation réception partielle — {{FOURNISSEUR}}', corps: 'Madame, Monsieur,\n\nNous accusons réception de votre livraison partielle. Les articles suivants restent en attente :\n{{LISTE_COMMANDES}}\n\nMerci de nous confirmer la date de livraison du solde.\n\n{{SIGNATURE}}' },
+    perso: { objet: 'Relance commandes — {{FOURNISSEUR}}', corps: '{{SIGNATURE}}' }
+  };
+  if (DEFAULTS[TEMPLATE_COURANT]) {
+    CFG.templates[TEMPLATE_COURANT] = { ...DEFAULTS[TEMPLATE_COURANT] };
+    changerTemplate(TEMPLATE_COURANT, null);
+    afficherToast('Template réinitialisé', 'info');
+  }
+}
+
+/* ============================================================
+   SECTION RENDER — Navigation et orchestration
+   ============================================================ */
+
+/**
+ * Affiche une page et met à jour la navigation.
+ * @param {string} pageId
+ * @param {HTMLElement} tabEl
+ */
+function showPage(pageId, tabEl) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  const page = document.getElementById(`page-${pageId}`);
+  if (page) page.classList.add('active');
+  if (tabEl) tabEl.classList.add('active');
+
+  // Rafraîchir les graphiques à la demande
+  if (pageId === 'analytique') rendreAnalytique();
+  if (pageId === 'fournisseur') peupleDropdownFournisseurs();
+}
+
+/**
+ * Rafraîchit toutes les vues après un chargement de données.
+ */
+function rafraichirTout() {
+  appliquerFiltres();
+  rendreKPIs();
+  rendreStatutDistribution();
+  rendreTop10();
+  peupleDropdownsMagasins();
+  peupleDropdownFournisseurs();
+}
+
+/* ============================================================
+   SECTION RENDER — Toast notifications
+   ============================================================ */
+
+/**
+ * Affiche une notification toast.
+ * @param {string} message
+ * @param {'success'|'error'|'info'|'warning'} type
+ */
+function afficherToast(message, type = 'info') {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  toast.textContent = message;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.style.animation = 'fadeOut .3s ease forwards';
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+
+/* ============================================================
+   SECTION EVENTS — Démarrage de l'application
+   ============================================================ */
+
+/**
+ * Démarre l'application après la sélection du mode.
+ */
+function demarrerApp() {
+  const modeEl = document.querySelector('input[name="mode"]:checked');
+  CFG.mode = modeEl ? modeEl.value : 'gestionnaire';
+  const initiales = document.getElementById('splash-initiales').value.trim().toUpperCase();
+  if (CFG.mode === 'gestionnaire' && !initiales) {
+    afficherToast('Veuillez saisir vos initiales', 'warning');
+    return;
+  }
+  CFG.initiales = initiales || 'XX';
+
+  // Masquer le splash, afficher l'app
+  document.getElementById('splash').style.display = 'none';
+  document.getElementById('navbar').style.display = 'flex';
+  document.querySelectorAll('.page').forEach(p => p.style.display = '');
+  document.getElementById('page-accueil').classList.add('active');
+
+  // Mettre à jour la navbar
+  document.getElementById('nav-badge-mode').textContent = CFG.mode === 'gestionnaire' ? 'GESTIONNAIRE' : 'CONSULTATION';
+  document.getElementById('nav-badge-mode').className = `nav-badge-mode ${CFG.mode}`;
+  document.getElementById('nav-user').textContent = CFG.initiales;
+
+  // Charger la config dans l'UI
+  chargerConfigDansUI();
+
+  // Initialiser les filtres
+  DATA_FILTREES = [...DATA_COMMANDES];
+  rendreTableau();
+}
+
+// Gestion des options radio du splash
+document.querySelectorAll('input[name="mode"]').forEach(radio => {
+  radio.addEventListener('change', function() {
+    document.querySelectorAll('.splash-mode-option').forEach(o => o.classList.remove('selected'));
+    this.closest('.splash-mode-option').classList.add('selected');
+    document.getElementById('splash-initiales-wrap').style.display = this.value === 'gestionnaire' ? 'block' : 'none';
+  });
+});
+
+// Majuscule automatique sur les initiales
+document.getElementById('splash-initiales').addEventListener('input', function() {
+  this.value = this.value.toUpperCase();
+});
+
+// Fermer les modals avec Escape
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    fermerDrawer();
+    fermerModal();
+    fermerModalEmail();
+  }
+});
+</script>
+</body>
+</html>
