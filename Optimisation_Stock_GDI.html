@@ -2,1855 +2,1021 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Optimisation Stock GDI — Application Web</title>
-
-<!-- ═══ CDN DEPENDENCIES ═══ -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Optimisation Stock GDI — V3.2</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18/dist/xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/papaparse@5"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
 <style>
-/* ═══════════════════════════════════════════════════════════════════════════
-   SECTION CSS : VARIABLES, LAYOUT, COMPOSANTS
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-/* --- Mode sombre (défaut) --- */
-:root {
-  --bg: #0f1117; --sf: #1a1d27; --sf2: #22263a; --bd: #333854;
-  --tx: #e8ebf4; --tx2: #8b92a8; --tx3: #5a6080;
-  --ac: #4f8df7; --gn: #34d399; --rd: #f87171; --or: #fbbf24;
-  --pp: #a78bfa; --cy: #22d3ee;
-  --voie: #4f8df7; --ct: #34d399; --tde: #fbbf24; --eso: #f87171; --stf: #a78bfa;
-  --abc-a: #f87171; --abc-b: #fbbf24; --abc-c: #60a5fa; --abc-d: #6b7280;
-  --shadow: 0 2px 12px rgba(0,0,0,.35);
-  --radius: 10px;
-  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-}
-
-/* --- Mode clair --- */
-.light {
-  --bg: #f3f4f8; --sf: #ffffff; --sf2: #f0f1f6; --bd: #d1d5e0;
-  --tx: #1a1d27; --tx2: #5a6080; --tx3: #8b92a8;
-  --shadow: 0 2px 12px rgba(0,0,0,.08);
-}
-
-/* --- Reset & Base --- */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { font-size: 14px; scroll-behavior: smooth; }
-body {
-  font-family: var(--font);
-  background: var(--bg);
-  color: var(--tx);
-  min-height: 100vh;
-  transition: background .3s, color .3s;
-}
-
-/* --- Layout principal --- */
-.app-container { max-width: 1440px; margin: 0 auto; padding: 16px 24px; }
-
-/* --- Header --- */
-.header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 16px 0; border-bottom: 1px solid var(--bd); margin-bottom: 20px;
-  flex-wrap: wrap; gap: 12px;
-}
-.header-left { display: flex; align-items: center; gap: 16px; }
-.header h1 { font-size: 1.5rem; font-weight: 700; color: var(--ac); }
-.header .badge {
-  display: inline-block; padding: 3px 10px; border-radius: 20px;
-  font-size: .75rem; font-weight: 600;
-  background: var(--ac); color: #fff;
-}
-.header-right { display: flex; gap: 8px; align-items: center; }
-.btn {
-  padding: 8px 16px; border: 1px solid var(--bd); border-radius: var(--radius);
-  background: var(--sf); color: var(--tx); cursor: pointer;
-  font-size: .85rem; font-weight: 500; transition: all .2s;
-  display: inline-flex; align-items: center; gap: 6px;
-}
-.btn:hover { background: var(--sf2); border-color: var(--ac); }
-.btn-primary { background: var(--ac); color: #fff; border-color: var(--ac); }
-.btn-primary:hover { opacity: .85; }
-.btn-export { background: var(--gn); color: #fff; border-color: var(--gn); }
-.btn-export:hover { opacity: .85; }
-
-/* --- Upload Zone --- */
-.upload-section {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 12px; margin-bottom: 20px;
-}
-.upload-card {
-  background: var(--sf); border: 2px dashed var(--bd); border-radius: var(--radius);
-  padding: 16px; text-align: center; cursor: pointer; transition: all .2s;
-  position: relative; min-height: 100px;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-}
-.upload-card:hover, .upload-card.dragover { border-color: var(--ac); background: var(--sf2); }
-.upload-card.loaded { border-color: var(--gn); border-style: solid; }
-.upload-card .icon { font-size: 1.8rem; margin-bottom: 6px; }
-.upload-card .label { font-size: .8rem; font-weight: 600; color: var(--tx2); }
-.upload-card .status { font-size: .7rem; color: var(--tx3); margin-top: 4px; }
-.upload-card.loaded .status { color: var(--gn); }
-.upload-card input[type="file"] {
-  position: absolute; inset: 0; opacity: 0; cursor: pointer;
-}
-
-/* --- Sélecteur d'unité --- */
-.unit-selector {
-  display: flex; gap: 6px; margin-bottom: 20px; flex-wrap: wrap;
-}
-.unit-btn {
-  padding: 6px 16px; border-radius: 20px; border: 1px solid var(--bd);
-  background: var(--sf); color: var(--tx2); cursor: pointer;
-  font-size: .8rem; font-weight: 600; transition: all .2s;
-}
-.unit-btn:hover { border-color: var(--ac); color: var(--tx); }
-.unit-btn.active { background: var(--ac); color: #fff; border-color: var(--ac); }
-.unit-btn[data-unit="VOIE"].active { background: var(--voie); border-color: var(--voie); }
-.unit-btn[data-unit="CT"].active { background: var(--ct); border-color: var(--ct); }
-.unit-btn[data-unit="TDE"].active { background: var(--tde); border-color: var(--tde); color: #1a1d27; }
-.unit-btn[data-unit="ESO"].active { background: var(--eso); border-color: var(--eso); }
-.unit-btn[data-unit="STF/ISE"].active { background: var(--stf); border-color: var(--stf); }
-
-/* --- KPI Band --- */
-.kpi-band {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 12px; margin-bottom: 20px;
-}
-.kpi-card {
-  background: var(--sf); border-radius: var(--radius); padding: 16px;
-  box-shadow: var(--shadow); border-left: 4px solid var(--ac);
-}
-.kpi-card .kpi-label { font-size: .75rem; color: var(--tx2); font-weight: 600; text-transform: uppercase; }
-.kpi-card .kpi-value { font-size: 1.6rem; font-weight: 700; margin: 6px 0 2px; }
-.kpi-card .kpi-sub { font-size: .75rem; color: var(--tx3); }
-.kpi-card.green { border-left-color: var(--gn); }
-.kpi-card.red { border-left-color: var(--rd); }
-.kpi-card.orange { border-left-color: var(--or); }
-.kpi-card.purple { border-left-color: var(--pp); }
-.kpi-card.cyan { border-left-color: var(--cy); }
-
-/* --- Tabs --- */
-.tabs-nav {
-  display: flex; gap: 2px; border-bottom: 2px solid var(--bd);
-  margin-bottom: 20px; overflow-x: auto; flex-wrap: nowrap;
-}
-.tab-btn {
-  padding: 10px 18px; border: none; background: none; color: var(--tx2);
-  cursor: pointer; font-size: .85rem; font-weight: 600; white-space: nowrap;
-  border-bottom: 3px solid transparent; transition: all .2s;
-}
-.tab-btn:hover { color: var(--tx); }
-.tab-btn.active { color: var(--ac); border-bottom-color: var(--ac); }
-.tab-content { display: none; }
-.tab-content.active { display: block; }
-
-/* --- Tables --- */
-.data-table-wrap { overflow-x: auto; margin-bottom: 20px; border-radius: var(--radius); }
-.data-table {
-  width: 100%; border-collapse: collapse; font-size: .8rem;
-  background: var(--sf);
-}
-.data-table thead th {
-  background: var(--sf2); color: var(--tx); padding: 10px 12px;
-  text-align: left; font-weight: 700; position: sticky; top: 0;
-  border-bottom: 2px solid var(--bd); white-space: nowrap;
-}
-.data-table tbody td {
-  padding: 8px 12px; border-bottom: 1px solid var(--bd);
-  white-space: nowrap;
-}
-.data-table tbody tr:hover { background: var(--sf2); }
-.data-table .num { text-align: right; font-variant-numeric: tabular-nums; }
-.data-table .eur::after { content: ' \20AC'; }
-.data-table .pct::after { content: ' %'; }
-.data-table .highlight-red { color: var(--rd); font-weight: 600; }
-.data-table .highlight-green { color: var(--gn); font-weight: 600; }
-.data-table .highlight-orange { color: var(--or); font-weight: 600; }
-
-/* --- Sections & Cards --- */
-.section-title {
-  font-size: 1.1rem; font-weight: 700; color: var(--ac);
-  margin: 24px 0 12px; padding-bottom: 6px;
-  border-bottom: 1px solid var(--bd);
-}
-.card {
-  background: var(--sf); border-radius: var(--radius); padding: 20px;
-  box-shadow: var(--shadow); margin-bottom: 16px;
-}
-.card-title { font-size: .95rem; font-weight: 700; margin-bottom: 12px; }
-
-/* --- Charts --- */
-.chart-grid {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
-  gap: 16px; margin-bottom: 20px;
-}
-.chart-card {
-  background: var(--sf); border-radius: var(--radius); padding: 16px;
-  box-shadow: var(--shadow);
-}
-.chart-card canvas { max-height: 320px; }
-
-/* --- Jauges --- */
-.gauge-grid {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 12px; margin-bottom: 20px;
-}
-.gauge-item {
-  background: var(--sf); border-radius: var(--radius); padding: 12px;
-  text-align: center; box-shadow: var(--shadow);
-}
-.gauge-item .gauge-label { font-size: .75rem; font-weight: 600; color: var(--tx2); margin-bottom: 6px; }
-.gauge-item .gauge-bar {
-  height: 8px; background: var(--sf2); border-radius: 4px; overflow: hidden; margin: 6px 0;
-}
-.gauge-item .gauge-fill { height: 100%; border-radius: 4px; transition: width .5s; }
-.gauge-item .gauge-value { font-size: .8rem; font-weight: 700; }
-
-/* --- Methodology --- */
-.methodology { line-height: 1.8; }
-.methodology h3 { color: var(--ac); margin: 16px 0 8px; font-size: 1rem; }
-.methodology p, .methodology li { color: var(--tx2); font-size: .85rem; }
-.methodology ul { padding-left: 20px; }
-.methodology .warning { color: var(--or); font-weight: 600; }
-
-/* --- Footer --- */
-.footer {
-  text-align: center; padding: 20px 0; margin-top: 40px;
-  border-top: 1px solid var(--bd); color: var(--tx3); font-size: .75rem;
-}
-
-/* --- Loader --- */
-.loader-overlay {
-  display: none; position: fixed; inset: 0; background: rgba(0,0,0,.6);
-  z-index: 9999; align-items: center; justify-content: center;
-}
-.loader-overlay.active { display: flex; }
-.loader-spinner {
-  width: 48px; height: 48px; border: 4px solid var(--bd);
-  border-top-color: var(--ac); border-radius: 50%; animation: spin 1s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-
-/* --- Print --- */
-@media print {
-  .header-right, .upload-section, .unit-selector, .tabs-nav, .footer { display: none !important; }
-  .tab-content { display: block !important; page-break-inside: avoid; }
-  body { background: #fff; color: #000; font-size: 10pt; }
-  .kpi-card, .card, .chart-card { box-shadow: none; border: 1px solid #ccc; }
-}
-
-/* --- Responsive --- */
-@media (max-width: 768px) {
-  .app-container { padding: 10px 12px; }
-  .header { flex-direction: column; align-items: flex-start; }
-  .kpi-band { grid-template-columns: repeat(2, 1fr); }
-  .chart-grid { grid-template-columns: 1fr; }
-}
-
-/* --- Pagination --- */
-.pagination {
-  display: flex; gap: 4px; align-items: center; justify-content: center;
-  margin: 12px 0; flex-wrap: wrap;
-}
-.pagination button {
-  padding: 4px 10px; border: 1px solid var(--bd); border-radius: 4px;
-  background: var(--sf); color: var(--tx); cursor: pointer; font-size: .75rem;
-}
-.pagination button.active { background: var(--ac); color: #fff; border-color: var(--ac); }
-.pagination .page-info { font-size: .75rem; color: var(--tx2); margin: 0 8px; }
-
-/* --- Search --- */
-.search-bar {
-  display: flex; gap: 8px; margin-bottom: 12px; align-items: center;
-}
-.search-bar input {
-  flex: 1; padding: 8px 12px; border: 1px solid var(--bd); border-radius: var(--radius);
-  background: var(--sf); color: var(--tx); font-size: .85rem;
-}
-.search-bar input:focus { outline: none; border-color: var(--ac); }
-.search-bar select {
-  padding: 8px 12px; border: 1px solid var(--bd); border-radius: var(--radius);
-  background: var(--sf); color: var(--tx); font-size: .85rem;
-}
+:root{--bg:#0f1117;--sf:#1a1d27;--sf2:#22263a;--bd:#333854;--tx:#e8ebf4;--tx2:#8b92a8;--tx3:#5a6080;--ac:#4f8df7;--gn:#34d399;--rd:#f87171;--or:#fbbf24;--pp:#a78bfa;--cy:#22d3ee;--voie:#4f8df7;--ct:#34d399;--tde:#fbbf24;--eso:#f87171;--stf:#a78bfa;--radius:8px;--shadow:0 2px 8px rgba(0,0,0,.3)}
+.light{--bg:#f3f4f8;--sf:#fff;--sf2:#f0f1f6;--bd:#d1d5e0;--tx:#1a1d27;--tx2:#5a6080;--tx3:#8b92a8;--shadow:0 2px 8px rgba(0,0,0,.08)}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--tx);line-height:1.5;transition:background .3s,color .3s}
+.app{max-width:1600px;margin:0 auto;padding:16px 24px}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+.header h1{font-size:1.5rem;font-weight:800;background:linear-gradient(135deg,var(--ac),var(--pp));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.badge{display:inline-block;padding:2px 10px;border-radius:12px;font-size:.7rem;font-weight:700;background:var(--ac);color:#fff;margin-left:8px;vertical-align:middle}
+.hdr-r{display:flex;gap:8px;flex-wrap:wrap}
+.btn{padding:8px 16px;border-radius:var(--radius);border:1px solid var(--bd);background:var(--sf);color:var(--tx);cursor:pointer;font-size:.8rem;font-weight:600;transition:all .2s}
+.btn:hover{border-color:var(--ac);color:var(--ac)}.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-exp{background:var(--gn);color:#fff;border-color:var(--gn)}.btn-exp:hover{background:#2bb87d}
+.btn-te{padding:4px 12px;border-radius:4px;border:1px solid var(--bd);background:var(--sf2);color:var(--tx2);cursor:pointer;font-size:.7rem;font-weight:600;transition:all .2s;margin-left:8px}
+.btn-te:hover{border-color:var(--gn);color:var(--gn)}
+.upl{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-bottom:20px}
+.upl-c{background:var(--sf);border:2px dashed var(--bd);border-radius:var(--radius);padding:12px;text-align:center;cursor:pointer;transition:all .2s;position:relative;min-height:80px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.upl-c:hover,.upl-c.dragover{border-color:var(--ac);background:var(--sf2)}
+.upl-c.loaded{border-color:var(--gn);border-style:solid}
+.upl-c .ic{font-size:1.4rem;margin-bottom:2px}.upl-c .lb{font-size:.72rem;font-weight:600;color:var(--tx2)}
+.upl-c .st{font-size:.62rem;color:var(--tx3);margin-top:2px}.upl-c.loaded .st{color:var(--gn)}
+.upl-c input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer}
+.us{display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap}
+.ub{padding:6px 16px;border-radius:20px;border:1px solid var(--bd);background:var(--sf);color:var(--tx2);cursor:pointer;font-size:.8rem;font-weight:600;transition:all .2s}
+.ub:hover{border-color:var(--ac);color:var(--tx)}.ub.active{background:var(--ac);color:#fff;border-color:var(--ac)}
+.ub[data-u="VOIE"].active{background:var(--voie);border-color:var(--voie)}
+.ub[data-u="CT"].active{background:var(--ct);border-color:var(--ct)}
+.ub[data-u="TDE"].active{background:var(--tde);border-color:var(--tde);color:#1a1d27}
+.ub[data-u="ESO"].active{background:var(--eso);border-color:var(--eso)}
+.ub[data-u="STF/ISE"].active{background:var(--stf);border-color:var(--stf)}
+.kpi-b{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:20px}
+.kc{background:var(--sf);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);border-left:4px solid var(--ac)}
+.kc .kl{font-size:.7rem;color:var(--tx2);font-weight:600;text-transform:uppercase}
+.kc .kv{font-size:1.5rem;font-weight:700;margin:4px 0 2px}.kc .ks{font-size:.7rem;color:var(--tx3)}
+.kc.green{border-left-color:var(--gn)}.kc.red{border-left-color:var(--rd)}.kc.orange{border-left-color:var(--or)}.kc.purple{border-left-color:var(--pp)}.kc.cyan{border-left-color:var(--cy)}
+.tn{display:flex;gap:2px;border-bottom:2px solid var(--bd);margin-bottom:20px;overflow-x:auto;flex-wrap:nowrap}
+.tb{padding:10px 18px;border:none;background:none;color:var(--tx2);cursor:pointer;font-size:.82rem;font-weight:600;white-space:nowrap;border-bottom:3px solid transparent;transition:all .2s}
+.tb:hover{color:var(--tx)}.tb.active{color:var(--ac);border-bottom-color:var(--ac)}
+.tc{display:none}.tc.active{display:block}
+.dtw{overflow-x:auto;margin-bottom:16px;border-radius:var(--radius)}
+.dt{width:100%;border-collapse:collapse;font-size:.76rem;background:var(--sf)}
+.dt thead th{background:var(--sf2);color:var(--tx);padding:9px 8px;text-align:left;font-weight:700;position:sticky;top:0;border-bottom:2px solid var(--bd);white-space:nowrap;font-size:.7rem}
+.dt tbody td{padding:6px 8px;border-bottom:1px solid var(--bd);white-space:nowrap}
+.dt tbody tr:hover{background:var(--sf2)}
+.dt .n{text-align:right;font-variant-numeric:tabular-nums}
+.dt .hr{color:var(--rd);font-weight:600}.dt .hg{color:var(--gn);font-weight:600}
+.dt .ho{color:var(--or);font-weight:600}.dt .hb{color:var(--ac);font-weight:600}
+.dt .dep{background:rgba(248,113,113,.12);color:var(--rd);font-weight:600}
+.st{font-size:1.05rem;font-weight:700;color:var(--ac);margin:20px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between}
+.card{background:var(--sf);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);margin-bottom:14px}
+.cg{display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:14px;margin-bottom:20px}
+.cc{background:var(--sf);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow)}
+.cc canvas{max-height:300px}
+.gg{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:20px}
+.gi{background:var(--sf);border-radius:var(--radius);padding:12px;text-align:center;box-shadow:var(--shadow)}
+.gi .gl{font-size:.72rem;font-weight:600;color:var(--tx2);margin-bottom:4px}
+.gi .gb{height:8px;background:var(--sf2);border-radius:4px;overflow:hidden;margin:6px 0}
+.gi .gf{height:100%;border-radius:4px;transition:width .5s}
+.gi .gv{font-size:.78rem;font-weight:700}
+.meth{line-height:1.8}.meth h3{color:var(--ac);margin:14px 0 6px;font-size:.95rem}
+.meth p,.meth li{color:var(--tx2);font-size:.82rem}.meth ul{padding-left:20px}
+.footer{text-align:center;padding:16px 0;margin-top:30px;border-top:1px solid var(--bd);color:var(--tx3);font-size:.72rem}
+.lo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center}
+.lo.active{display:flex}.ls{width:48px;height:48px;border:4px solid var(--bd);border-top-color:var(--ac);border-radius:50%;animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.pg{display:flex;gap:4px;align-items:center;justify-content:center;margin:10px 0;flex-wrap:wrap}
+.pg button{padding:4px 10px;border:1px solid var(--bd);border-radius:4px;background:var(--sf);color:var(--tx);cursor:pointer;font-size:.72rem}
+.pg button.active{background:var(--ac);color:#fff;border-color:var(--ac)}
+.pg .pi{font-size:.72rem;color:var(--tx2);margin:0 8px}
+.sb{display:flex;gap:8px;margin-bottom:10px;align-items:center;flex-wrap:wrap}
+.sb input{flex:1;min-width:200px;padding:8px 12px;border:1px solid var(--bd);border-radius:var(--radius);background:var(--sf);color:var(--tx);font-size:.82rem}
+.sb input:focus{outline:none;border-color:var(--ac)}
+.sb select{padding:8px 12px;border:1px solid var(--bd);border-radius:var(--radius);background:var(--sf);color:var(--tx);font-size:.82rem}
+@media print{.hdr-r,.upl,.us,.tn,.footer,.btn-te{display:none!important}.tc{display:block!important;page-break-inside:avoid}body{background:#fff;color:#000;font-size:10pt}.kc,.card,.cc{box-shadow:none;border:1px solid #ccc}}
+@media(max-width:768px){.app{padding:10px 12px}.header{flex-direction:column;align-items:flex-start}.kpi-b{grid-template-columns:repeat(2,1fr)}.cg{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-
-<!-- ═══════════════════════════════════════════════════════════════════════════
-     STRUCTURE HTML
-     ═══════════════════════════════════════════════════════════════════════════ -->
-
-<div class="loader-overlay" id="loader"><div class="loader-spinner"></div></div>
-
-<div class="app-container">
-
-  <!-- HEADER -->
-  <header class="header">
-    <div class="header-left">
-      <h1>Optimisation Stock GDI</h1>
-      <span class="badge">V3.1</span>
-    </div>
-    <div class="header-right">
-      <button class="btn" id="btnTheme" onclick="toggleTheme()">Mode Clair</button>
-      <button class="btn btn-export" id="btnExportExcel" onclick="exportExcel()" disabled>Export Excel</button>
-      <button class="btn" onclick="window.print()">Export PDF</button>
-    </div>
-  </header>
-
-  <!-- UPLOAD ZONE -->
-  <section class="upload-section" id="uploadSection">
-    <div class="upload-card" id="dropStock">
-      <div class="icon">📦</div>
-      <div class="label">STOCK (obligatoire)</div>
-      <div class="status" id="statusStock">Glisser ou cliquer</div>
-      <input type="file" accept=".xlsx,.xls,.csv" onchange="handleFile(this,'stock')">
-    </div>
-    <div class="upload-card" id="dropSorties">
-      <div class="icon">📤</div>
-      <div class="label">SORTIES / RETOURS</div>
-      <div class="status" id="statusSorties">Optionnel</div>
-      <input type="file" accept=".xlsx,.xls,.csv" onchange="handleFile(this,'sorties')">
-    </div>
-    <div class="upload-card" id="dropBC">
-      <div class="icon">📋</div>
-      <div class="label">BONS DE COMMANDE</div>
-      <div class="status" id="statusBC">Optionnel</div>
-      <input type="file" accept=".xlsx,.xls,.csv" onchange="handleFile(this,'bc')">
-    </div>
-    <div class="upload-card" id="dropDepre">
-      <div class="icon">📉</div>
-      <div class="label">DÉPRÉCIATION</div>
-      <div class="status" id="statusDepre">Optionnel</div>
-      <input type="file" accept=".xlsx,.xls,.csv" onchange="handleFile(this,'depreciation')">
-    </div>
-    <div class="upload-card" id="dropResa">
-      <div class="icon">📅</div>
-      <div class="label">RÉSERVATIONS</div>
-      <div class="status" id="statusResa">Optionnel</div>
-      <input type="file" accept=".xlsx,.xls,.csv" onchange="handleFile(this,'reservation')">
-    </div>
-  </section>
-
-  <!-- UNIT SELECTOR -->
-  <nav class="unit-selector" id="unitSelector">
-    <button class="unit-btn active" data-unit="ALL" onclick="filterUnit('ALL')">Toutes</button>
-    <button class="unit-btn" data-unit="VOIE" onclick="filterUnit('VOIE')">VOIE</button>
-    <button class="unit-btn" data-unit="CT" onclick="filterUnit('CT')">CT</button>
-    <button class="unit-btn" data-unit="TDE" onclick="filterUnit('TDE')">TDE</button>
-    <button class="unit-btn" data-unit="ESO" onclick="filterUnit('ESO')">ESO</button>
-    <button class="unit-btn" data-unit="STF/ISE" onclick="filterUnit('STF/ISE')">STF/ISE</button>
-  </nav>
-
-  <!-- KPI BAND -->
-  <section class="kpi-band" id="kpiBand">
-    <div class="kpi-card"><div class="kpi-label">Stock Total</div><div class="kpi-value" id="kpiStockTotal">—</div><div class="kpi-sub" id="kpiStockTotalSub"></div></div>
-    <div class="kpi-card green"><div class="kpi-label">Objectif</div><div class="kpi-value" id="kpiObjectif">—</div><div class="kpi-sub" id="kpiObjectifSub"></div></div>
-    <div class="kpi-card red"><div class="kpi-label">Écart</div><div class="kpi-value" id="kpiEcart">—</div><div class="kpi-sub" id="kpiEcartSub"></div></div>
-    <div class="kpi-card orange"><div class="kpi-label">Économie Potentielle</div><div class="kpi-value" id="kpiEconomie">—</div><div class="kpi-sub" id="kpiEconomieSub"></div></div>
-    <div class="kpi-card purple"><div class="kpi-label">% Réduction</div><div class="kpi-value" id="kpiReduction">—</div><div class="kpi-sub" id="kpiReductionSub"></div></div>
-    <div class="kpi-card cyan"><div class="kpi-label">Articles Analysés</div><div class="kpi-value" id="kpiArticles">—</div><div class="kpi-sub" id="kpiArticlesSub"></div></div>
-  </section>
-
-  <!-- TABS NAVIGATION -->
-  <nav class="tabs-nav">
-    <button class="tab-btn active" data-tab="synthese" onclick="switchTab('synthese')">SYNTHÈSE</button>
-    <button class="tab-btn" data-tab="pareto" onclick="switchTab('pareto')">PARETO ABC</button>
-    <button class="tab-btn" data-tab="reforme" onclick="switchTab('reforme')">RÉFORME</button>
-    <button class="tab-btn" data-tab="mutualisation" onclick="switchTab('mutualisation')">MUTUALISATION</button>
-    <button class="tab-btn" data-tab="parametrage" onclick="switchTab('parametrage')">PARAMÉTRAGE</button>
-    <button class="tab-btn" data-tab="detail" onclick="switchTab('detail')">DÉTAIL MAGASIN</button>
-    <button class="tab-btn" data-tab="methodologie" onclick="switchTab('methodologie')">MÉTHODOLOGIE</button>
-  </nav>
-
-  <!-- ═══ TAB: SYNTHÈSE ═══ -->
-  <div class="tab-content active" id="tab-synthese">
-    <div class="section-title">Jauges par Unité</div>
-    <div class="gauge-grid" id="gaugeGrid"></div>
-
-    <div class="section-title">Dormance du Stock</div>
-    <div class="card" id="dormanceCard">
-      <div class="data-table-wrap"><table class="data-table" id="tableDormance"></table></div>
-    </div>
-
-    <div class="section-title">Synthèse des 5 Leviers d'Optimisation</div>
-    <div class="card" id="leviersCard">
-      <div class="data-table-wrap"><table class="data-table" id="tableLeviers"></table></div>
-    </div>
-
-    <div class="section-title">Synthèse par Magasin</div>
-    <div class="card">
-      <div class="data-table-wrap"><table class="data-table" id="tableMagasin"></table></div>
-    </div>
-
-    <div class="section-title">Graphiques</div>
-    <div class="chart-grid">
-      <div class="chart-card"><canvas id="chart1"></canvas></div>
-      <div class="chart-card"><canvas id="chart2"></canvas></div>
-      <div class="chart-card"><canvas id="chart3"></canvas></div>
-      <div class="chart-card"><canvas id="chart4"></canvas></div>
-      <div class="chart-card"><canvas id="chart5"></canvas></div>
-      <div class="chart-card"><canvas id="chart6"></canvas></div>
-      <div class="chart-card"><canvas id="chart7"></canvas></div>
-      <div class="chart-card"><canvas id="chart8"></canvas></div>
-      <div class="chart-card"><canvas id="chart9"></canvas></div>
-    </div>
-  </div>
-
-  <!-- ═══ TAB: PARETO ABC ═══ -->
-  <div class="tab-content" id="tab-pareto">
-    <div class="section-title">Classification ABC (Pareto)</div>
-    <div class="search-bar">
-      <input type="text" id="searchPareto" placeholder="Rechercher article, libellé..." oninput="filterTable('pareto')">
-      <select id="filterABC" onchange="filterTable('pareto')">
-        <option value="">Toutes classes</option>
-        <option value="A">Classe A</option>
-        <option value="B">Classe B</option>
-        <option value="C">Classe C</option>
-        <option value="D">Classe D</option>
-      </select>
-    </div>
-    <div class="card">
-      <div class="data-table-wrap" style="max-height:600px;overflow-y:auto">
-        <table class="data-table" id="tablePareto"></table>
-      </div>
-      <div class="pagination" id="paginationPareto"></div>
-    </div>
-  </div>
-
-  <!-- ═══ TAB: RÉFORME ═══ -->
-  <div class="tab-content" id="tab-reforme">
-    <div class="section-title">Candidats à la Réforme</div>
-    <div class="search-bar">
-      <input type="text" id="searchReforme" placeholder="Rechercher..." oninput="filterTable('reforme')">
-      <select id="filterPriorite" onchange="filterTable('reforme')">
-        <option value="">Toutes priorités</option>
-        <option value="HAUTE">HAUTE</option>
-        <option value="MOYENNE">MOYENNE</option>
-        <option value="BASSE">BASSE</option>
-      </select>
-    </div>
-    <div class="card">
-      <div class="data-table-wrap" style="max-height:600px;overflow-y:auto">
-        <table class="data-table" id="tableReforme"></table>
-      </div>
-      <div class="pagination" id="paginationReforme"></div>
-    </div>
-  </div>
-
-  <!-- ═══ TAB: MUTUALISATION ═══ -->
-  <div class="tab-content" id="tab-mutualisation">
-    <div class="section-title">Mutualisation Inter-Magasins</div>
-    <div class="search-bar">
-      <input type="text" id="searchMutu" placeholder="Rechercher..." oninput="filterTable('mutu')">
-    </div>
-    <div class="card">
-      <div class="data-table-wrap" style="max-height:600px;overflow-y:auto">
-        <table class="data-table" id="tableMutu"></table>
-      </div>
-      <div class="pagination" id="paginationMutu"></div>
-    </div>
-  </div>
-
-  <!-- ═══ TAB: PARAMÉTRAGE ═══ -->
-  <div class="tab-content" id="tab-parametrage">
-    <div class="section-title">Reparamétrage Couverture (Classe A/B)</div>
-    <div class="search-bar">
-      <input type="text" id="searchParam" placeholder="Rechercher..." oninput="filterTable('param')">
-    </div>
-    <div class="card">
-      <div class="data-table-wrap" style="max-height:600px;overflow-y:auto">
-        <table class="data-table" id="tableParam"></table>
-      </div>
-      <div class="pagination" id="paginationParam"></div>
-    </div>
-  </div>
-
-  <!-- ═══ TAB: DÉTAIL MAGASIN ═══ -->
-  <div class="tab-content" id="tab-detail">
-    <div class="section-title">Détail par Article × Magasin</div>
-    <div class="search-bar">
-      <input type="text" id="searchDetail" placeholder="Rechercher article, magasin..." oninput="filterTable('detail')">
-      <select id="filterMag" onchange="filterTable('detail')">
-        <option value="">Tous magasins</option>
-      </select>
-    </div>
-    <div class="card">
-      <div class="data-table-wrap" style="max-height:600px;overflow-y:auto">
-        <table class="data-table" id="tableDetail"></table>
-      </div>
-      <div class="pagination" id="paginationDetail"></div>
-    </div>
-  </div>
-
-  <!-- ═══ TAB: MÉTHODOLOGIE ═══ -->
-  <div class="tab-content" id="tab-methodologie">
-    <div class="card methodology" id="methodoContent"></div>
-  </div>
-
-  <!-- FOOTER -->
-  <footer class="footer">
-    Application d'Optimisation de Stock GDI — V3.1 — Généré le <span id="footerDate"></span>
-    <br>Données analysées côté client uniquement. Aucune donnée transmise à un serveur.
-  </footer>
-
+<div class="lo" id="loader"><div class="ls"></div></div>
+<div class="app">
+<header class="header"><div><h1>Optimisation Stock GDI</h1><span class="badge">V3.2</span></div>
+<div class="hdr-r"><button class="btn" id="btnTheme" onclick="toggleTheme()">Mode Clair</button><button class="btn btn-exp" id="btnExAll" onclick="exportExcelAll()" disabled>Export Excel Complet</button><button class="btn" onclick="window.print()">Export PDF</button></div></header>
+<section class="upl">
+<div class="upl-c" id="dS"><div class="ic">📦</div><div class="lb">STOCK MAGASIN</div><div class="st" id="sS">Obligatoire</div><input type="file" accept=".xlsx,.xls,.csv" onchange="handleFile(this,'stockMag')"></div>
+<div class="upl-c" id="dP"><div class="ic">🏭</div><div class="lb">STOCK PLATEFORME</div><div class="st" id="sP">Obligatoire</div><input type="file" accept=".xlsx,.xls,.csv" onchange="handleFile(this,'stockPLF')"></div>
+<div class="upl-c" id="dM"><div class="ic">📤</div><div class="lb">MOUVEMENTS MAGASIN</div><div class="st" id="sM">Optionnel</div><input type="file" accept=".xlsx,.xls,.csv" onchange="handleFile(this,'mvtsMag')"></div>
+<div class="upl-c" id="dMP"><div class="ic">📤</div><div class="lb">MOUVEMENTS PLF</div><div class="st" id="sMP">Optionnel</div><input type="file" accept=".xlsx,.xls,.csv" onchange="handleFile(this,'mvtsPLF')"></div>
+<div class="upl-c" id="dB"><div class="ic">📋</div><div class="lb">BONS DE COMMANDE</div><div class="st" id="sB">Optionnel</div><input type="file" accept=".xlsx,.xls,.csv" onchange="handleFile(this,'bc')"></div>
+<div class="upl-c" id="dD"><div class="ic">📉</div><div class="lb">DÉPRÉCIATION</div><div class="st" id="sD">Optionnel</div><input type="file" accept=".xlsx,.xls,.csv" onchange="handleFile(this,'depre')"></div>
+</section>
+<nav class="us" id="uSel">
+<button class="ub active" data-u="ALL" onclick="filterUnit('ALL')">Toutes</button>
+<button class="ub" data-u="VOIE" onclick="filterUnit('VOIE')">VOIE</button>
+<button class="ub" data-u="CT" onclick="filterUnit('CT')">CT</button>
+<button class="ub" data-u="TDE" onclick="filterUnit('TDE')">TDE</button>
+<button class="ub" data-u="ESO" onclick="filterUnit('ESO')">ESO</button>
+<button class="ub" data-u="STF/ISE" onclick="filterUnit('STF/ISE')">STF/ISE</button>
+</nav>
+<section class="kpi-b" id="kpiB">
+<div class="kc"><div class="kl">Stock Total</div><div class="kv" id="k1">—</div><div class="ks" id="k1s"></div></div>
+<div class="kc green"><div class="kl">Objectif</div><div class="kv" id="k2">—</div><div class="ks" id="k2s"></div></div>
+<div class="kc red"><div class="kl">Écart</div><div class="kv" id="k3">—</div><div class="ks" id="k3s"></div></div>
+<div class="kc orange"><div class="kl">Économie Potentielle</div><div class="kv" id="k4">—</div><div class="ks" id="k4s"></div></div>
+<div class="kc purple"><div class="kl">% Réduction</div><div class="kv" id="k5">—</div><div class="ks" id="k5s"></div></div>
+<div class="kc cyan"><div class="kl">Articles Analysés</div><div class="kv" id="k6">—</div><div class="ks" id="k6s"></div></div>
+</section>
+<nav class="tn">
+<button class="tb active" data-t="syn" onclick="swTab('syn')">SYNTHÈSE</button>
+<button class="tb" data-t="par" onclick="swTab('par')">PARETO ABC</button>
+<button class="tb" data-t="ref" onclick="swTab('ref')">RÉFORME</button>
+<button class="tb" data-t="mut" onclick="swTab('mut')">MUTUALISATION</button>
+<button class="tb" data-t="prm" onclick="swTab('prm')">PARAMÉTRAGE</button>
+<button class="tb" data-t="det" onclick="swTab('det')">DÉTAIL MAGASIN</button>
+<button class="tb" data-t="met" onclick="swTab('met')">MÉTHODOLOGIE</button>
+</nav>
+<div class="tc active" id="t-syn">
+<div class="st"><span>Jauges par Unité</span><button class="btn-te" onclick="exportTab('syn')">Exporter Synthèse</button></div>
+<div class="gg" id="gauges"></div>
+<div class="st"><span>Dormance du Stock</span></div><div class="card"><div class="dtw"><table class="dt" id="tDorm"></table></div></div>
+<div class="st"><span>Synthèse des 5 Leviers d'Optimisation</span></div><div class="card"><div class="dtw"><table class="dt" id="tLev"></table></div></div>
+<div class="st"><span>Synthèse par Magasin</span></div><div class="card"><div class="dtw"><table class="dt" id="tMag"></table></div></div>
+<div class="st"><span>Graphiques</span></div>
+<div class="cg"><div class="cc"><canvas id="c1"></canvas></div><div class="cc"><canvas id="c2"></canvas></div><div class="cc"><canvas id="c3"></canvas></div><div class="cc"><canvas id="c4"></canvas></div><div class="cc"><canvas id="c5"></canvas></div><div class="cc"><canvas id="c6"></canvas></div><div class="cc"><canvas id="c7"></canvas></div><div class="cc"><canvas id="c8"></canvas></div><div class="cc"><canvas id="c9"></canvas></div></div>
 </div>
-
+<div class="tc" id="t-par"><div class="st"><span>Classification ABC (Pareto)</span><button class="btn-te" onclick="exportTab('par')">Exporter Pareto</button></div>
+<div class="sb"><input type="text" id="sPar" placeholder="Rechercher article, libellé..." oninput="filt('par')"><select id="fABC" onchange="filt('par')"><option value="">Toutes classes</option><option>A</option><option>B</option><option>C</option><option>D</option></select></div>
+<div class="card"><div class="dtw" style="max-height:600px;overflow-y:auto"><table class="dt" id="tPar"></table></div><div class="pg" id="pgPar"></div></div></div>
+<div class="tc" id="t-ref"><div class="st"><span>Candidats à la Réforme</span><button class="btn-te" onclick="exportTab('ref')">Exporter Réforme</button></div>
+<div class="sb"><input type="text" id="sRef" placeholder="Rechercher..." oninput="filt('ref')"><select id="fPri" onchange="filt('ref')"><option value="">Toutes priorités</option><option>HAUTE</option><option>MOYENNE</option><option>BASSE</option></select></div>
+<div class="card"><div class="dtw" style="max-height:600px;overflow-y:auto"><table class="dt" id="tRef"></table></div><div class="pg" id="pgRef"></div></div></div>
+<div class="tc" id="t-mut"><div class="st"><span>Mutualisation Inter-Magasins</span><button class="btn-te" onclick="exportTab('mut')">Exporter Mutualisation</button></div>
+<div class="sb"><input type="text" id="sMut" placeholder="Rechercher..." oninput="filt('mut')"></div>
+<div class="card"><div class="dtw" style="max-height:600px;overflow-y:auto"><table class="dt" id="tMut"></table></div><div class="pg" id="pgMut"></div></div></div>
+<div class="tc" id="t-prm"><div class="st"><span>Reparamétrage Couverture (Classe A/B)</span><button class="btn-te" onclick="exportTab('prm')">Exporter Paramétrage</button></div>
+<div class="sb"><input type="text" id="sPrm" placeholder="Rechercher..." oninput="filt('prm')"></div>
+<div class="card"><div class="dtw" style="max-height:600px;overflow-y:auto"><table class="dt" id="tPrm"></table></div><div class="pg" id="pgPrm"></div></div></div>
+<div class="tc" id="t-det"><div class="st"><span>Détail par Article × Magasin</span><button class="btn-te" onclick="exportTab('det')">Exporter Détail</button></div>
+<div class="sb"><input type="text" id="sDet" placeholder="Rechercher article, magasin..." oninput="filt('det')"><select id="fMag" onchange="filt('det')"><option value="">Tous magasins</option></select></div>
+<div class="card"><div class="dtw" style="max-height:600px;overflow-y:auto"><table class="dt" id="tDet"></table></div><div class="pg" id="pgDet"></div></div></div>
+<div class="tc" id="t-met"><div class="st"><span>Méthodologie</span><button class="btn-te" onclick="exportTab('met')">Exporter Méthodologie</button></div><div class="card meth" id="metC"></div></div>
+<footer class="footer">Application d'Optimisation de Stock GDI — V3.2 — Généré le <span id="fDate"></span><br>Données analysées côté client uniquement. Aucune donnée transmise à un serveur.</footer>
+</div>
 <script>
-/* ═══════════════════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════
    SECTION 1 : RÉFÉRENTIELS EMBARQUÉS
-   ═══════════════════════════════════════════════════════════════════════════ */
+   ═══════════════════════════════════════════════════════════════ */
+const UNIT_MAP={'07':{u:'VOIE',t:'Magasin'},'08':{u:'VOIE',t:'Magasin'},'09':{u:'VOIE',t:'Magasin'},'10':{u:'VOIE',t:'Magasin'},'14':{u:'VOIE',t:'Magasin'},'17':{u:'VOIE',t:'Magasin'},'18':{u:'VOIE',t:'Magasin'},'19':{u:'VOIE',t:'Magasin'},'24':{u:'VOIE',t:'Magasin'},'IM07':{u:'VOIE',t:'Plateforme'},'IM08':{u:'VOIE',t:'Plateforme'},'IM09':{u:'VOIE',t:'Plateforme'},'IM10':{u:'VOIE',t:'Plateforme'},'IM14':{u:'VOIE',t:'Plateforme'},'IM17':{u:'VOIE',t:'Plateforme'},'289':{u:'VOIE',t:'Plateforme'},'290':{u:'VOIE',t:'Plateforme'},'AQ01CT':{u:'CT',t:'Magasin'},'BN01CT':{u:'CT',t:'Magasin'},'BR01':{u:'CT',t:'Magasin'},'CE01':{u:'CT',t:'Magasin'},'DF01CT':{u:'CT',t:'Magasin'},'JO01CT':{u:'CT',t:'Magasin'},'PC01':{u:'CT',t:'Magasin'},'AQ02CT':{u:'CT',t:'Plateforme'},'BD02CT':{u:'CT',t:'Plateforme'},'BN02CT':{u:'CT',t:'Plateforme'},'CE02CT':{u:'CT',t:'Plateforme'},'DF02CT':{u:'CT',t:'Plateforme'},'MB02CT':{u:'CT',t:'Plateforme'},'MJ01CT':{u:'CT',t:'Plateforme'},'MJ02CT':{u:'CT',t:'Plateforme'},'MN02CT':{u:'CT',t:'Plateforme'},'IM01CT':{u:'CT',t:'Plateforme'},'IM02CT':{u:'CT',t:'Plateforme'},'IM04CT':{u:'CT',t:'Plateforme'},'IM05':{u:'CT',t:'Plateforme'},'IM05CT':{u:'CT',t:'Plateforme'},'IM06CT':{u:'CT',t:'Plateforme'},'210':{u:'CT',t:'Plateforme'},'212':{u:'CT',t:'Plateforme'},'97':{u:'TDE',t:'Magasin'},'BG':{u:'TDE',t:'Magasin'},'NA':{u:'TDE',t:'Magasin'},'VF':{u:'TDE',t:'Magasin'},'216':{u:'TDE',t:'Plateforme'},'106':{u:'ESO',t:'Magasin'},'BAR':{u:'ESO',t:'Magasin'},'CRU':{u:'ESO',t:'Magasin'},'287':{u:'ESO',t:'Plateforme'},'GPE-97-RATP':{u:'STF/ISE',t:'Plateforme'},'GPE-BAR-RATP':{u:'STF/ISE',t:'Plateforme'},'GPE-EMS-RATP':{u:'STF/ISE',t:'Plateforme'},'GPE-97-SGP':{u:'STF/ISE',t:'Plateforme'},'GPE-BAR-SGP':{u:'STF/ISE',t:'Plateforme'},'GPE-EMS-SGP':{u:'STF/ISE',t:'Plateforme'},'GP-97-SGP-R':{u:'STF/ISE',t:'Plateforme'},'GP-BAR-SGP-R':{u:'STF/ISE',t:'Plateforme'}};
+const EXCL_MAGS=new Set(['99','HS99','R-BAR']);
+function classifyMag(code){const s=String(code).replace(/\.0$/,'').trim();if(s==='NA'||s==='na')return{u:'TDE',t:'Magasin'};if(EXCL_MAGS.has(s))return{u:'EXCLU',t:'Réparable'};if(UNIT_MAP[s])return UNIT_MAP[s];if(/^HS/.test(s)&&/CT/.test(s))return{u:'CT',t:'Plateforme'};if(/^REBUT/.test(s))return{u:'CT',t:'Plateforme'};if(/^51CT$/.test(s))return{u:'CT',t:'Plateforme'};if(/^R-/.test(s))return{u:'EXCLU',t:'Réparable'};return{u:'AUTRE',t:'Inconnu'};}
+const OBJ={'VOIE':{mag:{s:22287196,o:19850000},plf:{s:3776467,o:3800000}},'CT':{mag:{s:4456334,o:3400000},plf:{s:5323509,o:4300000}},'TDE':{mag:{s:4203118,o:3300000},plf:{s:2140362,o:1800000}},'ESO':{mag:{s:479238,o:350000},plf:{s:1482195,o:1200000}},'STF/ISE':{mag:{s:0,o:0},plf:{s:23108432,o:19500000}},'TOTAL':{all:{s:67256851,o:57500000}}};
+const HIST={'VOIE':{mag:{'2024-12':20224212,'2025-12':22546979,'2026-01':22531647},plf:{'2024-12':3308558,'2025-12':3844830,'2026-01':3790698}},'CT':{mag:{'2024-12':4609943,'2025-12':4466392,'2026-01':4491751},plf:{'2024-12':4783333,'2025-12':5328239,'2026-01':5288609}},'TDE':{mag:{'2024-12':4312337,'2025-12':4222346,'2026-01':4206610},plf:{'2024-12':2151591,'2025-12':2176077,'2026-01':2163074}},'ESO':{mag:{'2024-12':417243,'2025-12':416769,'2026-01':458324},plf:{'2024-12':1397292,'2025-12':1495352,'2026-01':1463639}},'STF/ISE':{mag:{'2024-12':0,'2025-12':0,'2026-01':0},plf:{'2024-12':19102259,'2025-12':22976479,'2026-01':23390419}}};
+const COV_TGT={'A':{mag:2,plf:4,total:6},'B':{mag:3,plf:6,total:9},'C':{mag:6,plf:6,total:12},'D':{mag:12,plf:12,total:24}};
+const UC={'VOIE':'#4f8df7','CT':'#34d399','TDE':'#fbbf24','ESO':'#f87171','STF/ISE':'#a78bfa'};
+const AC={'A':'#f87171','B':'#fbbf24','C':'#60a5fa','D':'#6b7280'};
 
-const UNIT_MAP = {
-  '07':{unit:'VOIE',type:'Magasin'},'08':{unit:'VOIE',type:'Magasin'},
-  '09':{unit:'VOIE',type:'Magasin'},'10':{unit:'VOIE',type:'Magasin'},
-  '14':{unit:'VOIE',type:'Magasin'},'17':{unit:'VOIE',type:'Magasin'},
-  '18':{unit:'VOIE',type:'Magasin'},'19':{unit:'VOIE',type:'Magasin'},
-  '24':{unit:'VOIE',type:'Magasin'},
-  'IM07':{unit:'VOIE',type:'Plateforme'},'IM08':{unit:'VOIE',type:'Plateforme'},
-  'IM09':{unit:'VOIE',type:'Plateforme'},'IM10':{unit:'VOIE',type:'Plateforme'},
-  'IM14':{unit:'VOIE',type:'Plateforme'},'IM17':{unit:'VOIE',type:'Plateforme'},
-  'AQ01CT':{unit:'CT',type:'Magasin'},'BN01CT':{unit:'CT',type:'Magasin'},
-  'BR01':{unit:'CT',type:'Magasin'},'CE01':{unit:'CT',type:'Magasin'},
-  'DF01CT':{unit:'CT',type:'Magasin'},'JO01CT':{unit:'CT',type:'Magasin'},
-  'PC01':{unit:'CT',type:'Magasin'},
-  'AQ02CT':{unit:'CT',type:'Plateforme'},'BD02CT':{unit:'CT',type:'Plateforme'},
-  'BN02CT':{unit:'CT',type:'Plateforme'},'CE02CT':{unit:'CT',type:'Plateforme'},
-  'DF02CT':{unit:'CT',type:'Plateforme'},'MB02CT':{unit:'CT',type:'Plateforme'},
-  'MJ01CT':{unit:'CT',type:'Plateforme'},'MJ02CT':{unit:'CT',type:'Plateforme'},
-  'MN02CT':{unit:'CT',type:'Plateforme'},
-  'IM01CT':{unit:'CT',type:'Plateforme'},'IM02CT':{unit:'CT',type:'Plateforme'},
-  'IM04CT':{unit:'CT',type:'Plateforme'},'IM05':{unit:'CT',type:'Plateforme'},
-  'IM05CT':{unit:'CT',type:'Plateforme'},'IM06CT':{unit:'CT',type:'Plateforme'},
-  '97':{unit:'TDE',type:'Magasin'},'BG':{unit:'TDE',type:'Magasin'},
-  'NA':{unit:'TDE',type:'Magasin'},'VF':{unit:'TDE',type:'Magasin'},
-  '99':{unit:'TDE',type:'Plateforme'},'HS99':{unit:'TDE',type:'Plateforme'},
-  '287':{unit:'ESO',type:'Magasin'},'106':{unit:'ESO',type:'Magasin'},
-  'BAR':{unit:'ESO',type:'Magasin'},'CRU':{unit:'ESO',type:'Magasin'},
-  'R-BAR':{unit:'ESO',type:'Plateforme'},
-  'GPE-97-RATP':{unit:'STF/ISE',type:'Plateforme'},
-  'GPE-BAR-RATP':{unit:'STF/ISE',type:'Plateforme'},
-  'GPE-EMS-RATP':{unit:'STF/ISE',type:'Plateforme'},
-  'GPE-97-SGP':{unit:'STF/ISE',type:'Plateforme'},
-  'GPE-BAR-SGP':{unit:'STF/ISE',type:'Plateforme'},
-  'GPE-EMS-SGP':{unit:'STF/ISE',type:'Plateforme'},
-  'GP-97-SGP-R':{unit:'STF/ISE',type:'Plateforme'},
-  'GP-BAR-SGP-R':{unit:'STF/ISE',type:'Plateforme'}
-};
-
-// Magasins plateforme EXCLUS du périmètre local d'analyse
-// (99, HS99 = TDE réparables ; R-BAR = ESO réparable)
-// Ils sont comptabilisés séparément mais exclus des leviers d'optimisation
-const EXCLUDED_MAGS = new Set(['99', 'HS99', 'R-BAR']);
-
-function classifyMag(code) {
-  const s = String(code).trim();
-  if (s === 'NA' || s === 'na') return {unit:'TDE',type:'Magasin'};
-  if (UNIT_MAP[s]) return UNIT_MAP[s];
-  if (/^HS/.test(s) && /CT/.test(s)) return {unit:'CT',type:'Plateforme'};
-  if (/^REBUT/.test(s)) return {unit:'CT',type:'Plateforme'};
-  if (/^51CT$/.test(s)) return {unit:'CT',type:'Plateforme'};
-  return {unit:'AUTRE',type:'Inconnu'};
-}
-
-function isExcludedMag(code) {
-  return EXCLUDED_MAGS.has(String(code).trim());
-}
-
-const OBJECTIVES = {
-  'VOIE':    {mag:{stock:22287196,obj:19850000}, plf:{stock:3776467,obj:3800000}},
-  'CT':      {mag:{stock:4456334,obj:3400000},   plf:{stock:5323509,obj:4300000}},
-  'TDE':     {mag:{stock:4203118,obj:3300000},   plf:{stock:2140362,obj:1800000}},
-  'ESO':     {mag:{stock:479238,obj:350000},     plf:{stock:1482195,obj:1200000}},
-  'STF/ISE': {mag:{stock:0,obj:0},               plf:{stock:23108432,obj:19500000}},
-  'TOTAL':   {all:{stock:67256851,obj:57500000}}
-};
-
-const HISTORY = {
-  'VOIE':    {mag:{'2024-12':20224212,'2025-12':22546979,'2026-01':22531647},
-              plf:{'2024-12':3308558,'2025-12':3844830,'2026-01':3790698}},
-  'CT':      {mag:{'2024-12':4609943,'2025-12':4466392,'2026-01':4491751},
-              plf:{'2024-12':4783333,'2025-12':5328239,'2026-01':5288609}},
-  'TDE':     {mag:{'2024-12':4312337,'2025-12':4222346,'2026-01':4206610},
-              plf:{'2024-12':2151591,'2025-12':2176077,'2026-01':2163074}},
-  'ESO':     {mag:{'2024-12':417243,'2025-12':416769,'2026-01':458324},
-              plf:{'2024-12':1397292,'2025-12':1495352,'2026-01':1463639}},
-  'STF/ISE': {mag:{'2024-12':0,'2025-12':0,'2026-01':0},
-              plf:{'2024-12':19102259,'2025-12':22976479,'2026-01':23390419}}
-};
-
-const COVERAGE_TARGETS = {
-  'A': {mag:2, plf:4, total:6},
-  'B': {mag:3, plf:6, total:9},
-  'C': {mag:6, plf:6, total:12},
-  'D': {mag:12, plf:12, total:24}
-};
-
-const UNIT_COLORS = {
-  'VOIE':'#4f8df7','CT':'#34d399','TDE':'#fbbf24','ESO':'#f87171','STF/ISE':'#a78bfa'
-};
-const ABC_COLORS = {'A':'#f87171','B':'#fbbf24','C':'#60a5fa','D':'#6b7280'};
-
-/* ═══════════════════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════
    SECTION 2 : FONCTIONS UTILITAIRES
-   ═══════════════════════════════════════════════════════════════════════════ */
+   ═══════════════════════════════════════════════════════════════ */
+function fmtE(v){if(v==null||isNaN(v))return'—';return Math.round(v).toLocaleString('fr-FR')+' \u20AC';}
+function fmtN(v,d){if(v==null||isNaN(v))return'—';return d!==undefined?Number(v).toLocaleString('fr-FR',{minimumFractionDigits:d,maximumFractionDigits:d}):Math.round(v).toLocaleString('fr-FR');}
+function fmtP(v){if(v==null||isNaN(v))return'—';return(v*100).toFixed(1)+' %';}
+function sN(v){if(v===null||v===undefined||v==='')return 0;const s=String(v).trim();if(s==='NA'||s==='NaN'||s==='nan'||s==='#N/A'||s==='-')return 0;const n=Number(s.replace(/\s/g,'').replace(',','.'));return isNaN(n)?0:n;}
+function sM(v){if(v===null||v===undefined)return'';const s=String(v).replace(/\.0$/,'').trim();if(s===''||s==='NaN'||s==='nan'||s==='undefined'||s==='null')return'';return s;}
+function pD(v){if(!v)return null;if(v instanceof Date)return isNaN(v.getTime())?null:v;const s=String(v).trim();const p=s.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/);if(p)return new Date(+p[3],+p[2]-1,+p[1]);const d=new Date(s);return isNaN(d.getTime())?null:d;}
+function gY(v){const d=pD(v);return d?d.getFullYear():null;}
+function dBet(d1,d2){const a=pD(d1),b=pD(d2);if(!a||!b)return null;return Math.round(Math.abs(b-a)/864e5);}
 
-function formatEUR(v) {
-  if (v == null || isNaN(v)) return '—';
-  return new Intl.NumberFormat('fr-FR', {style:'currency',currency:'EUR',maximumFractionDigits:0}).format(v);
-}
-function formatNum(v, d=0) {
-  if (v == null || isNaN(v)) return '—';
-  return new Intl.NumberFormat('fr-FR', {maximumFractionDigits:d}).format(v);
-}
-function formatPct(v, d=1) {
-  if (v == null || isNaN(v)) return '—';
-  return (v*100).toFixed(d).replace('.',',') + ' %';
-}
-function safeNum(v) {
-  if (v === null || v === undefined || v === '' || v === 'NA' || v === 'na') return 0;
-  const n = Number(v);
-  return isNaN(n) ? 0 : n;
-}
-function safeMag(v) {
-  if (v === null || v === undefined) return '';
-  const s = String(v).trim();
-  if (s === 'NaN' || s === 'nan') return '';
-  return s;
-}
-function getYear(d) {
-  if (!d) return null;
-  if (d instanceof Date) return d.getFullYear();
-  const s = String(d);
-  const m = s.match(/(\d{4})/);
-  return m ? parseInt(m[1]) : null;
-}
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 3 : STATE
+   ═══════════════════════════════════════════════════════════════ */
+let S={stockMag:null,stockPLF:null,mvtsMag:null,mvtsPLF:null,bc:null,depre:null,merged:null,computed:null,unit:'ALL',charts:{}};
+const PS=100;let pg={par:1,ref:1,mut:1,prm:1,det:1};
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   SECTION 3 : STATE GLOBAL
-   ═══════════════════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 4 : LECTEURS DE FICHIERS
+   ═══════════════════════════════════════════════════════════════ */
+function readXL(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>{try{res(XLSX.read(e.target.result,{type:'array',cellDates:true,raw:true,defval:null}));}catch(err){rej(err);}};r.onerror=rej;r.readAsArrayBuffer(file);});}
 
-let STATE = {
-  stockData: null,
-  sortiesData: null,
-  bcData: null,
-  depreData: null,
-  resaData: null,
-  computed: null,
-  currentUnit: 'ALL',
-  charts: {}
-};
-
-const PAGE_SIZE = 100;
-let pageStates = { pareto:1, reforme:1, mutu:1, param:1, detail:1 };
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   SECTION 4 : LECTEURS DE FICHIERS (SheetJS)
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-function readExcelFile(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = e => {
-      try {
-        const wb = XLSX.read(e.target.result, {type:'array', cellDates:true, raw:false, defval:null});
-        resolve(wb);
-      } catch(err) { reject(err); }
-    };
-    reader.onerror = reject;
-    reader.readAsArrayBuffer(file);
-  });
+async function readStockMag(file){
+  const wb=await readXL(file);const ws=wb.Sheets[wb.SheetNames[0]];
+  const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,raw:true});
+  const data=[];let ex90=0,exRep=0;
+  for(let i=1;i<rows.length;i++){
+    const r=rows[i];if(!r||!r[1])continue;
+    const mag=sM(r[6]);if(!mag)continue;
+    const st=String(r[5]||'').trim();
+    if(st==='90'||st.includes('OBSOL')){ex90++;continue;}
+    const cl=classifyMag(mag);
+    if(cl.u==='EXCLU'){exRep++;continue;}
+    data.push({art:String(r[1]||'').trim(),lib:String(r[2]||'').trim(),statut:st,mag,qte:sN(r[7]),
+      datDS:r[17]||null,seuil:sN(r[18]),delai:sN(r[19]),qec:sN(r[20]),secu:sN(r[21]),qMax:sN(r[22]),
+      abc:String(r[23]||'D').trim().toUpperCase(),tourn:sN(r[24]),
+      fourn:String(r[25]||'').trim(),nomF:String(r[26]||'').trim(),
+      contrat:String(r[27]||'').trim(),datFC:r[28]||null,cmp:sN(r[29]),
+      cN:sN(r[30]),cN1:sN(r[31]),cN2:sN(r[32]),cN3:sN(r[33]),cN4:sN(r[34]),cN5:sN(r[35]),cN6:sN(r[36]),
+      unit:cl.u,type:cl.t,source:'MAGASIN'});
+  }
+  console.log(`StockMag: ${data.length} lignes, ${ex90} statut90 exclu, ${exRep} réparables exclu`);
+  return data;
 }
 
-async function readStock(file) {
-  const wb = await readExcelFile(file);
-  const ws = wb.Sheets[wb.SheetNames[0]];
-  const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, raw:true});
-  if (rows.length < 2) throw new Error('Fichier stock vide');
-  const headers = rows[0];
-  const data = [];
-  for (let i = 1; i < rows.length; i++) {
-    const r = rows[i];
-    if (!r || !r[1]) continue;
-    const mag = safeMag(r[6]);
-    if (!mag) continue;
-    data.push({
-      article: String(r[1]||'').trim(),
-      libelle: String(r[2]||'').trim(),
-      statut: String(r[5]||'').trim(),
-      magasin: mag,
-      qte: safeNum(r[7]),
-      dateDerniereSortie: r[17] || null,
-      seuil: safeNum(r[18]),
-      delaiJours: safeNum(r[19]),
-      qec: safeNum(r[20]),
-      stockSecu: safeNum(r[21]),
-      qteMax: safeNum(r[22]),
-      typeABC: String(r[23]||'D').trim().toUpperCase(),
-      tournant: safeNum(r[24]),
-      fournisseur: String(r[25]||'').trim(),
-      nomFournisseur: String(r[26]||'').trim(),
-      contrat: String(r[27]||'').trim(),
-      dateFinContrat: r[28] || null,
-      coutMoyen: safeNum(r[29]),
-      consoN: safeNum(r[30]),
-      consoN1: safeNum(r[31]),
-      consoN2: safeNum(r[32]),
-      consoN3: safeNum(r[33]),
-      consoN4: safeNum(r[34]),
-      consoN5: safeNum(r[35]),
-      consoN6: safeNum(r[36]),
-      _classify: classifyMag(mag)
-    });
+async function readStockPLF(file){
+  const wb=await readXL(file);const ws=wb.Sheets[wb.SheetNames[0]];
+  const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,raw:true});
+  const data=[];let exF=0;
+  for(let i=1;i<rows.length;i++){
+    const r=rows[i];if(!r||!r[0])continue;
+    const mag=sM(r[4]);if(!mag)continue;
+    const st=String(r[12]||'').trim();
+    if(st.toLowerCase().includes('ferm')){exF++;continue;}
+    const cl=classifyMag(mag);
+    if(cl.u==='EXCLU'||cl.u==='AUTRE')continue;
+    data.push({art:String(r[0]||'').trim(),lib:String(r[1]||'').trim(),
+      statut:st==='A'||st==='Actif'||st.toLowerCase()==='a'?'40':'70',mag,
+      qte:sN(r[5]),cmp:sN(r[11]),valeur:sN(r[14]),
+      fourn:String(r[15]||'').trim(),nomF:String(r[16]||'').trim(),
+      seuil:sN(r[17]),delai:sN(r[25]),
+      secu:sN(r[17]),qMax:null,qec:null,contrat:null,datFC:null,
+      abc:null,tourn:null,datDS:null,
+      cN:null,cN1:null,cN2:null,cN3:null,cN4:null,cN5:null,cN6:null,
+      unit:cl.u,type:cl.t,source:'PLATEFORME'});
+  }
+  console.log(`StockPLF: ${data.length} lignes, ${exF} fermés exclu`);
+  return data;
+}
+
+async function readMvtsMag(file){
+  const wb=await readXL(file);const ws=wb.Sheets[wb.SheetNames[0]];
+  const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,raw:true});
+  const data=[];
+  for(let i=1;i<rows.length;i++){
+    const r=rows[i];if(!r||!r[0])continue;
+    data.push({art:String(r[0]||'').trim(),mag:sM(r[2]),datMvt:r[4]||null,
+      typeMvt:String(r[5]||'').trim(),qte:sN(r[6]),cout:sN(r[8])});
   }
   return data;
 }
 
-async function readSorties(file) {
-  const wb = await readExcelFile(file);
-  const ws = wb.Sheets[wb.SheetNames[0]];
-  const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, raw:true});
-  const data = [];
-  for (let i = 1; i < rows.length; i++) {
-    const r = rows[i];
-    if (!r || !r[0]) continue;
-    data.push({
-      article: String(r[0]||'').trim(),
-      magasin: safeMag(r[2]),
-      dateMouvement: r[4] || null,
-      typeMouvement: String(r[5]||'').trim(),
-      qte: safeNum(r[6]),
-      coutLigne: safeNum(r[8])
-    });
+async function readMvtsPLF(file){
+  const wb=await readXL(file);const ws=wb.Sheets[wb.SheetNames[0]];
+  const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,raw:true});
+  const data=[];
+  for(let i=1;i<rows.length;i++){
+    const r=rows[i];if(!r)continue;
+    const nomType=String(r[1]||'').trim().toUpperCase();
+    const sens=String(r[5]||'').trim().toUpperCase();
+    const isSortie=nomType.includes('SORTIE')&&!nomType.includes('ANNUL')&&sens==='M';
+    data.push({periode:String(r[0]||'').trim(),nomType,mag:sM(r[3]),
+      sens,art:String(r[6]||'').trim(),qte:sN(r[7]),valeur:sN(r[8]),
+      datCrea:r[14]||null,isSortie});
   }
   return data;
 }
 
-async function readBC(file) {
-  const wb = await readExcelFile(file);
-  const ws = wb.Sheets[wb.SheetNames[0]];
-  const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, raw:true});
-  const data = [];
-  for (let i = 1; i < rows.length; i++) {
-    const r = rows[i];
-    if (!r) continue;
-    data.push({
-      magasin: safeMag(r[0]),
-      codeArticle: String(r[15]||'').trim(),
-      qteCommandee: safeNum(r[18]),
-      qteRecue: safeNum(r[19]),
-      dateCommande: r[21] || null,
-      dateReception: r[12] || null,
-      libelleFournisseur: String(r[27]||'').trim(),
-      coutUnitaire: safeNum(r[28])
-    });
+async function readBC(file){
+  const wb=await readXL(file);const ws=wb.Sheets[wb.SheetNames[0]];
+  const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,raw:true});
+  const data=[];
+  for(let i=1;i<rows.length;i++){
+    const r=rows[i];if(!r)continue;
+    data.push({mag:sM(r[0]),art:String(r[15]||'').trim(),qCmd:sN(r[18]),qRec:sN(r[19]),
+      datCmd:r[21]||null,datRec:r[12]||null,libF:String(r[27]||'').trim(),cu:sN(r[28])});
   }
   return data;
 }
 
-async function readDepreciation(file) {
-  const wb = await readExcelFile(file);
-  // Lire l'onglet "Export" spécifiquement
-  let sheetName = 'Export';
-  if (!wb.Sheets[sheetName]) sheetName = wb.SheetNames[0];
-  const ws = wb.Sheets[sheetName];
-  const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, raw:true});
-  const data = [];
-  for (let i = 1; i < rows.length; i++) {
-    const r = rows[i];
-    if (!r || !r[3]) continue;
-    data.push({
-      codeArticle: String(r[3]||'').trim(),
-      codeMagasin: safeMag(r[4]),
-      valeurStock: safeNum(r[5]),
-      provisionM: safeNum(r[9]),
-      provisionStockMort: safeNum(r[11]),
-      provisionSurstock: safeNum(r[12]),
-      nbMoisDepuisDernierMvt: safeNum(r[13])
-    });
+async function readDepre(file){
+  const wb=await readXL(file);let sn='Export';if(!wb.Sheets[sn])sn=wb.SheetNames[0];
+  const ws=wb.Sheets[sn];
+  const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,raw:true});
+  const data=[];
+  for(let i=1;i<rows.length;i++){
+    const r=rows[i];if(!r||!r[3])continue;
+    data.push({art:String(r[3]||'').trim(),mag:sM(r[4]),valS:sN(r[5]),
+      provM:sN(r[9]),provSM:sN(r[11]),provSS:sN(r[12]),nbMois:sN(r[13])});
   }
   return data;
 }
-
-async function readReservation(file) {
-  const wb = await readExcelFile(file);
-  const ws = wb.Sheets[wb.SheetNames[0]];
-  const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, raw:true});
-  const data = [];
-  for (let i = 1; i < rows.length; i++) {
-    const r = rows[i];
-    if (!r) continue;
-    data.push({
-      article: String(r[4]||'').trim(),
-      magasin: safeMag(r[6]),
-      qteReservee: safeNum(r[9]),
-      prixLigne: safeNum(r[10])
-    });
-  }
-  return data;
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   SECTION 5 : MOTEUR DE CALCUL
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-function computeAll() {
-  const stock = STATE.stockData;
-  if (!stock || stock.length === 0) return null;
-
-  const sorties = STATE.sortiesData || [];
-  const bc = STATE.bcData || [];
-  const depre = STATE.depreData || [];
-
-  // Index dépréciation par article+magasin
-  const depreIndex = {};
-  depre.forEach(d => {
-    const key = d.codeArticle + '|' + d.codeMagasin;
-    depreIndex[key] = d;
-  });
-
-  // Index sorties par article
-  const sortiesIndex = {};
-  sorties.forEach(s => {
-    if (s.typeMouvement.toUpperCase().includes('SORTIE')) {
-      if (!sortiesIndex[s.article]) sortiesIndex[s.article] = [];
-      sortiesIndex[s.article].push(s);
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 5 : MOTEUR DE CALCUL PRINCIPAL
+   ═══════════════════════════════════════════════════════════════ */
+function computeAll(){
+  const merged=[...(S.stockMag||[]),...(S.stockPLF||[])];
+  merged.forEach(r=>{if(r.source==='MAGASIN')r.valeur=r.qte*r.cmp;});
+  const depIdx={};
+  if(S.depre)S.depre.forEach(d=>{depIdx[d.art+'|'+d.mag]=d;});
+  const bcByArt={};
+  if(S.bc)S.bc.forEach(b=>{if(!bcByArt[b.art])bcByArt[b.art]=[];bcByArt[b.art].push(b);});
+  const mvtPLFByAM={};
+  if(S.mvtsPLF)S.mvtsPLF.forEach(m=>{if(m.isSortie){const k=m.art+'|'+m.mag;if(!mvtPLFByAM[k])mvtPLFByAM[k]=[];mvtPLFByAM[k].push(m);}});
+  const mvtMagByAM={};
+  if(S.mvtsMag)S.mvtsMag.forEach(m=>{if(m.typeMvt.toUpperCase()==='SORTIE'){const k=m.art+'|'+m.mag;if(!mvtMagByAM[k])mvtMagByAM[k]=[];mvtMagByAM[k].push(m);}});
+  const enriched=merged.map(r=>{
+    let cmm=0;
+    if(r.source==='MAGASIN'){
+      const mvts=mvtMagByAM[r.art+'|'+r.mag];
+      if(mvts&&mvts.length>0){cmm=mvts.reduce((s,m)=>s+Math.abs(m.cout),0)/36;}
+      else{cmm=((r.cN||0)+(r.cN1||0)+(r.cN2||0))/36;}
+    }else{
+      const mvts=mvtPLFByAM[r.art+'|'+r.mag];
+      if(mvts&&mvts.length>0){cmm=mvts.reduce((s,m)=>s+Math.abs(m.valeur),0)/36;}
     }
-  });
-
-  // Enrichir chaque ligne stock
-  const enriched = stock.map(row => {
-    const unit = row._classify.unit;
-    const type = row._classify.type;
-    const valeur = row.qte * row.coutMoyen;
-    const isOskar = row.fournisseur.toUpperCase().includes('OSKAR') || row.contrat.toUpperCase().includes('OSKAR');
-    const isPlateforme = type === 'Plateforme' || isOskar;
-    const isExcluded = isExcludedMag(row.magasin); // 99, HS99, R-BAR exclus du périmètre local
-
-    // CMM: moyenne sur 3 ans (N, N-1, N-2)
-    const consoTotale3ans = row.consoN + row.consoN1 + row.consoN2;
-    const consoMoyAn = consoTotale3ans / 3;
-    const cmm = consoMoyAn / 12;
-
-    // Couverture en mois (valeur / CMM car conso est en EUR)
-    let couvertureMois = cmm > 0 ? valeur / cmm : Infinity;
-    if (couvertureMois === Infinity || !isFinite(couvertureMois)) couvertureMois = 9999;
-
-    // Dormance
-    const consoHist = row.consoN + row.consoN1 + row.consoN2 + row.consoN3 + row.consoN4 + row.consoN5 + row.consoN6;
-    const isDormant12 = row.consoN === 0 && row.qte > 0;
-    const isDormant24 = isDormant12 && row.consoN1 === 0;
-    const isDormant36 = isDormant24 && row.consoN2 === 0;
-    const isDormantTotal = isDormant36 && row.consoN3 === 0 && row.consoN4 === 0 && row.consoN5 === 0 && row.consoN6 === 0;
-
-    let dormanceLevel = 'Actif';
-    if (isDormantTotal) dormanceLevel = 'Dormant 36m+';
-    else if (isDormant36) dormanceLevel = 'Dormant 36m';
-    else if (isDormant24) dormanceLevel = 'Dormant 24m';
-    else if (isDormant12) dormanceLevel = 'Dormant 12m';
-
-    // Faible activité: conso N et N-1 = 0 mais conso antérieure > 0
-    const isFaibleActivite = row.consoN === 0 && row.consoN1 === 0 && (row.consoN2 > 0 || row.consoN3 > 0) && row.qte > 0;
-
-    // Croisement dépréciation
-    const depreKey = row.article + '|' + row.magasin;
-    const depreInfo = depreIndex[depreKey] || null;
-    const isDeprecie = depreInfo && depreInfo.provisionM > 0;
-    const provisionM = depreInfo ? depreInfo.provisionM : 0;
-    const provisionStockMort = depreInfo ? depreInfo.provisionStockMort : 0;
-    const provisionSurstock = depreInfo ? depreInfo.provisionSurstock : 0;
-
-    // Réformable immédiatement = dormant + déprécié
-    const reformableImmediat = (isDormant12 || isFaibleActivite) && isDeprecie;
-
-    // Priorité réforme
-    let prioriteReforme = '';
-    if (isDormant12 || isFaibleActivite) {
-      if (valeur >= 1000) prioriteReforme = 'HAUTE';
-      else if (valeur >= 100) prioriteReforme = 'MOYENNE';
-      else prioriteReforme = 'BASSE';
+    const cmmQte=r.cmp>0?cmm/r.cmp:0;
+    const couv=cmm>0?r.valeur/cmm:r.valeur>0?999:0;
+    const consoTot=(r.cN||0)+(r.cN1||0)+(r.cN2||0)+(r.cN3||0)+(r.cN4||0)+(r.cN5||0)+(r.cN6||0);
+    let dormance='Actif';
+    if(r.source==='MAGASIN'){
+      if(consoTot===0&&cmm===0)dormance='Dormant';
+      else if((r.cN||0)===0&&(r.cN1||0)===0&&cmm===0)dormance='Faible activité';
+    }else{if(cmm===0)dormance='Dormant';}
+    const dep=depIdx[r.art+'|'+r.mag];
+    const deprecie=dep&&dep.provM>0;
+    const provM=dep?dep.provM:0;
+    const provSM=dep?dep.provSM:0;
+    const provSS=dep?dep.provSS:0;
+    const pctDep=r.valeur>0&&provM>0?(provM/r.valeur*100):0;
+    let delaiBC=null;
+    const bcs=bcByArt[r.art];
+    if(bcs){
+      const delais=bcs.map(b=>{const d=dBet(b.datCmd,b.datRec);return d&&d>0?d:null;}).filter(Boolean);
+      if(delais.length>0){delais.sort((a,b)=>a-b);delaiBC=delais[Math.floor(delais.length/2)];}
     }
-
-    // Motif réforme
-    let motifReforme = '';
-    if (isDormantTotal) motifReforme = 'Dormant total (0 conso historique)';
-    else if (isDormant36) motifReforme = 'Dormant 36 mois';
-    else if (isDormant24) motifReforme = 'Dormant 24 mois';
-    else if (isDormant12) motifReforme = 'Dormant 12 mois';
-    if (isFaibleActivite && !isDormant12) motifReforme = 'Faible activité (conso N et N-1 = 0)';
-
-    // Levier 2 : Paramétrage (classe A et B, hors réforme)
-    const abc = row.typeABC;
-    const target = COVERAGE_TARGETS[abc] || COVERAGE_TARGETS['D'];
-    const cibleCouv = isPlateforme ? target.plf : target.mag;
-    const delaiMois = row.delaiJours / 30.44;
-    // CMM en quantités = CMM_EUR / coutMoyen
-    const cmmQte = row.coutMoyen > 0 ? cmm / row.coutMoyen : 0;
-    const stockOptimal = cmmQte * cibleCouv;
-    let secuPropose = 0, seuilPropose = 0, qecPropose = 0, qteMaxPropose = 0;
-    if (cmmQte > 0) {
-      secuPropose = cmmQte * (abc === 'A' ? 1 : 1.5);
-      seuilPropose = cmmQte * delaiMois + secuPropose;
-      qecPropose = cmmQte * 2;
-      qteMaxPropose = stockOptimal;
+    const delaiRetenu=delaiBC||r.delai||30;
+    const abc=r.abc||'D';
+    const covTgt=COV_TGT[abc]||COV_TGT['D'];
+    const cibleCouv=r.type==='Plateforme'?covTgt.plf:covTgt.mag;
+    const stockOpt=cmmQte*cibleCouv;
+    const secuProp=Math.ceil(cmmQte*(delaiRetenu/30));
+    const seuilProp=Math.ceil(stockOpt+secuProp);
+    const exces=Math.max(0,r.qte-stockOpt);
+    const valExces=exces*r.cmp;
+    let motifRef=null,prioriteRef=null;
+    if(dormance==='Dormant'){motifRef='Dormant (0 conso historique)';}
+    else if(dormance==='Faible activité'){motifRef='Faible activité (0 conso 2025-2026)';}
+    if(motifRef){
+      if(r.valeur>=1000)prioriteRef='HAUTE';
+      else if(r.valeur>=100)prioriteRef='MOYENNE';
+      else prioriteRef='BASSE';
     }
-    const excessQte = Math.max(0, row.qte - stockOptimal);
-    const excessValeur = excessQte * row.coutMoyen;
-
-    // Levier 5 : Sécurisation flux
-    const isInactifObsolete = row.statut.includes('70-INACT') || row.statut.includes('90-OBSOL');
-    let contratExpire = false;
-    if (row.dateFinContrat) {
-      const d = row.dateFinContrat instanceof Date ? row.dateFinContrat : new Date(row.dateFinContrat);
-      const dans12m = new Date();
-      dans12m.setMonth(dans12m.getMonth() + 12);
-      contratExpire = d <= dans12m;
-    }
-
-    return {
-      ...row,
-      unit, type, valeur, isOskar, isPlateforme, isExcluded,
-      consoMoyAn, cmm, cmmQte, couvertureMois,
-      consoHist, isDormant12, isDormant24, isDormant36, isDormantTotal,
-      dormanceLevel, isFaibleActivite,
-      isDeprecie, provisionM, provisionStockMort, provisionSurstock,
-      reformableImmediat, prioriteReforme, motifReforme,
-      abc, cibleCouv, delaiMois, stockOptimal,
-      secuPropose, seuilPropose, qecPropose, qteMaxPropose,
-      excessQte, excessValeur,
-      isInactifObsolete, contratExpire
-    };
+    return{...r,cmm,cmmQte,couv,consoTot,dormance,deprecie,provM,provSM,provSS,pctDep,
+      delaiBC,delaiRetenu,cibleCouv,stockOpt,secuProp,seuilProp,exces,valExces,
+      motifRef,prioriteRef};
   });
-
-  // Séparer les articles locaux (périmètre d'analyse) et les exclus (plateforme 99/HS99/R-BAR)
-  const localEnriched = enriched.filter(r => !r.isExcluded);
-  const excludedEnriched = enriched.filter(r => r.isExcluded);
-  const stockPlateforme = excludedEnriched.reduce((s,r) => s + r.valeur, 0);
-  const nbExcluded = excludedEnriched.length;
-
-  // Pareto ABC recalculé (agrégation par article unique, PÉRIMÈTRE LOCAL uniquement)
-  const articleAgg = {};
-  localEnriched.forEach(r => {
-    if (!articleAgg[r.article]) {
-      articleAgg[r.article] = {
-        article: r.article, libelle: r.libelle, valeurTotale: 0, qteTotale: 0,
-        coutMoyen: r.coutMoyen, consoMoyAn: 0, magasins: new Set(), nbMag: 0,
-        isDormant: false, isFaibleAct: false, isDeprecie: false, provisionM: 0,
-        fournisseur: r.fournisseur, contrat: r.contrat, isPlateforme: r.isPlateforme,
-        typeABC: r.typeABC, rows: []
-      };
-    }
-    const a = articleAgg[r.article];
-    a.valeurTotale += r.valeur;
-    a.qteTotale += r.qte;
-    a.consoMoyAn += r.consoMoyAn;
-    a.magasins.add(r.magasin);
-    a.provisionM += r.provisionM;
-    if (r.isDormant12) a.isDormant = true;
-    if (r.isFaibleActivite) a.isFaibleAct = true;
-    if (r.isDeprecie) a.isDeprecie = true;
-    a.rows.push(r);
+  // ABC global (Pareto sur articles agrégés)
+  const artAgg={};
+  enriched.forEach(r=>{
+    if(!artAgg[r.art])artAgg[r.art]={art:r.art,lib:r.lib,val:0,qte:0,cmm:0,mags:new Set(),abc:r.abc};
+    artAgg[r.art].val+=r.valeur;artAgg[r.art].qte+=r.qte;artAgg[r.art].cmm+=r.cmm;artAgg[r.art].mags.add(r.mag);
   });
-
-  // Tri par valeur décroissante pour Pareto
-  const articleList = Object.values(articleAgg);
-  articleList.forEach(a => { a.nbMag = a.magasins.size; a.magasins = [...a.magasins]; });
-  articleList.sort((a,b) => b.valeurTotale - a.valeurTotale);
-
-  const totalValeur = articleList.reduce((s,a) => s + a.valeurTotale, 0);
-  let cumul = 0;
-  articleList.forEach(a => {
-    cumul += a.valeurTotale;
-    a.pctCumule = totalValeur > 0 ? cumul / totalValeur : 0;
-    if (a.pctCumule <= 0.80) a.abcRecalcule = 'A';
-    else if (a.pctCumule <= 0.95) a.abcRecalcule = 'B';
-    else if (a.pctCumule <= 0.99) a.abcRecalcule = 'C';
-    else a.abcRecalcule = 'D';
-    // Couverture en mois = valeur / CMM_EUR
-    const aCmm = a.consoMoyAn / 12;
-    a.couvertureMois = aCmm > 0 ? a.valeurTotale / aCmm : 9999;
+  const artList=Object.values(artAgg).sort((a,b)=>b.val-a.val);
+  const totalVal=artList.reduce((s,a)=>s+a.val,0);
+  let cumVal=0;
+  artList.forEach(a=>{
+    cumVal+=a.val;a.pctCum=totalVal>0?cumVal/totalVal:0;
+    if(a.pctCum<=0.80)a.abcCalc='A';
+    else if(a.pctCum<=0.95)a.abcCalc='B';
+    else if(a.pctCum<=0.99)a.abcCalc='C';
+    else a.abcCalc='D';
   });
-
-  // Levier 1 : Réforme dormants (périmètre local uniquement)
-  const reformeCandidats = localEnriched.filter(r => r.isDormant12 || r.isFaibleActivite);
-  const reformeDormants = localEnriched.filter(r => r.isDormant12);
-  const reformeFaibleAct = localEnriched.filter(r => r.isFaibleActivite && !r.isDormant12);
-
-  const valeurDormants = reformeDormants.reduce((s,r) => s + r.valeur, 0);
-  const valeurFaibleAct = reformeFaibleAct.reduce((s,r) => s + r.valeur, 0);
-  const reductionL1 = valeurDormants * 0.50; // 50% des dormants
-
-  // Levier 2 : Reparamétrage (périmètre local uniquement)
-  const parametrables = localEnriched.filter(r =>
-    (r.abc === 'A' || r.abc === 'B') && !r.isDormant12 && !r.isFaibleActivite && r.couvertureMois > 24
-  );
-  const reductionL2 = parametrables.reduce((s,r) => s + r.excessValeur, 0);
-
-  // Levier 3 : Optimisation appro
-  let consoNTotal = 0, cmdNTotal = 0;
-  if (bc.length > 0) {
-    const currentYear = new Date().getFullYear();
-    bc.forEach(b => {
-      const yr = getYear(b.dateCommande);
-      if (yr === currentYear || yr === currentYear - 1) {
-        cmdNTotal += b.qteCommandee * b.coutUnitaire;
-      }
-    });
-  }
-  // consoN est déjà en EUR, pas besoin de multiplier par coutMoyen (périmètre local)
-  consoNTotal = localEnriched.reduce((s,r) => s + r.consoN, 0);
-  const decalageAppro = consoNTotal > 0 ? ((cmdNTotal - consoNTotal) / consoNTotal) : 0;
-  const reductionL3 = Math.abs(cmdNTotal - consoNTotal) * 0.10;
-
-  // Levier 4 : Mutualisation
-  const mutuCandidats = [];
-  Object.values(articleAgg).forEach(a => {
-    if (a.nbMag >= 2 && !a.isDormant && !a.isFaibleAct) {
-      mutuCandidats.push(a);
-    }
+  const abcMap={};artList.forEach(a=>{abcMap[a.art]=a;});
+  enriched.forEach(r=>{
+    const a=abcMap[r.art];
+    if(a){r.abcCalc=a.abcCalc;r.pctCum=a.pctCum;r.nbMags=a.mags.size;}
+    else{r.abcCalc=r.abc||'D';r.pctCum=1;r.nbMags=1;}
   });
-  const valeurMutu = mutuCandidats.reduce((s,a) => s + a.valeurTotale, 0);
-  const reductionL4 = valeurMutu * 0.15;
-
-  // Levier 5 : Sécurisation flux (périmètre local uniquement)
-  const risqueFlux = localEnriched.filter(r => r.isInactifObsolete || r.contratExpire);
-  const valeurRisque = risqueFlux.reduce((s,r) => s + r.valeur, 0);
-  const reductionL5 = valeurRisque * 0.05;
-
-  // Totaux
-  const reductionTotale = reductionL1 + reductionL2 + reductionL3 + reductionL4 + reductionL5;
-  const stockTotal = enriched.reduce((s,r) => s + r.valeur, 0);
-  const stockLocal = localEnriched.reduce((s,r) => s + r.valeur, 0);
-
-  // Synthèse par magasin (périmètre local uniquement)
-  const magSynthese = {};
-  localEnriched.forEach(r => {
-    if (!magSynthese[r.magasin]) {
-      magSynthese[r.magasin] = {
-        magasin: r.magasin, unit: r.unit, type: r.type,
-        articles: 0, valeur: 0, dormants: 0, valDormants: 0,
-        faibleAct: 0, valFaibleAct: 0
-      };
-    }
-    const m = magSynthese[r.magasin];
-    m.articles++;
-    m.valeur += r.valeur;
-    if (r.isDormant12) { m.dormants++; m.valDormants += r.valeur; }
-    if (r.isFaibleActivite) { m.faibleAct++; m.valFaibleAct += r.valeur; }
+  // Mutualisation: articles dans 2+ magasins, hors réforme
+  const mutuCand=artList.filter(a=>a.mags.size>=2).map(a=>{
+    const items=enriched.filter(r=>r.art===a.art&&!r.motifRef);
+    const totalQ=items.reduce((s,r)=>s+r.qte,0);
+    const totalV=items.reduce((s,r)=>s+r.valeur,0);
+    const avgCmm=items.reduce((s,r)=>s+r.cmm,0);
+    const avgCouv=avgCmm>0?totalV/avgCmm:0;
+    const qteCentrale=Math.ceil(totalQ*0.6);
+    const qteLocal=totalQ-qteCentrale;
+    return{art:a.art,lib:a.lib,abc:a.abcCalc,valTot:totalV,qteTot:totalQ,
+      cmp:totalQ>0?totalV/totalQ:0,cmm:avgCmm,couv:avgCouv,
+      mags:[...a.mags].join(', '),nbMag:a.mags.size,
+      qteCentrale,qteLocal,eco:totalV*0.15,
+      fourn:items[0]?.fourn||'',contrat:items[0]?.contrat||''};
   });
-
-  // Dormance par unité
-  const dormanceByUnit = {};
-  ['VOIE','CT','TDE','ESO','STF/ISE'].forEach(u => {
-    dormanceByUnit[u] = {d12:0,d24:0,d36:0,d36p:0,v12:0,v24:0,v36:0,v36p:0,total:0,totalVal:0};
-  });
-  localEnriched.forEach(r => {
-    if (!dormanceByUnit[r.unit]) return;
-    const d = dormanceByUnit[r.unit];
-    d.total++;
-    d.totalVal += r.valeur;
-    if (r.isDormantTotal) { d.d36p++; d.v36p += r.valeur; }
-    else if (r.isDormant36) { d.d36++; d.v36 += r.valeur; }
-    else if (r.isDormant24) { d.d24++; d.v24 += r.valeur; }
-    else if (r.isDormant12) { d.d12++; d.v12 += r.valeur; }
-  });
-
-  // Dépréciation agrégée par unité (périmètre local)
-  const depreByUnit = {};
-  localEnriched.forEach(r => {
-    if (!depreByUnit[r.unit]) depreByUnit[r.unit] = {stockMort:0, surstock:0, provisionM:0};
-    const d = depreByUnit[r.unit];
-    d.stockMort += r.provisionStockMort;
-    d.surstock += r.provisionSurstock;
-    d.provisionM += r.provisionM;
-  });
-
-  return {
-    enriched, localEnriched, excludedEnriched,
-    articleList, articleAgg,
-    reformeCandidats, reformeDormants, reformeFaibleAct,
-    parametrables, mutuCandidats, risqueFlux,
-    valeurDormants, valeurFaibleAct,
-    reductionL1, reductionL2, reductionL3, reductionL4, reductionL5, reductionTotale,
-    stockTotal, stockLocal, stockPlateforme, nbExcluded,
-    decalageAppro, cmdNTotal, consoNTotal,
-    magSynthese, dormanceByUnit, depreByUnit,
-    totalValeur
-  };
+  S.merged=merged;S.computed={enriched,artList,abcMap,mutuCand};
+  return S.computed;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   SECTION 6 : RENDU UI
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-function updateAll() {
-  const c = STATE.computed;
-  if (!c) return;
-  const unit = STATE.currentUnit;
-
-  // Filtrer par unité si nécessaire (périmètre LOCAL uniquement, exclu 99/HS99/R-BAR)
-  let items = c.localEnriched;
-  if (unit !== 'ALL') items = items.filter(r => r.unit === unit);
-
-  const stockVal = items.reduce((s,r) => s + r.valeur, 0);
-  const nbArticles = items.length;
-
-  // Objectif
-  let objectif = OBJECTIVES.TOTAL.all.obj;
-  if (unit !== 'ALL' && OBJECTIVES[unit]) {
-    objectif = (OBJECTIVES[unit].mag?.obj || 0) + (OBJECTIVES[unit].plf?.obj || 0);
-  }
-  const ecart = stockVal - objectif;
-
-  // Réductions filtrées
-  let reductionEstimee = c.reductionTotale;
-  if (unit !== 'ALL') {
-    const filtered = items;
-    const dormVal = filtered.filter(r=>r.isDormant12).reduce((s,r)=>s+r.valeur,0);
-    const paramVal = filtered.filter(r=>(r.abc==='A'||r.abc==='B')&&!r.isDormant12&&!r.isFaibleActivite&&r.couvertureMois>24).reduce((s,r)=>s+r.excessValeur,0);
-    reductionEstimee = dormVal*0.5 + paramVal;
-  }
-  const pctReduction = stockVal > 0 ? reductionEstimee / stockVal : 0;
-
-  // KPIs
-  document.getElementById('kpiStockTotal').textContent = formatEUR(stockVal);
-  document.getElementById('kpiStockTotalSub').textContent = formatNum(nbArticles) + ' lignes locales (exclu ' + formatNum(c.nbExcluded) + ' PLF: ' + formatEUR(c.stockPlateforme) + ')';
-  document.getElementById('kpiObjectif').textContent = formatEUR(objectif);
-  document.getElementById('kpiEcart').textContent = formatEUR(ecart);
-  document.getElementById('kpiEcartSub').textContent = ecart > 0 ? 'Au-dessus de l\'objectif' : 'Sous l\'objectif';
-  document.getElementById('kpiEconomie').textContent = formatEUR(reductionEstimee);
-  document.getElementById('kpiEconomieSub').textContent = '5 leviers combinés';
-  document.getElementById('kpiReduction').textContent = formatPct(pctReduction);
-  document.getElementById('kpiArticles').textContent = formatNum(nbArticles);
-
-  renderGauges(c, unit);
-  renderDormance(c, unit);
-  renderLeviers(c, unit);
-  renderMagasinTable(c, unit);
-  renderCharts(c, unit);
-  renderParetoTable(c, unit);
-  renderReformeTable(c, unit);
-  renderMutuTable(c, unit);
-  renderParamTable(c, unit);
-  renderDetailTable(c, unit);
-  renderMethodologie();
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 6 : FILTRAGE CENTRALISÉ
+   ═══════════════════════════════════════════════════════════════ */
+function fU(data,unit){
+  if(!unit||unit==='ALL')return data;
+  return data.filter(r=>r.unit===unit);
 }
 
-function renderGauges(c, unit) {
-  const grid = document.getElementById('gaugeGrid');
-  grid.innerHTML = '';
-  const units = unit === 'ALL' ? ['VOIE','CT','TDE','ESO','STF/ISE'] : [unit];
-  units.forEach(u => {
-    const obj = OBJECTIVES[u];
-    if (!obj) return;
-    const items = c.localEnriched.filter(r => r.unit === u);
-    const magItems = items.filter(r => r.type === 'Magasin');
-    const plfItems = items.filter(r => r.type === 'Plateforme');
-    const magVal = magItems.reduce((s,r) => s + r.valeur, 0);
-    const plfVal = plfItems.reduce((s,r) => s + r.valeur, 0);
-    const totalVal = magVal + plfVal;
-    const totalObj = (obj.mag?.obj || 0) + (obj.plf?.obj || 0);
-    const pct = totalObj > 0 ? Math.min(totalVal / totalObj * 100, 150) : 0;
-    let color = 'var(--gn)';
-    if (totalVal > totalObj * 1.10) color = 'var(--rd)';
-    else if (totalVal > totalObj) color = 'var(--or)';
-
-    grid.innerHTML += `
-      <div class="gauge-item">
-        <div class="gauge-label">${u}</div>
-        <div class="gauge-bar"><div class="gauge-fill" style="width:${Math.min(pct,100)}%;background:${color}"></div></div>
-        <div class="gauge-value" style="color:${color}">${formatEUR(totalVal)}</div>
-        <div style="font-size:.7rem;color:var(--tx3)">Obj: ${formatEUR(totalObj)}</div>
-      </div>`;
-  });
+function filterUnit(u){
+  S.unit=u;
+  document.querySelectorAll('.ub').forEach(b=>{b.classList.toggle('active',b.dataset.u===u);});
+  if(S.computed)updateAll();
 }
 
-function renderDormance(c, unit) {
-  const table = document.getElementById('tableDormance');
-  const units = unit === 'ALL' ? ['VOIE','CT','TDE','ESO','STF/ISE'] : [unit];
-  let html = '<thead><tr><th>Unité</th><th class="num">12 mois</th><th class="num">24 mois</th><th class="num">36 mois</th><th class="num">36m+</th><th class="num">Val. Dormants</th><th class="num">% Stock</th></tr></thead><tbody>';
-  units.forEach(u => {
-    const d = c.dormanceByUnit[u];
-    if (!d) return;
-    const totalDorm = d.v12+d.v24+d.v36+d.v36p;
-    const pct = d.totalVal > 0 ? totalDorm/d.totalVal : 0;
-    html += `<tr><td><strong>${u}</strong></td>
-      <td class="num">${formatNum(d.d12)}</td><td class="num">${formatNum(d.d24)}</td>
-      <td class="num">${formatNum(d.d36)}</td><td class="num">${formatNum(d.d36p)}</td>
-      <td class="num highlight-red">${formatEUR(totalDorm)}</td>
-      <td class="num">${formatPct(pct)}</td></tr>`;
-  });
-  html += '</tbody>';
-  table.innerHTML = html;
+function swTab(t){
+  document.querySelectorAll('.tb').forEach(b=>{b.classList.toggle('active',b.dataset.t===t);});
+  document.querySelectorAll('.tc').forEach(c=>{c.classList.toggle('active',c.id==='t-'+t);});
 }
 
-function renderLeviers(c, unit) {
-  const table = document.getElementById('tableLeviers');
-  const leviers = [
-    {num:1, nom:'Réduction stock dormant', articles:c.reformeDormants.length, valBrute:c.valeurDormants, reduction:c.reductionL1, priorite:'HAUTE'},
-    {num:2, nom:'Reparamétrage couverture A/B', articles:c.parametrables.length, valBrute:c.parametrables.reduce((s,r)=>s+r.valeur,0), reduction:c.reductionL2, priorite:'HAUTE'},
-    {num:3, nom:'Optimisation approvisionnements', articles:'—', valBrute:c.cmdNTotal, reduction:c.reductionL3, priorite:'MOYENNE'},
-    {num:4, nom:'Mutualisation inter-magasins', articles:c.mutuCandidats.length, valBrute:c.mutuCandidats.reduce((s,a)=>s+a.valeurTotale,0), reduction:c.reductionL4, priorite:'MOYENNE'},
-    {num:5, nom:'Sécurisation flux futur', articles:c.risqueFlux.length, valBrute:c.risqueFlux.reduce((s,r)=>s+r.valeur,0), reduction:c.reductionL5, priorite:'BASSE'}
-  ];
-  let html = '<thead><tr><th>#</th><th>Levier</th><th class="num">Articles</th><th class="num">Valeur brute</th><th class="num">Réduction estimée</th><th>Priorité</th></tr></thead><tbody>';
-  leviers.forEach(l => {
-    const pClass = l.priorite === 'HAUTE' ? 'highlight-red' : l.priorite === 'MOYENNE' ? 'highlight-orange' : '';
-    html += `<tr><td>${l.num}</td><td>${l.nom}</td><td class="num">${typeof l.articles === 'number' ? formatNum(l.articles) : l.articles}</td>
-      <td class="num">${formatEUR(l.valBrute)}</td><td class="num highlight-green">${formatEUR(l.reduction)}</td>
-      <td class="${pClass}">${l.priorite}</td></tr>`;
-  });
-  html += `<tr style="font-weight:700;background:var(--sf2)"><td colspan="4">TOTAL RÉDUCTION ESTIMÉE</td><td class="num highlight-green">${formatEUR(c.reductionTotale)}</td><td></td></tr>`;
-  html += '</tbody>';
-  table.innerHTML = html;
-}
-
-function renderMagasinTable(c, unit) {
-  const table = document.getElementById('tableMagasin');
-  const mags = Object.values(c.magSynthese);
-  const filtered = unit === 'ALL' ? mags : mags.filter(m => m.unit === unit);
-  filtered.sort((a,b) => b.valeur - a.valeur);
-
-  let html = '<thead><tr><th>Magasin</th><th>Unité</th><th>Type</th><th class="num">Articles</th><th class="num">Valeur stock</th><th class="num">Dormants</th><th class="num">Val. dormants</th><th class="num">Faible act.</th><th class="num">Val. faible act.</th></tr></thead><tbody>';
-  filtered.forEach(m => {
-    html += `<tr><td><strong>${m.magasin}</strong></td><td>${m.unit}</td><td>${m.type}</td>
-      <td class="num">${formatNum(m.articles)}</td><td class="num">${formatEUR(m.valeur)}</td>
-      <td class="num">${formatNum(m.dormants)}</td><td class="num">${formatEUR(m.valDormants)}</td>
-      <td class="num">${formatNum(m.faibleAct)}</td><td class="num">${formatEUR(m.valFaibleAct)}</td></tr>`;
-  });
-  // Total
-  const totals = filtered.reduce((t,m) => ({articles:t.articles+m.articles,valeur:t.valeur+m.valeur,dormants:t.dormants+m.dormants,valDormants:t.valDormants+m.valDormants,faibleAct:t.faibleAct+m.faibleAct,valFaibleAct:t.valFaibleAct+m.valFaibleAct}), {articles:0,valeur:0,dormants:0,valDormants:0,faibleAct:0,valFaibleAct:0});
-  html += `<tr style="font-weight:700;background:var(--sf2)"><td>TOTAL</td><td></td><td></td>
-    <td class="num">${formatNum(totals.articles)}</td><td class="num highlight-green">${formatEUR(totals.valeur)}</td>
-    <td class="num">${formatNum(totals.dormants)}</td><td class="num">${formatEUR(totals.valDormants)}</td>
-    <td class="num">${formatNum(totals.faibleAct)}</td><td class="num">${formatEUR(totals.valFaibleAct)}</td></tr>`;
-  html += '</tbody>';
-  table.innerHTML = html;
-}
-
-/* --- Tableaux paginés --- */
-
-function renderParetoTable(c, unit) {
-  let list = c.articleList;
-  if (unit !== 'ALL') list = list.filter(a => a.rows.some(r => r.unit === unit));
-  renderPaginatedTable('tablePareto', 'paginationPareto', 'pareto', list,
-    ['#','Article','Libellé','ABC Pareto','Valeur stock','% cumulé','Qté','Coût moyen','Conso moy/an','Couverture','Magasins','Nb mag','Dormant','Faible act.','Déprécié','Provision M','Fournisseur','ABC recalculé','PLF'],
-    (a,i) => [i+1, a.article, a.libelle, a.typeABC, formatEUR(a.valeurTotale), formatPct(a.pctCumule),
-      formatNum(a.qteTotale), formatEUR(a.coutMoyen), formatEUR(a.consoMoyAn),
-      a.couvertureMois >= 9999 ? '∞' : formatNum(a.couvertureMois,1),
-      a.magasins.join(', '), a.nbMag, a.isDormant?'Oui':'', a.isFaibleAct?'Oui':'',
-      a.isDeprecie?'Oui':'', formatEUR(a.provisionM), a.fournisseur, a.abcRecalcule,
-      a.isPlateforme?'Oui':'Non']
-  );
-}
-
-function renderReformeTable(c, unit) {
-  let list = c.reformeCandidats;
-  if (unit !== 'ALL') list = list.filter(r => r.unit === unit);
-  list.sort((a,b) => b.valeur - a.valeur);
-  renderPaginatedTable('tableReforme', 'paginationReforme', 'reforme', list,
-    ['#','Article','Libellé','ABC','Valeur','Qté','Coût moyen','Motif','Priorité','Magasin','Unité',
-     'Conso hist.','Conso N','Conso N-1','Conso N-2','Déprécié','Provision M','Prov. Stock Mort','Prov. Surstock','Réformable immédiat','Fournisseur','Contrat'],
-    (r,i) => [i+1, r.article, r.libelle, r.abc, formatEUR(r.valeur), formatNum(r.qte), formatEUR(r.coutMoyen),
-      r.motifReforme, r.prioriteReforme, r.magasin, r.unit,
-      formatEUR(r.consoHist), formatEUR(r.consoN), formatEUR(r.consoN1), formatEUR(r.consoN2),
-      r.isDeprecie?'Oui':'Non', formatEUR(r.provisionM), formatEUR(r.provisionStockMort), formatEUR(r.provisionSurstock),
-      r.reformableImmediat?'Oui':'Non', r.fournisseur, r.contrat]
-  );
-}
-
-function renderMutuTable(c, unit) {
-  let list = c.mutuCandidats;
-  if (unit !== 'ALL') list = list.filter(a => a.rows.some(r => r.unit === unit));
-  list.sort((a,b) => b.valeurTotale - a.valeurTotale);
-  renderPaginatedTable('tableMutu', 'paginationMutu', 'mutu', list,
-    ['#','Article','Libellé','ABC','Valeur totale','Qté totale','Coût moyen','Conso moy/an','Couverture','Magasins','Nb mag','Économie est.(15%)','Fournisseur','Contrat'],
-    (a,i) => [i+1, a.article, a.libelle, a.typeABC, formatEUR(a.valeurTotale), formatNum(a.qteTotale),
-      formatEUR(a.coutMoyen), formatEUR(a.consoMoyAn),
-      a.couvertureMois >= 9999 ? '∞' : formatNum(a.couvertureMois,1),
-      a.magasins.join(', '), a.nbMag, formatEUR(a.valeurTotale*0.15), a.fournisseur, a.contrat]
-  );
-}
-
-function renderParamTable(c, unit) {
-  let list = c.parametrables;
-  if (unit !== 'ALL') list = list.filter(r => r.unit === unit);
-  list.sort((a,b) => b.excessValeur - a.excessValeur);
-  renderPaginatedTable('tableParam', 'paginationParam', 'param', list,
-    ['#','Article','Libellé','ABC','Qté stock','Valeur','Coût moyen','Conso moy/an','CMM','Couverture act.',
-     'Délai (j)','Délai (m)','Cible couv.','Stock optimal','Sécu proposé','Seuil proposé','QEC proposée','Qté max proposée',
-     'Excès qté','Valeur excès','Type','Magasin','Fournisseur','PLF'],
-    (r,i) => [i+1, r.article, r.libelle, r.abc, formatNum(r.qte), formatEUR(r.valeur), formatEUR(r.coutMoyen),
-      formatEUR(r.consoMoyAn), formatNum(r.cmm,2),
-      r.couvertureMois >= 9999 ? '∞' : formatNum(r.couvertureMois,1),
-      formatNum(r.delaiJours), formatNum(r.delaiMois,1), formatNum(r.cibleCouv),
-      formatNum(r.stockOptimal,0), formatNum(r.secuPropose,0), formatNum(r.seuilPropose,0),
-      formatNum(r.qecPropose,0), formatNum(r.qteMaxPropose,0),
-      formatNum(r.excessQte), formatEUR(r.excessValeur),
-      r.type, r.magasin, r.fournisseur, r.isPlateforme?'Oui':'Non']
-  );
-}
-
-function renderDetailTable(c, unit) {
-  let list = c.localEnriched;
-  if (unit !== 'ALL') list = list.filter(r => r.unit === unit);
-
-  // Populate magasin filter
-  const magSelect = document.getElementById('filterMag');
-  const currentVal = magSelect.value;
-  const mags = [...new Set(list.map(r => r.magasin))].sort();
-  magSelect.innerHTML = '<option value="">Tous magasins</option>' + mags.map(m => `<option value="${m}">${m}</option>`).join('');
-  magSelect.value = currentVal;
-
-  if (currentVal) list = list.filter(r => r.magasin === currentVal);
-
-  list.sort((a,b) => b.valeur - a.valeur);
-  renderPaginatedTable('tableDetail', 'paginationDetail', 'detail', list,
-    ['Article','Libellé','Magasin','Unité','Type','Qté','Valeur','Coût moyen',
-     'C.N','C.N-1','C.N-2','C.N-3','Conso moy/an','Couverture',
-     'ABC','Seuil act.','Sécu act.','Qté max act.',
-     'Seuil prop.','Sécu prop.','Qté max prop.',
-     'Fournisseur','Contrat','Statut','Déprécié','Provision M'],
-    (r,i) => [r.article, r.libelle, r.magasin, r.unit, r.type, formatNum(r.qte), formatEUR(r.valeur), formatEUR(r.coutMoyen),
-      formatEUR(r.consoN), formatEUR(r.consoN1), formatEUR(r.consoN2), formatEUR(r.consoN3),
-      formatEUR(r.consoMoyAn), r.couvertureMois >= 9999 ? '∞' : formatNum(r.couvertureMois,1),
-      r.abc, formatNum(r.seuil), formatNum(r.stockSecu), formatNum(r.qteMax),
-      formatNum(r.seuilPropose,0), formatNum(r.secuPropose,0), formatNum(r.qteMaxPropose,0),
-      r.fournisseur, r.contrat, r.statut, r.isDeprecie?'Oui':'Non', formatEUR(r.provisionM)]
-  );
-}
-
-function renderPaginatedTable(tableId, paginationId, key, data, headers, rowFn) {
-  const table = document.getElementById(tableId);
-  const pagination = document.getElementById(paginationId);
-  const page = pageStates[key] || 1;
-  const totalPages = Math.max(1, Math.ceil(data.length / PAGE_SIZE));
-  const start = (page - 1) * PAGE_SIZE;
-  const end = Math.min(start + PAGE_SIZE, data.length);
-  const pageData = data.slice(start, end);
-
-  let html = '<thead><tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr></thead><tbody>';
-  pageData.forEach((item, idx) => {
-    const cells = rowFn(item, start + idx);
-    html += '<tr>' + cells.map((c,ci) => `<td${ci >= 3 ? ' class="num"' : ''}>${c}</td>`).join('') + '</tr>';
-  });
-  if (data.length === 0) html += '<tr><td colspan="' + headers.length + '" style="text-align:center;color:var(--tx3)">Aucune donnée</td></tr>';
-  html += '</tbody>';
-  table.innerHTML = html;
-
-  // Pagination
-  let pHtml = `<span class="page-info">${formatNum(data.length)} résultats — Page ${page}/${totalPages}</span>`;
-  if (totalPages > 1) {
-    pHtml += `<button ${page<=1?'disabled':''} onclick="goPage('${key}',${page-1})">◀</button>`;
-    for (let p = Math.max(1,page-3); p <= Math.min(totalPages,page+3); p++) {
-      pHtml += `<button class="${p===page?'active':''}" onclick="goPage('${key}',${p})">${p}</button>`;
-    }
-    pHtml += `<button ${page>=totalPages?'disabled':''} onclick="goPage('${key}',${page+1})">▶</button>`;
-  }
-  pagination.innerHTML = pHtml;
-}
-
-function goPage(key, page) {
-  pageStates[key] = page;
-  updateAll();
-}
-
-function filterTable(key) {
-  pageStates[key] = 1;
-  updateAll();
-}
-
-function renderMethodologie() {
-  document.getElementById('methodoContent').innerHTML = `
-    <h3>1. PÉRIMÈTRE DES ARTICLES PLATEFORME</h3>
-    <p>Les magasins plateforme suivants sont <strong>EXCLUS</strong> du périmètre local d'analyse :</p>
-    <ul>
-      <li><strong>99</strong> et <strong>HS99</strong> (TDE — Réparables)</li>
-      <li><strong>R-BAR</strong> (ESO — Réparable)</li>
-    </ul>
-    <p>→ EXCLUS du périmètre local. Le travail de mutualisation a déjà été réalisé.</p>
-    <p>Impact : les lignes article×magasin de ces magasins sont retirées du périmètre d'analyse (réforme, paramétrage, Pareto, etc.) mais comptabilisées séparément dans les indicateurs clés.</p>
-
-    <h3>2. PÉRIMÈTRE DES UNITÉS</h3>
-    <p>Magasins répartis en 5 unités : VOIE, CT, TDE, ESO, STF/ISE. Chaque magasin est classifié via le référentiel UNIT_MAP embarqué.</p>
-    <p class="warning">⚠ Le code magasin "NA" est traité comme la chaîne "NA" = Nanterre (TDE), et non comme une valeur manquante (NaN).</p>
-
-    <h3>3. CLASSIFICATION ABC (PARETO)</h3>
-    <p>Agrégation par article unique (somme des stocks sur tous les magasins, hors plateforme). Classification basée sur la valeur cumulée :</p>
-    <ul>
-      <li><strong>A</strong> : 0-80% valeur cumulée</li>
-      <li><strong>B</strong> : 80-95% valeur cumulée</li>
-      <li><strong>C</strong> : 95-99% valeur cumulée</li>
-      <li><strong>D</strong> : 99-100% valeur cumulée</li>
-    </ul>
-
-    <h3>4. CANDIDATS À LA RÉFORME</h3>
-    <p><strong>DORMANT</strong> : Consommation totale historique = 0 (cumul + 6 années).</p>
-    <p><strong>FAIBLE ACTIVITÉ</strong> : Conso N et N-1 = 0, mais consommation antérieure > 0.</p>
-    <p>Priorité : <strong>HAUTE</strong> ≥ 1 000 € | <strong>MOYENNE</strong> ≥ 100 € | <strong>BASSE</strong> < 100 €</p>
-
-    <h3>5. MUTUALISATION VERS PLATEFORME</h3>
-    <p>Articles présents dans 2+ magasins, hors candidats réforme. Économie estimée : 15% de la valeur totale.</p>
-
-    <h3>6. PARAMÉTRAGE (reparamétrage couverture)</h3>
-    <p>Classe A + Classe B (couverture > 24 mois), hors réforme.</p>
-    <p>Cible : A = 2 mois (mag) / 4 mois (PLF) = 6 mois total | B = 3 mois (mag) / 6 mois (PLF) = 9 mois total</p>
-    <p>Stock optimal = CMM × cible | Sécu = CMM × 1 (A) ou 1.5 (B) | Seuil = CMM × délai + sécu</p>
-    <p>Excès = max(0, stock actuel − stock optimal)</p>
-
-    <h3>7. CONSOMMATION DE RÉFÉRENCE</h3>
-    <p>Moyenne 2023-2025 (3 années complètes). CMM = Conso moyenne annuelle / 12.</p>
-    <p>Couverture = Stock / CMM (en mois).</p>
-
-    <h3>8. ORDRE DE MISE EN ŒUVRE RECOMMANDÉ</h3>
-    <ol>
-      <li>Étape 1 : Valider la liste de réforme avec les équipes opérationnelles</li>
-      <li>Étape 2 : Lancer les réformes (sorties inventaire, retours fournisseur)</li>
-      <li>Étape 3 : Ajuster les paramètres de réapprovisionnement</li>
-      <li>Étape 4 : Transférer les articles mutualisables vers plateforme</li>
-      <li>Étape 5 : Suivi mensuel des indicateurs</li>
-    </ol>
-  `;
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   SECTION 7 : GRAPHIQUES (Chart.js)
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-function destroyCharts() {
-  Object.values(STATE.charts).forEach(ch => { if (ch) ch.destroy(); });
-  STATE.charts = {};
-}
-
-function renderCharts(c, unit) {
-  destroyCharts();
-  const units = ['VOIE','CT','TDE','ESO','STF/ISE'];
-  const isDark = !document.body.classList.contains('light');
-  const gridColor = isDark ? 'rgba(255,255,255,.1)' : 'rgba(0,0,0,.1)';
-  const textColor = isDark ? '#e8ebf4' : '#1a1d27';
-
-  Chart.defaults.color = textColor;
-  Chart.defaults.borderColor = gridColor;
-
-  // Chart 1: Stock par unité vs objectif
-  const stockByUnit = units.map(u => c.localEnriched.filter(r=>r.unit===u).reduce((s,r)=>s+r.valeur,0));
-  const objByUnit = units.map(u => (OBJECTIVES[u]?.mag?.obj||0) + (OBJECTIVES[u]?.plf?.obj||0));
-  STATE.charts.c1 = new Chart(document.getElementById('chart1'), {
-    type:'bar',
-    data:{
-      labels:units,
-      datasets:[
-        {label:'Stock Actuel',data:stockByUnit,backgroundColor:units.map(u=>UNIT_COLORS[u])},
-        {label:'Objectif',data:objByUnit,backgroundColor:'rgba(52,211,153,.3)',borderColor:'#34d399',borderWidth:2,borderDash:[5,5],type:'line',fill:false,pointRadius:6}
-      ]
-    },
-    options:{responsive:true,plugins:{title:{display:true,text:'Stock par Unité vs Objectif',font:{size:14}},datalabels:{display:false}},scales:{y:{ticks:{callback:v=>formatEUR(v)}}}}
-  });
-
-  // Chart 2: Magasin vs Plateforme
-  const magByUnit = units.map(u => c.localEnriched.filter(r=>r.unit===u&&r.type==='Magasin').reduce((s,r)=>s+r.valeur,0));
-  const plfByUnit = units.map(u => c.localEnriched.filter(r=>r.unit===u&&r.type==='Plateforme').reduce((s,r)=>s+r.valeur,0));
-  STATE.charts.c2 = new Chart(document.getElementById('chart2'), {
-    type:'bar',
-    data:{labels:units,datasets:[
-      {label:'Magasin',data:magByUnit,backgroundColor:'#4f8df7'},
-      {label:'Plateforme',data:plfByUnit,backgroundColor:'#a78bfa'}
-    ]},
-    options:{responsive:true,plugins:{title:{display:true,text:'Magasin vs Plateforme par Unité',font:{size:14}},datalabels:{display:false}},scales:{x:{stacked:true},y:{stacked:true,ticks:{callback:v=>formatEUR(v)}}}}
-  });
-
-  // Chart 3: Dormance multi-horizons
-  const d12 = units.map(u => c.dormanceByUnit[u]?.d12||0);
-  const d24 = units.map(u => c.dormanceByUnit[u]?.d24||0);
-  const d36 = units.map(u => c.dormanceByUnit[u]?.d36||0);
-  const d36p = units.map(u => c.dormanceByUnit[u]?.d36p||0);
-  STATE.charts.c3 = new Chart(document.getElementById('chart3'), {
-    type:'bar',
-    data:{labels:units,datasets:[
-      {label:'12m',data:d12,backgroundColor:'#fbbf24'},
-      {label:'24m',data:d24,backgroundColor:'#f97316'},
-      {label:'36m',data:d36,backgroundColor:'#f87171'},
-      {label:'36m+',data:d36p,backgroundColor:'#991b1b'}
-    ]},
-    options:{responsive:true,plugins:{title:{display:true,text:'Dormance Multi-Horizons (nb articles)',font:{size:14}},datalabels:{display:false}},scales:{x:{stacked:true},y:{stacked:true}}}
-  });
-
-  // Chart 4: ABC Doughnut
-  const abcVals = {};
-  c.articleList.forEach(a => {
-    const cls = a.abcRecalcule;
-    abcVals[cls] = (abcVals[cls]||0) + a.valeurTotale;
-  });
-  STATE.charts.c4 = new Chart(document.getElementById('chart4'), {
-    type:'doughnut',
-    data:{labels:['A','B','C','D'],datasets:[{data:['A','B','C','D'].map(k=>abcVals[k]||0),backgroundColor:['#f87171','#fbbf24','#60a5fa','#6b7280']}]},
-    options:{responsive:true,plugins:{title:{display:true,text:'ABC — Répartition Valeur',font:{size:14}},datalabels:{formatter:(v,ctx)=>{const t=ctx.dataset.data.reduce((a,b)=>a+b,0);return t>0?((v/t)*100).toFixed(1)+'%':'';},color:'#fff',font:{weight:'bold'}}}}
-  });
-
-  // Chart 5: ABC Nombre articles
-  const abcCounts = {};
-  c.articleList.forEach(a => { abcCounts[a.abcRecalcule] = (abcCounts[a.abcRecalcule]||0) + 1; });
-  STATE.charts.c5 = new Chart(document.getElementById('chart5'), {
-    type:'bar',
-    data:{labels:['A','B','C','D'],datasets:[{label:'Nb articles',data:['A','B','C','D'].map(k=>abcCounts[k]||0),backgroundColor:['#f87171','#fbbf24','#60a5fa','#6b7280']}]},
-    options:{indexAxis:'y',responsive:true,plugins:{title:{display:true,text:'ABC — Nombre d\'Articles',font:{size:14}},datalabels:{display:false}}}
-  });
-
-  // Chart 6: Commandes vs Consommation
-  const years = [2024, 2025, 2026];
-  const consoByYear = years.map(y => c.localEnriched.reduce((s,r) => {
-    if (y === 2026) return s + r.consoN;
-    if (y === 2025) return s + r.consoN1;
-    return s + r.consoN2;
-  }, 0));
-  const cmdByYear = years.map(y => {
-    if (!STATE.bcData) return 0;
-    return STATE.bcData.filter(b => getYear(b.dateCommande) === y).reduce((s,b) => s + b.qteCommandee * b.coutUnitaire, 0);
-  });
-  STATE.charts.c6 = new Chart(document.getElementById('chart6'), {
-    type:'bar',
-    data:{labels:years.map(String),datasets:[
-      {label:'Consommation',data:consoByYear,backgroundColor:'#34d399'},
-      {label:'Commandes',data:cmdByYear,backgroundColor:'#4f8df7'}
-    ]},
-    options:{responsive:true,plugins:{title:{display:true,text:'Commandes vs Consommation',font:{size:14}},datalabels:{display:false}},scales:{y:{ticks:{callback:v=>formatEUR(v)}}}}
-  });
-
-  // Chart 7: Synthèse 5 leviers
-  STATE.charts.c7 = new Chart(document.getElementById('chart7'), {
-    type:'bar',
-    data:{labels:['L1 Dormants','L2 Paramétrage','L3 Appro','L4 Mutualisation','L5 Flux'],
-      datasets:[{label:'Réduction estimée',data:[c.reductionL1,c.reductionL2,c.reductionL3,c.reductionL4,c.reductionL5],
-        backgroundColor:['#f87171','#fbbf24','#60a5fa','#a78bfa','#34d399']}]},
-    options:{indexAxis:'y',responsive:true,plugins:{title:{display:true,text:'Synthèse 5 Leviers — Réduction Estimée',font:{size:14}},datalabels:{display:false}},scales:{x:{ticks:{callback:v=>formatEUR(v)}}}}
-  });
-
-  // Chart 8: Évolution stock historique
-  const periods = ['2024-12','2025-12','2026-01'];
-  const histTotal = periods.map(p => {
-    let total = 0;
-    units.forEach(u => { total += (HISTORY[u]?.mag?.[p]||0) + (HISTORY[u]?.plf?.[p]||0); });
-    return total;
-  });
-  STATE.charts.c8 = new Chart(document.getElementById('chart8'), {
-    type:'line',
-    data:{labels:['Déc 2024','Déc 2025','Jan 2026'],datasets:[
-      {label:'Stock Total',data:histTotal,borderColor:'#4f8df7',backgroundColor:'rgba(79,141,247,.1)',fill:true,tension:.3,pointRadius:6},
-      {label:'Objectif',data:[57500000,57500000,57500000],borderColor:'#34d399',borderDash:[5,5],pointRadius:0}
-    ]},
-    options:{responsive:true,plugins:{title:{display:true,text:'Évolution Stock Historique',font:{size:14}},datalabels:{display:false}},scales:{y:{ticks:{callback:v=>formatEUR(v)}}}}
-  });
-
-  // Chart 9: Dépréciation par unité
-  const smByUnit = units.map(u => c.depreByUnit[u]?.stockMort||0);
-  const ssByUnit = units.map(u => c.depreByUnit[u]?.surstock||0);
-  STATE.charts.c9 = new Chart(document.getElementById('chart9'), {
-    type:'bar',
-    data:{labels:units,datasets:[
-      {label:'Stock Mort',data:smByUnit,backgroundColor:'#f87171'},
-      {label:'Surstock',data:ssByUnit,backgroundColor:'#fbbf24'}
-    ]},
-    options:{responsive:true,plugins:{title:{display:true,text:'Dépréciation par Unité',font:{size:14}},datalabels:{display:false}},scales:{x:{stacked:true},y:{stacked:true,ticks:{callback:v=>formatEUR(v)}}}}
-  });
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   SECTION 8 : EXPORT EXCEL (SheetJS)
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-function exportExcel() {
-  const c = STATE.computed;
-  if (!c) return;
-
-  const wb = XLSX.utils.book_new();
-
-  // --- ONGLET 1 : SYNTHÈSE ---
-  const synthData = [];
-  synthData.push(['OPTIMISATION DU STOCK — SYNTHÈSE EXÉCUTIVE']);
-  synthData.push(['Généré le ' + new Date().toLocaleDateString('fr-FR') + ' — Application Optimisation Stock GDI V3.1']);
-  synthData.push([]);
-  synthData.push(['INDICATEURS CLÉS']);
-  synthData.push(['Stock total (local + plateforme)', formatEUR(c.stockTotal)]);
-  synthData.push(['Stock local (hors plateforme)', formatEUR(c.stockLocal)]);
-  synthData.push(['Stock plateforme (exclu)', formatEUR(c.stockPlateforme)]);
-  synthData.push(['Objectif', formatEUR(OBJECTIVES.TOTAL.all.obj)]);
-  synthData.push(['Écart', formatEUR(c.stockLocal - OBJECTIVES.TOTAL.all.obj)]);
-  synthData.push(['Réduction estimée (5 leviers)', formatEUR(c.reductionTotale)]);
-  synthData.push(['% Réduction', formatPct(c.reductionTotale / c.stockLocal)]);
-  synthData.push(['Articles locaux analysés', c.localEnriched.length]);
-  synthData.push(['Articles plateforme (exclus)', c.nbExcluded]);
-  synthData.push([]);
-  synthData.push(['SYNTHÈSE PAR MAGASIN']);
-  synthData.push(['Magasin','Unité','Type','Articles','Valeur stock','Dormants','Val. dormants','Faible act.','Val. faible act.']);
-  const mags = Object.values(c.magSynthese).sort((a,b) => b.valeur - a.valeur);
-  mags.forEach(m => {
-    synthData.push([m.magasin, m.unit, m.type, m.articles, m.valeur, m.dormants, m.valDormants, m.faibleAct, m.valFaibleAct]);
-  });
-  synthData.push([]);
-  synthData.push(['LEVIERS DE RÉDUCTION']);
-  synthData.push(['#','Levier','Articles','Valeur brute','Réduction estimée','Priorité']);
-  synthData.push([1,'Réduction stock dormant',c.reformeDormants.length,c.valeurDormants,c.reductionL1,'HAUTE']);
-  synthData.push([2,'Reparamétrage couverture A/B',c.parametrables.length,c.parametrables.reduce((s,r)=>s+r.valeur,0),c.reductionL2,'HAUTE']);
-  synthData.push([3,'Optimisation approvisionnements','—',c.cmdNTotal,c.reductionL3,'MOYENNE']);
-  synthData.push([4,'Mutualisation inter-magasins',c.mutuCandidats.length,c.mutuCandidats.reduce((s,a)=>s+a.valeurTotale,0),c.reductionL4,'MOYENNE']);
-  synthData.push([5,'Sécurisation flux futur',c.risqueFlux.length,c.risqueFlux.reduce((s,r)=>s+r.valeur,0),c.reductionL5,'BASSE']);
-  synthData.push(['','TOTAL RÉDUCTION ESTIMÉE','','',c.reductionTotale,'']);
-  synthData.push([]);
-  synthData.push(['Pareto ABC']);
-  const abcClasses = ['A','B','C','D'];
-  abcClasses.forEach(cls => {
-    const items = c.articleList.filter(a => a.abcRecalcule === cls);
-    const val = items.reduce((s,a) => s + a.valeurTotale, 0);
-    const pct = c.totalValeur > 0 ? val / c.totalValeur : 0;
-    synthData.push(['Classe ' + cls, items.length, formatPct(items.length/c.articleList.length) + ' articles', formatEUR(val), formatPct(pct) + ' valeur']);
-  });
-
-  const wsSynth = XLSX.utils.aoa_to_sheet(synthData);
-  wsSynth['!cols'] = [{wch:25},{wch:35},{wch:15},{wch:15},{wch:20},{wch:15},{wch:20},{wch:15},{wch:20}];
-  XLSX.utils.book_append_sheet(wb, wsSynth, 'SYNTHÈSE');
-
-  // --- ONGLET 2 : PARETO_ABC ---
-  const paretoHeaders = ['#','Article','Libellé','ABC Pareto','Valeur stock','% cumulé','Qté','Coût moyen','Conso moy/an','Couverture (mois)','Magasins','Nb mag.','Dormant','Faible act.','Déprécié','Provision M','Fournisseur','Contrat','ABC recalculé','Plateforme (O/N)'];
-  const paretoData = [paretoHeaders];
-  c.articleList.forEach((a,i) => {
-    paretoData.push([i+1, a.article, a.libelle, a.typeABC, a.valeurTotale, a.pctCumule,
-      a.qteTotale, a.coutMoyen, a.consoMoyAn, a.couvertureMois >= 9999 ? '∞' : Math.round(a.couvertureMois*10)/10,
-      a.magasins.join(', '), a.nbMag, a.isDormant?'Oui':'Non', a.isFaibleAct?'Oui':'Non',
-      a.isDeprecie?'Oui':'Non', a.provisionM, a.fournisseur, a.contrat, a.abcRecalcule, a.isPlateforme?'Oui':'Non']);
-  });
-  const wsPareto = XLSX.utils.aoa_to_sheet(paretoData);
-  wsPareto['!cols'] = paretoHeaders.map(h => ({wch: Math.max(h.length + 4, 14)}));
-  XLSX.utils.book_append_sheet(wb, wsPareto, 'PARETO_ABC');
-
-  // --- ONGLET 3 : RÉFORME ---
-  const refHeaders = ['#','Article','Libellé','Classe ABC','Valeur stock','Qté','Coût moyen','Motif réforme','Priorité','Magasin','Unité','Conso hist.','Conso N','Conso N-1','Conso N-2','DÉPRÉCIÉ (O/N)','Provision M','Prov. Stock Mort','Prov. Surstock','Réformable immédiat (O/N)','Fournisseur','Contrat'];
-  const refData = [refHeaders];
-  const refList = [...c.reformeCandidats].sort((a,b) => b.valeur - a.valeur);
-  refList.forEach((r,i) => {
-    refData.push([i+1, r.article, r.libelle, r.abc, r.valeur, r.qte, r.coutMoyen,
-      r.motifReforme, r.prioriteReforme, r.magasin, r.unit,
-      r.consoHist, r.consoN, r.consoN1, r.consoN2,
-      r.isDeprecie?'Oui':'Non', r.provisionM, r.provisionStockMort, r.provisionSurstock,
-      r.reformableImmediat?'Oui':'Non', r.fournisseur, r.contrat]);
-  });
-  const wsRef = XLSX.utils.aoa_to_sheet(refData);
-  wsRef['!cols'] = refHeaders.map(h => ({wch: Math.max(h.length + 4, 14)}));
-  XLSX.utils.book_append_sheet(wb, wsRef, 'RÉFORME');
-
-  // --- ONGLET 4 : MUTUALISATION ---
-  const mutuHeaders = ['#','Article','Libellé','Classe ABC','Valeur totale','Qté totale','Coût moyen','Conso moy/an','Couverture (mois)','Magasins','Nb mag.','Économie est.(15%)','Fournisseur','Contrat'];
-  const mutuData = [mutuHeaders];
-  const mutuList = [...c.mutuCandidats].sort((a,b) => b.valeurTotale - a.valeurTotale);
-  mutuList.forEach((a,i) => {
-    mutuData.push([i+1, a.article, a.libelle, a.typeABC, a.valeurTotale, a.qteTotale, a.coutMoyen,
-      a.consoMoyAn, a.couvertureMois >= 9999 ? '∞' : Math.round(a.couvertureMois*10)/10,
-      a.magasins.join(', '), a.nbMag, a.valeurTotale*0.15, a.fournisseur, a.contrat]);
-  });
-  const wsMutu = XLSX.utils.aoa_to_sheet(mutuData);
-  wsMutu['!cols'] = mutuHeaders.map(h => ({wch: Math.max(h.length + 4, 14)}));
-  XLSX.utils.book_append_sheet(wb, wsMutu, 'MUTUALISATION');
-
-  // --- ONGLET 5 : MUTU_REFORME (articles réforme + multi-mag) ---
-  const mutuRefHeaders = ['#','Article','Libellé','ABC','Valeur','Magasins','Nb mag','Motif','Priorité'];
-  const mutuRefData = [mutuRefHeaders];
-  const mutuRefList = c.reformeCandidats.filter(r => {
-    const agg = c.articleAgg[r.article];
-    return agg && agg.nbMag >= 2;
-  });
-  mutuRefList.sort((a,b) => b.valeur - a.valeur);
-  mutuRefList.forEach((r,i) => {
-    const agg = c.articleAgg[r.article];
-    mutuRefData.push([i+1, r.article, r.libelle, r.abc, r.valeur, agg.magasins.join(', '), agg.nbMag, r.motifReforme, r.prioriteReforme]);
-  });
-  const wsMutuRef = XLSX.utils.aoa_to_sheet(mutuRefData);
-  wsMutuRef['!cols'] = mutuRefHeaders.map(h => ({wch: Math.max(h.length + 4, 14)}));
-  XLSX.utils.book_append_sheet(wb, wsMutuRef, 'MUTU_REFORME');
-
-  // --- ONGLET 6 : PARAMÉTRAGE ---
-  const paramHeaders = ['#','Article','Libellé','Classe ABC','Qté stock','Valeur stock','Coût moyen','Conso moy/an','CMM','Couverture act. (mois)','Délai (jours)','Délai (mois)','Cible couv.','Stock optimal','Sécu proposé','Seuil proposé','QEC proposée','Qté max proposée','Excès qté','Valeur excès €','Type Mag/PLF','Magasin','Fournisseur','Plateforme (O/N)'];
-  const paramData = [paramHeaders];
-  const paramList = [...c.parametrables].sort((a,b) => b.excessValeur - a.excessValeur);
-  paramList.forEach((r,i) => {
-    paramData.push([i+1, r.article, r.libelle, r.abc, r.qte, r.valeur, r.coutMoyen,
-      r.consoMoyAn, Math.round(r.cmm*100)/100, r.couvertureMois >= 9999 ? '∞' : Math.round(r.couvertureMois*10)/10,
-      r.delaiJours, Math.round(r.delaiMois*10)/10, r.cibleCouv,
-      Math.round(r.stockOptimal), Math.round(r.secuPropose), Math.round(r.seuilPropose),
-      Math.round(r.qecPropose), Math.round(r.qteMaxPropose),
-      Math.round(r.excessQte), r.excessValeur, r.type, r.magasin, r.fournisseur, r.isPlateforme?'Oui':'Non']);
-  });
-  const wsParam = XLSX.utils.aoa_to_sheet(paramData);
-  wsParam['!cols'] = paramHeaders.map(h => ({wch: Math.max(h.length + 4, 14)}));
-  XLSX.utils.book_append_sheet(wb, wsParam, 'PARAMETRAGE');
-
-  // --- ONGLET 7 : DÉTAIL_MAGASIN ---
-  const detHeaders = ['Article','Libellé','Magasin','Unité','Type (Mag/PLF)','Qté stock','Valeur','Coût moyen','C.N','C.N-1','C.N-2','C.N-3','Conso moy/an','Couverture','ABC','Seuil actuel','Stock sécu actuel','Qté max actuelle','Seuil proposé','Sécu proposé','Qté max proposée','Fournisseur','Contrat','Statut','Déprécié','Provision M'];
-  const detData = [detHeaders];
-  const detList = [...c.localEnriched].sort((a,b) => b.valeur - a.valeur);
-  detList.forEach(r => {
-    detData.push([r.article, r.libelle, r.magasin, r.unit, r.type, r.qte, r.valeur, r.coutMoyen,
-      r.consoN, r.consoN1, r.consoN2, r.consoN3, r.consoMoyAn,
-      r.couvertureMois >= 9999 ? '∞' : Math.round(r.couvertureMois*10)/10,
-      r.abc, r.seuil, r.stockSecu, r.qteMax,
-      Math.round(r.seuilPropose), Math.round(r.secuPropose), Math.round(r.qteMaxPropose),
-      r.fournisseur, r.contrat, r.statut, r.isDeprecie?'Oui':'Non', r.provisionM]);
-  });
-  const wsDet = XLSX.utils.aoa_to_sheet(detData);
-  wsDet['!cols'] = detHeaders.map(h => ({wch: Math.max(h.length + 4, 14)}));
-  XLSX.utils.book_append_sheet(wb, wsDet, 'DÉTAIL_MAGASIN');
-
-  // --- ONGLET 8 : MÉTHODOLOGIE ---
-  const methData = [
-    ['MÉTHODOLOGIE — Optimisation Stock GDI'],
-    [],
-    ['1. PÉRIMÈTRE DES ARTICLES PLATEFORME'],
-    ['  Magasins plateforme EXCLUS du périmètre local : 99, HS99 (TDE Réparables), R-BAR (ESO Réparable).'],
-    ['  → EXCLUS du périmètre local. Le travail de mutualisation a déjà été réalisé.'],
-    ['  Impact : lignes article×magasin retirées de l\'analyse mais comptabilisées séparément.'],
-    [],
-    ['2. PÉRIMÈTRE DES UNITÉS'],
-    ['  Magasins : VOIE, CT, TDE, ESO, STF/ISE'],
-    ['  ⚠ "NA" lu avec keep_default_na=False pour éviter interprétation comme NaN.'],
-    [],
-    ['3. CLASSIFICATION ABC (PARETO)'],
-    ['  Agrégation par article unique (somme des stocks sur tous magasins).'],
-    ['  A : 0-80% valeur cumulée | B : 80-95% | C : 95-99% | D : 99-100%'],
-    [],
-    ['4. CANDIDATS À LA RÉFORME'],
-    ['  DORMANT : Consommation totale historique = 0 (cumul + 6 années)'],
-    ['  FAIBLE ACTIVITÉ : Conso N et N-1 = 0, mais conso antérieure > 0'],
-    ['  Priorité : HAUTE ≥ 1000€ | MOYENNE ≥ 100€ | BASSE < 100€'],
-    [],
-    ['5. MUTUALISATION VERS PLATEFORME'],
-    ['  Articles dans 2+ magasins, HORS candidats réforme'],
-    ['  Économie estimée : 15% de la valeur totale'],
-    [],
-    ['6. PARAMÉTRAGE (avec flag → plateforme)'],
-    ['  Classe A + Classe B (couverture > 24 mois), hors réforme'],
-    ['  Cible : A = 2 mois (mag) / 4 mois (PLF) | B = 3 mois (mag) / 6 mois (PLF)'],
-    ['  Stock optimal = CMM × cible | Sécu = CMM × 1 (A) ou 1.5 (B)'],
-    ['  Excès = max(0, stock actuel − stock optimal)'],
-    [],
-    ['7. CONSOMMATION DE RÉFÉRENCE'],
-    ['  Moyenne 2023-2025 (3 années complètes)'],
-    ['  Couverture = Stock / (Conso annuelle moyenne / 12)'],
-    [],
-    ['8. ORDRE DE MISE EN ŒUVRE RECOMMANDÉ'],
-    ['  Étape 1 : Valider la liste de réforme avec les équipes opérationnelles'],
-    ['  Étape 2 : Lancer les réformes (sorties inventaire, retours fournisseur)'],
-    ['  Étape 3 : Ajuster les paramètres de réapprovisionnement'],
-    ['  Étape 4 : Transférer les articles mutualisables vers plateforme'],
-    ['  Étape 5 : Suivi mensuel des indicateurs']
-  ];
-  const wsMeth = XLSX.utils.aoa_to_sheet(methData);
-  wsMeth['!cols'] = [{wch:80}];
-  XLSX.utils.book_append_sheet(wb, wsMeth, 'MÉTHODOLOGIE');
-
-  // Télécharger
-  const filename = 'Optimisation_Stock_GDI_' + new Date().toISOString().slice(0,10) + '.xlsx';
-  XLSX.writeFile(wb, filename);
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   SECTION 9 : GESTION DES ÉVÉNEMENTS & INITIALISATION
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-function toggleTheme() {
+function toggleTheme(){
   document.body.classList.toggle('light');
-  const isLight = document.body.classList.contains('light');
-  document.getElementById('btnTheme').textContent = isLight ? 'Mode Sombre' : 'Mode Clair';
-  if (STATE.computed) renderCharts(STATE.computed, STATE.currentUnit);
+  document.getElementById('btnTheme').textContent=document.body.classList.contains('light')?'Mode Sombre':'Mode Clair';
 }
 
-function switchTab(tabId) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-  document.querySelector(`.tab-btn[data-tab="${tabId}"]`).classList.add('active');
-  document.getElementById('tab-' + tabId).classList.add('active');
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 7 : RENDU UI
+   ═══════════════════════════════════════════════════════════════ */
+function updateAll(){
+  const c=S.computed;if(!c)return;
+  const f=fU(c.enriched,S.unit);
+  renderKPIs(f);renderGauges(f);renderDormance(f);renderLeviers(f);renderMagSynth(f);
+  renderPareto(f);renderReforme(f);renderMutu(f);renderParam(f);renderDetail(f);
+  renderMethodo();renderCharts(f);
+  // Populate magasin filter
+  const mags=[...new Set(f.map(r=>r.mag))].sort();
+  const sel=document.getElementById('fMag');
+  const cur=sel.value;sel.innerHTML='<option value="">Tous magasins</option>';
+  mags.forEach(m=>{const o=document.createElement('option');o.value=m;o.textContent=m;sel.appendChild(o);});
+  if(cur)sel.value=cur;
 }
 
-function filterUnit(unit) {
-  STATE.currentUnit = unit;
-  document.querySelectorAll('.unit-btn').forEach(b => b.classList.remove('active'));
-  document.querySelector(`.unit-btn[data-unit="${unit}"]`).classList.add('active');
-  // Reset pages
-  Object.keys(pageStates).forEach(k => pageStates[k] = 1);
-  if (STATE.computed) updateAll();
+function renderKPIs(f){
+  const stockTot=f.reduce((s,r)=>s+r.valeur,0);
+  const magTot=f.filter(r=>r.type==='Magasin').reduce((s,r)=>s+r.valeur,0);
+  const plfTot=f.filter(r=>r.type==='Plateforme').reduce((s,r)=>s+r.valeur,0);
+  let obj=0;
+  if(S.unit==='ALL'){obj=OBJ.TOTAL.all.o;}
+  else if(OBJ[S.unit]){obj=(OBJ[S.unit].mag?.o||0)+(OBJ[S.unit].plf?.o||0);}
+  const ecart=stockTot-obj;
+  const refItems=f.filter(r=>r.motifRef);
+  const refVal=refItems.reduce((s,r)=>s+r.valeur,0)*0.5;
+  const paramItems=f.filter(r=>!r.motifRef&&(r.abcCalc==='A'||r.abcCalc==='B')&&r.couv>24);
+  const paramVal=paramItems.reduce((s,r)=>s+r.valExces,0);
+  const mutuVal=S.unit==='ALL'?S.computed.mutuCand.reduce((s,m)=>s+m.eco,0):
+    S.computed.mutuCand.filter(m=>{const items=S.computed.enriched.filter(r=>r.art===m.art&&r.unit===(S.unit));return items.length>0;}).reduce((s,m)=>s+m.eco,0);
+  const ecoTot=refVal+paramVal+mutuVal;
+  const pctRed=stockTot>0?(ecoTot/stockTot*100):0;
+  const nbArt=f.length;
+  const nbExcl=(S.merged||[]).length-S.computed.enriched.length;
+  document.getElementById('k1').textContent=fmtE(stockTot);
+  document.getElementById('k1s').textContent=fmtN(nbArt)+' lignes (Mag: '+fmtE(magTot)+' | PLF: '+fmtE(plfTot)+')';
+  document.getElementById('k2').textContent=fmtE(obj);
+  document.getElementById('k2s').textContent=S.unit==='ALL'?'Objectif global':'Objectif '+S.unit;
+  document.getElementById('k3').textContent=fmtE(ecart);
+  document.getElementById('k3s').textContent=ecart>0?'Au-dessus de l\'objectif':'Sous l\'objectif';
+  document.getElementById('k4').textContent=fmtE(ecoTot);
+  document.getElementById('k4s').textContent='5 leviers combinés';
+  document.getElementById('k5').textContent=fmtN(pctRed,1)+' %';
+  document.getElementById('k5s').textContent='Potentiel de réduction';
+  document.getElementById('k6').textContent=fmtN(nbArt);
+  document.getElementById('k6s').textContent='Lignes article×magasin';
 }
 
-async function handleFile(input, type) {
-  const file = input.files[0];
-  if (!file) return;
-
-  const loader = document.getElementById('loader');
-  loader.classList.add('active');
-
-  try {
-    switch(type) {
-      case 'stock':
-        STATE.stockData = await readStock(file);
-        document.getElementById('dropStock').classList.add('loaded');
-        document.getElementById('statusStock').textContent = `✓ ${formatNum(STATE.stockData.length)} lignes`;
-        break;
-      case 'sorties':
-        STATE.sortiesData = await readSorties(file);
-        document.getElementById('dropSorties').classList.add('loaded');
-        document.getElementById('statusSorties').textContent = `✓ ${formatNum(STATE.sortiesData.length)} lignes`;
-        break;
-      case 'bc':
-        STATE.bcData = await readBC(file);
-        document.getElementById('dropBC').classList.add('loaded');
-        document.getElementById('statusBC').textContent = `✓ ${formatNum(STATE.bcData.length)} lignes`;
-        break;
-      case 'depreciation':
-        STATE.depreData = await readDepreciation(file);
-        document.getElementById('dropDepre').classList.add('loaded');
-        document.getElementById('statusDepre').textContent = `✓ ${formatNum(STATE.depreData.length)} lignes`;
-        break;
-      case 'reservation':
-        STATE.resaData = await readReservation(file);
-        document.getElementById('dropResa').classList.add('loaded');
-        document.getElementById('statusResa').textContent = `✓ ${formatNum(STATE.resaData.length)} lignes`;
-        break;
-    }
-
-    // Recalculer si stock chargé
-    if (STATE.stockData) {
-      STATE.computed = computeAll();
-      document.getElementById('btnExportExcel').disabled = false;
-      updateAll();
-    }
-  } catch(err) {
-    alert('Erreur lecture fichier: ' + err.message);
-    console.error(err);
-  } finally {
-    loader.classList.remove('active');
-  }
-}
-
-// Drag & drop support
-document.querySelectorAll('.upload-card').forEach(card => {
-  card.addEventListener('dragover', e => { e.preventDefault(); card.classList.add('dragover'); });
-  card.addEventListener('dragleave', () => card.classList.remove('dragover'));
-  card.addEventListener('drop', e => {
-    e.preventDefault();
-    card.classList.remove('dragover');
-    const input = card.querySelector('input[type="file"]');
-    if (e.dataTransfer.files.length > 0) {
-      input.files = e.dataTransfer.files;
-      input.dispatchEvent(new Event('change'));
-    }
+function renderGauges(f){
+  const el=document.getElementById('gauges');el.innerHTML='';
+  const units=S.unit==='ALL'?['VOIE','CT','TDE','ESO','STF/ISE']:[S.unit];
+  units.forEach(u=>{
+    const items=f.filter(r=>r.unit===u);
+    const val=items.reduce((s,r)=>s+r.valeur,0);
+    const obj=(OBJ[u]?.mag?.o||0)+(OBJ[u]?.plf?.o||0);
+    const pct=obj>0?Math.min(val/obj*100,150):0;
+    const col=pct<=100?'var(--gn)':pct<=110?'var(--or)':'var(--rd)';
+    el.innerHTML+=`<div class="gi"><div class="gl">${u}</div><div class="gb"><div class="gf" style="width:${Math.min(pct,100)}%;background:${col}"></div></div><div class="gv" style="color:${col}">${fmtE(val)}</div><div style="font-size:.65rem;color:var(--tx3)">Obj: ${fmtE(obj)}</div></div>`;
   });
-});
+}
+
+function renderDormance(f){
+  const el=document.getElementById('tDorm');
+  const cats=[{l:'< 12 mois',fn:r=>r.couv>0&&r.couv<12},{l:'12-24 mois',fn:r=>r.couv>=12&&r.couv<24},
+    {l:'24-36 mois',fn:r=>r.couv>=24&&r.couv<36},{l:'> 36 mois',fn:r=>r.couv>=36&&r.couv<999},
+    {l:'Dormant (0 conso)',fn:r=>r.dormance==='Dormant'}];
+  let h='<thead><tr><th>Catégorie</th><th class="n">Articles</th><th class="n">Valeur</th><th class="n">% Stock</th></tr></thead><tbody>';
+  const totV=f.reduce((s,r)=>s+r.valeur,0);
+  cats.forEach(c=>{
+    const items=f.filter(c.fn);const v=items.reduce((s,r)=>s+r.valeur,0);
+    h+=`<tr><td>${c.l}</td><td class="n">${fmtN(items.length)}</td><td class="n">${fmtE(v)}</td><td class="n">${totV>0?(v/totV*100).toFixed(1):0} %</td></tr>`;
+  });
+  h+='</tbody>';el.innerHTML=h;
+}
+
+function renderLeviers(f){
+  const el=document.getElementById('tLev');
+  const dorm=f.filter(r=>r.dormance==='Dormant');
+  const faib=f.filter(r=>r.dormance==='Faible activité');
+  const param=f.filter(r=>!r.motifRef&&(r.abcCalc==='A'||r.abcCalc==='B')&&r.couv>24);
+  const mutu=S.computed.mutuCand;
+  const depr=f.filter(r=>r.deprecie);
+  const leviers=[
+    {n:'1',l:'Réforme dormants (0 conso historique)',art:dorm.length,vb:dorm.reduce((s,r)=>s+r.valeur,0),red:dorm.reduce((s,r)=>s+r.valeur,0)*0.5,p:'HAUTE'},
+    {n:'2',l:'Réforme faible activité (0 conso 2025-2026)',art:faib.length,vb:faib.reduce((s,r)=>s+r.valeur,0),red:faib.reduce((s,r)=>s+r.valeur,0)*0.3,p:'HAUTE'},
+    {n:'3',l:'Re-paramétrage classe A/B (excès couverture)',art:param.length,vb:param.reduce((s,r)=>s+r.valeur,0),red:param.reduce((s,r)=>s+r.valExces,0),p:'MOYENNE'},
+    {n:'4',l:'Mutualisation inter-magasins',art:mutu.length,vb:mutu.reduce((s,m)=>s+m.valTot,0),red:mutu.reduce((s,m)=>s+m.eco,0),p:'MOYENNE'},
+    {n:'5',l:'Articles dépréciés (provision > 0)',art:depr.length,vb:depr.reduce((s,r)=>s+r.valeur,0),red:depr.reduce((s,r)=>s+r.provM,0),p:'HAUTE'}
+  ];
+  let h='<thead><tr><th>#</th><th>Levier</th><th class="n">Articles</th><th class="n">Valeur brute</th><th class="n">Réduction estimée</th><th>Priorité</th></tr></thead><tbody>';
+  let totRed=0;
+  leviers.forEach(l=>{
+    totRed+=l.red;
+    const pc=l.p==='HAUTE'?'hr':l.p==='MOYENNE'?'ho':'hb';
+    h+=`<tr><td>${l.n}</td><td>${l.l}</td><td class="n">${fmtN(l.art)}</td><td class="n">${fmtE(l.vb)}</td><td class="n">${fmtE(l.red)}</td><td class="${pc}">${l.p}</td></tr>`;
+  });
+  h+=`<tr style="font-weight:700;border-top:2px solid var(--bd)"><td></td><td>TOTAL RÉDUCTION ESTIMÉE</td><td></td><td></td><td class="n hg">${fmtE(totRed)}</td><td></td></tr>`;
+  h+='</tbody>';el.innerHTML=h;
+}
+
+function renderMagSynth(f){
+  const el=document.getElementById('tMag');
+  const byMag={};
+  f.forEach(r=>{
+    if(!byMag[r.mag])byMag[r.mag]={mag:r.mag,unit:r.unit,type:r.type,art:0,val:0,dorm:0,valDorm:0,faib:0,valFaib:0};
+    byMag[r.mag].art++;byMag[r.mag].val+=r.valeur;
+    if(r.dormance==='Dormant'){byMag[r.mag].dorm++;byMag[r.mag].valDorm+=r.valeur;}
+    if(r.dormance==='Faible activité'){byMag[r.mag].faib++;byMag[r.mag].valFaib+=r.valeur;}
+  });
+  const mags=Object.values(byMag).sort((a,b)=>b.val-a.val);
+  let h='<thead><tr><th>Magasin</th><th>Unité</th><th>Type</th><th class="n">Articles</th><th class="n">Valeur stock</th><th class="n">Dormants</th><th class="n">Val. dormants</th><th class="n">Faible act.</th><th class="n">Val. faible act.</th></tr></thead><tbody>';
+  mags.forEach(m=>{
+    h+=`<tr><td><strong>${m.mag}</strong></td><td>${m.unit}</td><td>${m.type}</td><td class="n">${fmtN(m.art)}</td><td class="n">${fmtE(m.val)}</td><td class="n">${fmtN(m.dorm)}</td><td class="n">${fmtE(m.valDorm)}</td><td class="n">${fmtN(m.faib)}</td><td class="n">${fmtE(m.valFaib)}</td></tr>`;
+  });
+  const tot={art:f.length,val:f.reduce((s,r)=>s+r.valeur,0)};
+  h+=`<tr style="font-weight:700;border-top:2px solid var(--bd)"><td>TOTAL</td><td></td><td></td><td class="n">${fmtN(tot.art)}</td><td class="n hg">${fmtE(tot.val)}</td><td></td><td></td><td></td><td></td></tr>`;
+  h+='</tbody>';el.innerHTML=h;
+}
+
+function renderPaged(data,cols,tbId,pgId,key,extraFilter){
+  let filtered=data;
+  if(extraFilter)filtered=extraFilter(filtered);
+  const total=filtered.length;const pages=Math.ceil(total/PS)||1;
+  if(pg[key]>pages)pg[key]=1;
+  const start=(pg[key]-1)*PS;const slice=filtered.slice(start,start+PS);
+  const tb=document.getElementById(tbId);
+  let h='<thead><tr>'+cols.map(c=>`<th class="${c.cls||''}">${c.h}</th>`).join('')+'</tr></thead><tbody>';
+  slice.forEach((r,i)=>{
+    h+='<tr>'+cols.map(c=>`<td class="${c.cls||''}">${c.fn(r,start+i)}</td>`).join('')+'</tr>';
+  });
+  if(slice.length===0)h+='<tr><td colspan="'+cols.length+'" style="text-align:center;padding:20px;color:var(--tx3)">Aucune donnée</td></tr>';
+  h+='</tbody>';tb.innerHTML=h;
+  // Pagination
+  const pe=document.getElementById(pgId);
+  if(total<=PS){pe.innerHTML='';return;}
+  let ph='<span class="pi">'+fmtN(total)+' lignes</span>';
+  if(pg[key]>1)ph+=`<button onclick="pg.${key}=1;updateAll()">«</button><button onclick="pg.${key}--;updateAll()">‹</button>`;
+  const from=Math.max(1,pg[key]-3),to=Math.min(pages,pg[key]+3);
+  for(let i=from;i<=to;i++)ph+=`<button class="${i===pg[key]?'active':''}" onclick="pg.${key}=${i};updateAll()">${i}</button>`;
+  if(pg[key]<pages)ph+=`<button onclick="pg.${key}++;updateAll()">›</button><button onclick="pg.${key}=${pages};updateAll()">»</button>`;
+  pe.innerHTML=ph;
+}
+
+function renderPareto(f){
+  const search=(document.getElementById('sPar')?.value||'').toLowerCase();
+  const abcF=document.getElementById('fABC')?.value||'';
+  const cols=[
+    {h:'#',cls:'n',fn:(r,i)=>i+1},{h:'Article',fn:r=>r.art},{h:'Libellé',fn:r=>r.lib?.substring(0,40)},
+    {h:'Classe',fn:r=>`<span style="color:${AC[r.abcCalc]||'#888'};font-weight:700">${r.abcCalc}</span>`},
+    {h:'Valeur stock',cls:'n',fn:r=>fmtE(r.valeur)},{h:'% Cumulé',cls:'n',fn:r=>(r.pctCum*100).toFixed(1)+' %'},
+    {h:'Qté',cls:'n',fn:r=>fmtN(r.qte)},{h:'CMP',cls:'n',fn:r=>fmtE(r.cmp)},
+    {h:'CMM',cls:'n',fn:r=>fmtE(r.cmm)},{h:'Couv. (mois)',cls:'n',fn:r=>r.couv>=999?'∞':fmtN(r.couv,1)},
+    {h:'Magasin',fn:r=>r.mag},{h:'Unité',fn:r=>r.unit},{h:'Type',fn:r=>r.type},
+    {h:'Nb mag.',cls:'n',fn:r=>r.nbMags},{h:'Dormant',fn:r=>r.dormance==='Dormant'?'<span class="hr">OUI</span>':''},
+    {h:'Déprécié',fn:r=>r.deprecie?'<span class="dep">OUI</span>':''},
+    {h:'Provision',cls:'n',fn:r=>r.provM>0?fmtE(r.provM):''},
+    {h:'Fournisseur',fn:r=>r.nomF?.substring(0,25)}
+  ];
+  renderPaged(f,cols,'tPar','pgPar','par',d=>{
+    let r=d;
+    if(search)r=r.filter(x=>(x.art+x.lib+x.nomF).toLowerCase().includes(search));
+    if(abcF)r=r.filter(x=>x.abcCalc===abcF);
+    return r.sort((a,b)=>b.valeur-a.valeur);
+  });
+}
+
+function renderReforme(f){
+  const search=(document.getElementById('sRef')?.value||'').toLowerCase();
+  const priF=document.getElementById('fPri')?.value||'';
+  const ref=f.filter(r=>r.motifRef);
+  const cols=[
+    {h:'#',cls:'n',fn:(r,i)=>i+1},{h:'Article',fn:r=>r.art},{h:'Libellé',fn:r=>r.lib?.substring(0,35)},
+    {h:'Classe',fn:r=>`<span style="color:${AC[r.abcCalc]};font-weight:700">${r.abcCalc}</span>`},
+    {h:'Valeur',cls:'n',fn:r=>fmtE(r.valeur)},{h:'Qté',cls:'n',fn:r=>fmtN(r.qte)},{h:'CMP',cls:'n',fn:r=>fmtE(r.cmp)},
+    {h:'Motif',fn:r=>r.motifRef},{h:'Priorité',fn:r=>{const c=r.prioriteRef==='HAUTE'?'hr':r.prioriteRef==='MOYENNE'?'ho':'hb';return`<span class="${c}">${r.prioriteRef}</span>`;}},
+    {h:'Magasin',fn:r=>r.mag},{h:'Unité',fn:r=>r.unit},{h:'Type',fn:r=>r.type},
+    {h:'CMM',cls:'n',fn:r=>fmtE(r.cmm)},
+    {h:'Conso N',cls:'n',fn:r=>fmtE(r.cN)},{h:'Conso N-1',cls:'n',fn:r=>fmtE(r.cN1)},{h:'Conso N-2',cls:'n',fn:r=>fmtE(r.cN2)},
+    {h:'Déprécié',fn:r=>r.deprecie?'<span class="dep">OUI</span>':'NON'},
+    {h:'Provision €',cls:'n',fn:r=>r.provM>0?fmtE(r.provM):'—'},
+    {h:'% Dépré.',cls:'n',fn:r=>r.pctDep>0?fmtN(r.pctDep,1)+' %':'—'},
+    {h:'Prov. Stock Mort',cls:'n',fn:r=>r.provSM>0?fmtE(r.provSM):'—'},
+    {h:'Prov. Surstock',cls:'n',fn:r=>r.provSS>0?fmtE(r.provSS):'—'},
+    {h:'Fournisseur',fn:r=>r.nomF?.substring(0,25)}
+  ];
+  renderPaged(ref,cols,'tRef','pgRef','ref',d=>{
+    let r=d;
+    if(search)r=r.filter(x=>(x.art+x.lib+x.nomF).toLowerCase().includes(search));
+    if(priF)r=r.filter(x=>x.prioriteRef===priF);
+    return r.sort((a,b)=>b.valeur-a.valeur);
+  });
+}
+
+function renderMutu(f){
+  const search=(document.getElementById('sMut')?.value||'').toLowerCase();
+  let mutu=S.computed.mutuCand;
+  if(S.unit!=='ALL')mutu=mutu.filter(m=>{
+    const items=S.computed.enriched.filter(r=>r.art===m.art&&r.unit===S.unit);return items.length>0;
+  });
+  const cols=[
+    {h:'#',cls:'n',fn:(r,i)=>i+1},{h:'Article',fn:r=>r.art},{h:'Libellé',fn:r=>r.lib?.substring(0,35)},
+    {h:'Classe',fn:r=>`<span style="color:${AC[r.abc]};font-weight:700">${r.abc}</span>`},
+    {h:'Valeur tot.',cls:'n',fn:r=>fmtE(r.valTot)},{h:'Qté tot.',cls:'n',fn:r=>fmtN(r.qteTot)},
+    {h:'CMP',cls:'n',fn:r=>fmtE(r.cmp)},{h:'CMM',cls:'n',fn:r=>fmtE(r.cmm)},
+    {h:'Couv. (mois)',cls:'n',fn:r=>r.couv>=999?'∞':fmtN(r.couv,1)},
+    {h:'Magasins',fn:r=>r.mags},{h:'Nb mag.',cls:'n',fn:r=>r.nbMag},
+    {h:'Qté centrale',cls:'n',fn:r=>fmtN(r.qteCentrale)},{h:'Qté local',cls:'n',fn:r=>fmtN(r.qteLocal)},
+    {h:'Éco. est. (15%)',cls:'n hg',fn:r=>fmtE(r.eco)},
+    {h:'Fournisseur',fn:r=>r.fourn?.substring(0,25)}
+  ];
+  renderPaged(mutu,cols,'tMut','pgMut','mut',d=>{
+    let r=d;if(search)r=r.filter(x=>(x.art+x.lib+x.fourn).toLowerCase().includes(search));
+    return r.sort((a,b)=>b.eco-a.eco);
+  });
+}
+
+function renderParam(f){
+  const search=(document.getElementById('sPrm')?.value||'').toLowerCase();
+  const param=f.filter(r=>!r.motifRef&&(r.abcCalc==='A'||r.abcCalc==='B')&&r.couv>24);
+  const cols=[
+    {h:'#',cls:'n',fn:(r,i)=>i+1},{h:'Article',fn:r=>r.art},{h:'Libellé',fn:r=>r.lib?.substring(0,30)},
+    {h:'Classe',fn:r=>`<span style="color:${AC[r.abcCalc]};font-weight:700">${r.abcCalc}</span>`},
+    {h:'Qté stock',cls:'n',fn:r=>fmtN(r.qte)},{h:'Valeur',cls:'n',fn:r=>fmtE(r.valeur)},{h:'CMP',cls:'n',fn:r=>fmtE(r.cmp)},
+    {h:'CMM',cls:'n',fn:r=>fmtE(r.cmm)},{h:'Couv. actuelle',cls:'n',fn:r=>r.couv>=999?'∞':fmtN(r.couv,1)+' m'},
+    {h:'Délai théo. (j)',cls:'n',fn:r=>fmtN(r.delai)},
+    {h:'Délai réel BC (j)',cls:'n',fn:r=>r.delaiBC?fmtN(r.delaiBC,0):'—'},
+    {h:'Délai retenu (j)',cls:'n',fn:r=>fmtN(r.delaiRetenu)},
+    {h:'Cible couv.',cls:'n',fn:r=>r.cibleCouv+' m'},
+    {h:'Stock optimal',cls:'n',fn:r=>fmtN(r.stockOpt,0)},
+    {h:'Sécu proposé',cls:'n',fn:r=>fmtN(r.secuProp)},
+    {h:'Seuil proposé',cls:'n',fn:r=>fmtN(r.seuilProp)},
+    {h:'Qté MAX',cls:'n',fn:r=>{const v=r.qMax;return(v===null||v===undefined||v>=999999)?'<span class="ho">Défaut</span>':fmtN(v);}},
+    {h:'Excès qté',cls:'n',fn:r=>fmtN(r.exces,0)},
+    {h:'Val. excès',cls:'n hr',fn:r=>fmtE(r.valExces)},
+    {h:'Déprécié',fn:r=>r.deprecie?'<span class="dep">OUI</span>':''},
+    {h:'Provision €',cls:'n',fn:r=>r.provM>0?fmtE(r.provM):''},
+    {h:'Magasin',fn:r=>r.mag},{h:'Unité',fn:r=>r.unit},{h:'Type',fn:r=>r.type},
+    {h:'Fournisseur',fn:r=>r.nomF?.substring(0,20)}
+  ];
+  renderPaged(param,cols,'tPrm','pgPrm','prm',d=>{
+    let r=d;if(search)r=r.filter(x=>(x.art+x.lib+x.nomF).toLowerCase().includes(search));
+    return r.sort((a,b)=>b.valExces-a.valExces);
+  });
+}
+
+function renderDetail(f){
+  const search=(document.getElementById('sDet')?.value||'').toLowerCase();
+  const magF=document.getElementById('fMag')?.value||'';
+  const cols=[
+    {h:'Article',fn:r=>r.art},{h:'Libellé',fn:r=>r.lib?.substring(0,30)},
+    {h:'Magasin',fn:r=>r.mag},{h:'Unité',fn:r=>r.unit},{h:'Type',fn:r=>r.type},{h:'Source',fn:r=>r.source},
+    {h:'Qté',cls:'n',fn:r=>fmtN(r.qte)},{h:'Valeur',cls:'n',fn:r=>fmtE(r.valeur)},{h:'CMP',cls:'n',fn:r=>fmtE(r.cmp)},
+    {h:'CMM',cls:'n',fn:r=>fmtE(r.cmm)},{h:'Conso N',cls:'n',fn:r=>fmtE(r.cN)},
+    {h:'Conso N-1',cls:'n',fn:r=>fmtE(r.cN1)},{h:'Conso N-2',cls:'n',fn:r=>fmtE(r.cN2)},
+    {h:'Couv.',cls:'n',fn:r=>r.couv>=999?'∞':fmtN(r.couv,1)},
+    {h:'ABC',fn:r=>`<span style="color:${AC[r.abcCalc]};font-weight:700">${r.abcCalc}</span>`},
+    {h:'Seuil act.',cls:'n',fn:r=>fmtN(r.seuil)},{h:'Sécu act.',cls:'n',fn:r=>fmtN(r.secu)},
+    {h:'Seuil prop.',cls:'n',fn:r=>fmtN(r.seuilProp)},{h:'Sécu prop.',cls:'n',fn:r=>fmtN(r.secuProp)},
+    {h:'Fournisseur',fn:r=>r.nomF?.substring(0,20)},{h:'Statut',fn:r=>r.statut},
+    {h:'Déprécié',fn:r=>r.deprecie?'<span class="dep">OUI</span>':''},
+    {h:'Provision',cls:'n',fn:r=>r.provM>0?fmtE(r.provM):''}
+  ];
+  renderPaged(f,cols,'tDet','pgDet','det',d=>{
+    let r=d;
+    if(search)r=r.filter(x=>(x.art+x.lib+x.mag+x.nomF).toLowerCase().includes(search));
+    if(magF)r=r.filter(x=>x.mag===magF);
+    return r.sort((a,b)=>b.valeur-a.valeur);
+  });
+}
+
+function renderMethodo(){
+  document.getElementById('metC').innerHTML=`
+<h3>1. PÉRIMÈTRE DES ARTICLES PLATEFORME</h3>
+<p>Les magasins plateforme sont intégrés dans l'analyse avec leur rattachement aux unités :</p>
+<ul><li><strong>VOIE</strong> : 289, 290</li><li><strong>CT</strong> : 210, 212</li><li><strong>TDE</strong> : 216</li><li><strong>ESO</strong> : 287</li></ul>
+<p>Les magasins réparables (99, HS99, R-BAR) et les articles en statut 90 (obsolète) sont <strong>EXCLUS</strong> du périmètre d'analyse. Les statuts 40 et 70 (inactif) sont conservés.</p>
+<h3>2. PÉRIMÈTRE DES UNITÉS</h3>
+<p>Magasins TDE : 97, BG, NA (Nanterre), VF + PLF 216<br>
+Magasins CT : AQ01CT, BN01CT, BR01, CE01, DF01CT, JO01CT, PC01 + PLF 210, 212<br>
+Magasins VOIE : 07-10, 14, 17-19, 24 + PLF 289, 290<br>
+Magasins ESO : 106, BAR, CRU + PLF 287<br>
+STF/ISE : GPE-* (plateforme uniquement)</p>
+<h3>3. CLASSIFICATION ABC (PARETO)</h3>
+<p>Agrégation par article unique (somme des stocks sur tous magasins). A : 0-80% valeur cumulée | B : 80-95% | C : 95-99% | D : 99-100%</p>
+<h3>4. CANDIDATS À LA RÉFORME</h3>
+<p>DORMANT : Consommation totale historique = 0 (cumul 6 années + CMM = 0)<br>
+FAIBLE ACTIVITÉ : Conso N et N-1 = 0, mais conso antérieure > 0<br>
+Priorité : HAUTE ≥ 1000€ | MOYENNE ≥ 100€ | BASSE < 100€</p>
+<h3>5. MUTUALISATION</h3>
+<p>Articles présents dans 2+ magasins, hors candidats réforme. Économie estimée : 15% de la valeur totale.</p>
+<h3>6. PARAMÉTRAGE (avec délai réel BC)</h3>
+<p>Classe A + Classe B (couverture > 24 mois), hors réforme.<br>
+Cibles couverture : A = 2m (mag) / 4m (PLF) | B = 3m (mag) / 6m (PLF)<br>
+Stock optimal = CMM_qty × cible | Sécu = CMM_qty × (délai_retenu/30) | Seuil = stock_opt + sécu<br>
+Délai retenu = médiane des délais réels BC si disponible, sinon délai théorique, sinon 30j par défaut.<br>
+Qté MAX : 999 999,99 = valeur par défaut (affichée "Défaut").</p>
+<h3>7. DÉPRÉCIATION</h3>
+<p>Croisement avec le fichier Dépréciation (onglet "Export"). Colonnes Provision M, Stock Mort, Surstock affichées dans RÉFORME et PARAMÉTRAGE.</p>
+<h3>8. CONSOMMATION DE RÉFÉRENCE</h3>
+<p>Magasin : Moyenne 3 années (colonnes conso N/N-1/N-2) en EUR<br>
+Plateforme : Calculée via Mouvements Plateforme (sorties consommation uniquement, hors annulations et écarts inventaire)<br>
+Couverture = Valeur stock / CMM (en mois)</p>
+<h3>9. ORDRE DE MISE EN ŒUVRE RECOMMANDÉ</h3>
+<ul><li>Étape 1 : Valider la liste de réforme avec les équipes opérationnelles</li>
+<li>Étape 2 : Lancer les réformes (sorties inventaire, retours fournisseur)</li>
+<li>Étape 3 : Ajuster les paramètres de réapprovisionnement</li>
+<li>Étape 4 : Transférer les articles mutualisables vers plateforme</li>
+<li>Étape 5 : Suivi mensuel des indicateurs</li></ul>`;
+}
+
+function filt(key){pg[key]=1;updateAll();}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 8 : GRAPHIQUES (Chart.js — 9 graphiques)
+   ═══════════════════════════════════════════════════════════════ */
+function renderCharts(f){
+  Object.values(S.charts).forEach(c=>{if(c)c.destroy();});S.charts={};
+  const units=['VOIE','CT','TDE','ESO','STF/ISE'];
+  const uCols=units.map(u=>UC[u]);
+  const cs=getComputedStyle(document.body);
+  const txC=cs.getPropertyValue('--tx').trim()||'#e8ebf4';
+  const tx2C=cs.getPropertyValue('--tx2').trim()||'#8b92a8';
+  const bdC=cs.getPropertyValue('--bd').trim()||'#333854';
+  const dOpts={responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:txC,font:{size:11}}},datalabels:{display:false}},scales:{x:{ticks:{color:tx2C,font:{size:10}},grid:{color:bdC}},y:{ticks:{color:tx2C,font:{size:10},callback:v=>v>=1e6?(v/1e6).toFixed(1)+'M':v>=1e3?(v/1e3).toFixed(0)+'k':v},grid:{color:bdC}}}};
+  // C1: Stock par unité vs objectif
+  const c1d=units.map(u=>f.filter(r=>r.unit===u).reduce((s,r)=>s+r.valeur,0));
+  const c1o=units.map(u=>(OBJ[u]?.mag?.o||0)+(OBJ[u]?.plf?.o||0));
+  S.charts.c1=new Chart(document.getElementById('c1'),{type:'bar',data:{labels:units,datasets:[{label:'Stock actuel',data:c1d,backgroundColor:uCols.map(c=>c+'CC')},{label:'Objectif',data:c1o,backgroundColor:uCols.map(c=>c+'44'),borderColor:uCols,borderWidth:2,borderDash:[5,5],type:'bar'}]},options:{...dOpts,plugins:{...dOpts.plugins,title:{display:true,text:'Stock par Unité vs Objectif',color:txC,font:{size:14}}}}});
+  // C2: Magasin vs Plateforme par unité
+  const c2m=units.map(u=>f.filter(r=>r.unit===u&&r.type==='Magasin').reduce((s,r)=>s+r.valeur,0));
+  const c2p=units.map(u=>f.filter(r=>r.unit===u&&r.type==='Plateforme').reduce((s,r)=>s+r.valeur,0));
+  S.charts.c2=new Chart(document.getElementById('c2'),{type:'bar',data:{labels:units,datasets:[{label:'Magasin',data:c2m,backgroundColor:'#4f8df7CC'},{label:'Plateforme',data:c2p,backgroundColor:'#a78bfaCC'}]},options:{...dOpts,plugins:{...dOpts.plugins,title:{display:true,text:'Magasin vs Plateforme par Unité',color:txC,font:{size:14}}},scales:{...dOpts.scales,x:{...dOpts.scales.x,stacked:true},y:{...dOpts.scales.y,stacked:true}}}});
+  // C3: Dormance multi-horizons
+  const dormCats=['< 12m','12-24m','24-36m','> 36m','Dormant'];
+  const dormFns=[r=>r.couv>0&&r.couv<12,r=>r.couv>=12&&r.couv<24,r=>r.couv>=24&&r.couv<36,r=>r.couv>=36&&r.couv<999,r=>r.dormance==='Dormant'];
+  const dormColors=['#34d399','#fbbf24','#f97316','#f87171','#ef4444'];
+  S.charts.c3=new Chart(document.getElementById('c3'),{type:'bar',data:{labels:units,datasets:dormCats.map((c,i)=>({label:c,data:units.map(u=>f.filter(r=>r.unit===u&&dormFns[i](r)).reduce((s,r)=>s+r.valeur,0)),backgroundColor:dormColors[i]+'CC'}))},options:{...dOpts,plugins:{...dOpts.plugins,title:{display:true,text:'Dormance Multi-Horizons par Unité',color:txC,font:{size:14}}},scales:{...dOpts.scales,x:{...dOpts.scales.x,stacked:true},y:{...dOpts.scales.y,stacked:true}}}});
+  // C4: ABC répartition valeur (Doughnut)
+  const abcCats=['A','B','C','D'];
+  const c4d=abcCats.map(a=>f.filter(r=>r.abcCalc===a).reduce((s,r)=>s+r.valeur,0));
+  S.charts.c4=new Chart(document.getElementById('c4'),{type:'doughnut',data:{labels:abcCats.map(a=>'Classe '+a),datasets:[{data:c4d,backgroundColor:abcCats.map(a=>AC[a]+'CC'),borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:txC}},title:{display:true,text:'Répartition ABC (Valeur)',color:txC,font:{size:14}},datalabels:{display:true,color:'#fff',font:{weight:'bold',size:12},formatter:(v,ctx)=>{const t=ctx.dataset.data.reduce((s,x)=>s+x,0);return t>0?(v/t*100).toFixed(1)+'%':'';}}}}});
+  // C5: ABC nombre articles (Horizontal Bar)
+  const c5d=abcCats.map(a=>f.filter(r=>r.abcCalc===a).length);
+  S.charts.c5=new Chart(document.getElementById('c5'),{type:'bar',data:{labels:abcCats.map(a=>'Classe '+a),datasets:[{label:'Articles',data:c5d,backgroundColor:abcCats.map(a=>AC[a]+'CC')}]},options:{...dOpts,indexAxis:'y',plugins:{...dOpts.plugins,title:{display:true,text:'Nombre d\'Articles par Classe ABC',color:txC,font:{size:14}}}}});
+  // C6: Consommation par année
+  const years=['N','N-1','N-2'];
+  const c6d=years.map((y,i)=>f.filter(r=>r.source==='MAGASIN').reduce((s,r)=>s+(i===0?r.cN:i===1?r.cN1:r.cN2)||0,0));
+  S.charts.c6=new Chart(document.getElementById('c6'),{type:'bar',data:{labels:years,datasets:[{label:'Consommation (EUR)',data:c6d,backgroundColor:['#4f8df7CC','#34d399CC','#fbbf24CC']}]},options:{...dOpts,plugins:{...dOpts.plugins,title:{display:true,text:'Consommation par Année (Magasins)',color:txC,font:{size:14}}}}});
+  // C7: Synthèse 5 leviers (Horizontal Bar)
+  const dorm=f.filter(r=>r.dormance==='Dormant');
+  const faib=f.filter(r=>r.dormance==='Faible activité');
+  const param=f.filter(r=>!r.motifRef&&(r.abcCalc==='A'||r.abcCalc==='B')&&r.couv>24);
+  const mutu=S.computed.mutuCand;
+  const depr=f.filter(r=>r.deprecie);
+  const levVals=[dorm.reduce((s,r)=>s+r.valeur,0)*0.5,faib.reduce((s,r)=>s+r.valeur,0)*0.3,param.reduce((s,r)=>s+r.valExces,0),mutu.reduce((s,m)=>s+m.eco,0),depr.reduce((s,r)=>s+r.provM,0)];
+  const levLabs=['Dormants','Faible activité','Re-paramétrage','Mutualisation','Dépréciation'];
+  S.charts.c7=new Chart(document.getElementById('c7'),{type:'bar',data:{labels:levLabs,datasets:[{label:'Réduction estimée (EUR)',data:levVals,backgroundColor:['#f87171CC','#f97316CC','#fbbf24CC','#34d399CC','#a78bfaCC']}]},options:{...dOpts,indexAxis:'y',plugins:{...dOpts.plugins,title:{display:true,text:'Synthèse des 5 Leviers d\'Optimisation',color:txC,font:{size:14}}}}});
+  // C8: Évolution stock historique
+  const histPeriods=['2024-12','2025-12','2026-01'];
+  const histUnits=S.unit==='ALL'?units:[S.unit];
+  const c8ds=histUnits.map(u=>({label:u,data:histPeriods.map(p=>(HIST[u]?.mag?.[p]||0)+(HIST[u]?.plf?.[p]||0)),borderColor:UC[u],backgroundColor:UC[u]+'33',fill:false,tension:0.3}));
+  S.charts.c8=new Chart(document.getElementById('c8'),{type:'line',data:{labels:histPeriods,datasets:c8ds},options:{...dOpts,plugins:{...dOpts.plugins,title:{display:true,text:'Évolution Stock Historique',color:txC,font:{size:14}}}}});
+  // C9: Dépréciation par unité
+  const c9sm=units.map(u=>f.filter(r=>r.unit===u).reduce((s,r)=>s+r.provSM,0));
+  const c9ss=units.map(u=>f.filter(r=>r.unit===u).reduce((s,r)=>s+r.provSS,0));
+  S.charts.c9=new Chart(document.getElementById('c9'),{type:'bar',data:{labels:units,datasets:[{label:'Stock Mort',data:c9sm,backgroundColor:'#f87171CC'},{label:'Surstock',data:c9ss,backgroundColor:'#fbbf24CC'}]},options:{...dOpts,plugins:{...dOpts.plugins,title:{display:true,text:'Dépréciation par Unité',color:txC,font:{size:14}}},scales:{...dOpts.scales,x:{...dOpts.scales.x,stacked:true},y:{...dOpts.scales.y,stacked:true}}}});
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 9 : EXPORT EXCEL STYLÉ
+   ═══════════════════════════════════════════════════════════════ */
+function getFilteredData(){
+  const f=fU(S.computed.enriched,S.unit);
+  return f;
+}
+
+function exportTab(tab){
+  if(!S.computed)return;
+  const f=getFilteredData();
+  const uLabel=S.unit==='ALL'?'Toutes':S.unit;
+  const date=new Date().toISOString().slice(0,10);
+  const wb=XLSX.utils.book_new();
+  let ws,name;
+  switch(tab){
+    case 'syn':name='SYNTHESE';ws=buildSyntheseSheet(f);break;
+    case 'par':name='PARETO_ABC';ws=buildParetoSheet(f);break;
+    case 'ref':name='REFORME';ws=buildReformeSheet(f);break;
+    case 'mut':name='MUTUALISATION';ws=buildMutuSheet(f);break;
+    case 'prm':name='PARAMETRAGE';ws=buildParamSheet(f);break;
+    case 'det':name='DETAIL_MAGASIN';ws=buildDetailSheet(f);break;
+    case 'met':name='METHODOLOGIE';ws=buildMethoSheet();break;
+  }
+  XLSX.utils.book_append_sheet(wb,ws,name);
+  XLSX.writeFile(wb,`${name}_${uLabel}_${date}.xlsx`);
+}
+
+function exportExcelAll(){
+  if(!S.computed)return;
+  const f=getFilteredData();
+  const uLabel=S.unit==='ALL'?'Toutes':S.unit;
+  const date=new Date().toISOString().slice(0,10);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,buildSyntheseSheet(f),'SYNTHESE');
+  XLSX.utils.book_append_sheet(wb,buildParetoSheet(f),'PARETO_ABC');
+  XLSX.utils.book_append_sheet(wb,buildReformeSheet(f),'REFORME');
+  XLSX.utils.book_append_sheet(wb,buildMutuSheet(f),'MUTUALISATION');
+  XLSX.utils.book_append_sheet(wb,buildParamSheet(f),'PARAMETRAGE');
+  XLSX.utils.book_append_sheet(wb,buildDetailSheet(f),'DETAIL_MAGASIN');
+  XLSX.utils.book_append_sheet(wb,buildMethoSheet(),'METHODOLOGIE');
+  XLSX.writeFile(wb,`Optimisation_Stock_GDI_${uLabel}_${date}.xlsx`);
+}
+
+function styledSheet(headers,rows,colWidths){
+  const aoa=[headers,...rows];
+  const ws=XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols']=colWidths||headers.map((h,i)=>{
+    const maxLen=Math.max(String(h).length,...rows.slice(0,50).map(r=>String(r[i]||'').length));
+    return{wch:Math.min(Math.max(maxLen+2,8),45)};
+  });
+  ws['!freeze']={xSplit:0,ySplit:1};
+  // Note: SheetJS community edition doesn't support cell styles
+  // For styled output, we use xlsx-style or add conditional formatting
+  return ws;
+}
+
+function buildSyntheseSheet(f){
+  const stockTot=f.reduce((s,r)=>s+r.valeur,0);
+  const magTot=f.filter(r=>r.type==='Magasin').reduce((s,r)=>s+r.valeur,0);
+  const plfTot=f.filter(r=>r.type==='Plateforme').reduce((s,r)=>s+r.valeur,0);
+  let obj=0;
+  if(S.unit==='ALL')obj=OBJ.TOTAL.all.o;
+  else if(OBJ[S.unit])obj=(OBJ[S.unit].mag?.o||0)+(OBJ[S.unit].plf?.o||0);
+  const rows=[];
+  rows.push(['OPTIMISATION DU STOCK GDI — SYNTHÈSE EXÉCUTIVE']);
+  rows.push(['Unité filtrée : '+(S.unit==='ALL'?'Toutes les unités':S.unit)]);
+  rows.push([]);
+  rows.push(['INDICATEURS CLÉS']);
+  rows.push(['Stock Total (Mag + PLF)',stockTot]);
+  rows.push(['Stock Magasin',magTot]);
+  rows.push(['Stock Plateforme',plfTot]);
+  rows.push(['Objectif',obj]);
+  rows.push(['Écart',stockTot-obj]);
+  rows.push(['Articles analysés',f.length]);
+  rows.push([]);
+  // Synthèse par magasin
+  rows.push(['SYNTHÈSE PAR MAGASIN']);
+  rows.push(['Magasin','Unité','Type','Articles','Valeur stock','Dormants','Val. dormants','Faible act.','Val. faible act.']);
+  const byMag={};
+  f.forEach(r=>{
+    if(!byMag[r.mag])byMag[r.mag]={mag:r.mag,unit:r.unit,type:r.type,art:0,val:0,dorm:0,valDorm:0,faib:0,valFaib:0};
+    byMag[r.mag].art++;byMag[r.mag].val+=r.valeur;
+    if(r.dormance==='Dormant'){byMag[r.mag].dorm++;byMag[r.mag].valDorm+=r.valeur;}
+    if(r.dormance==='Faible activité'){byMag[r.mag].faib++;byMag[r.mag].valFaib+=r.valeur;}
+  });
+  Object.values(byMag).sort((a,b)=>b.val-a.val).forEach(m=>{
+    rows.push([m.mag,m.unit,m.type,m.art,m.val,m.dorm,m.valDorm,m.faib,m.valFaib]);
+  });
+  rows.push([]);
+  // Leviers
+  rows.push(['LEVIERS D\'OPTIMISATION']);
+  rows.push(['#','Levier','Articles','Valeur brute','Réduction estimée','Priorité']);
+  const dorm=f.filter(r=>r.dormance==='Dormant');
+  const faib=f.filter(r=>r.dormance==='Faible activité');
+  const param=f.filter(r=>!r.motifRef&&(r.abcCalc==='A'||r.abcCalc==='B')&&r.couv>24);
+  const mutu=S.computed.mutuCand;
+  const depr=f.filter(r=>r.deprecie);
+  rows.push([1,'Réforme dormants',dorm.length,dorm.reduce((s,r)=>s+r.valeur,0),dorm.reduce((s,r)=>s+r.valeur,0)*0.5,'HAUTE']);
+  rows.push([2,'Réforme faible activité',faib.length,faib.reduce((s,r)=>s+r.valeur,0),faib.reduce((s,r)=>s+r.valeur,0)*0.3,'HAUTE']);
+  rows.push([3,'Re-paramétrage A/B',param.length,param.reduce((s,r)=>s+r.valeur,0),param.reduce((s,r)=>s+r.valExces,0),'MOYENNE']);
+  rows.push([4,'Mutualisation',mutu.length,mutu.reduce((s,m)=>s+m.valTot,0),mutu.reduce((s,m)=>s+m.eco,0),'MOYENNE']);
+  rows.push([5,'Dépréciation',depr.length,depr.reduce((s,r)=>s+r.valeur,0),depr.reduce((s,r)=>s+r.provM,0),'HAUTE']);
+  rows.push([]);
+  // Pareto ABC summary
+  rows.push(['PARETO ABC (stock local)']);
+  rows.push(['Classe','Articles','% articles','Valeur','% valeur']);
+  const totV=f.reduce((s,r)=>s+r.valeur,0);
+  ['A','B','C','D'].forEach(a=>{
+    const items=f.filter(r=>r.abcCalc===a);
+    const v=items.reduce((s,r)=>s+r.valeur,0);
+    rows.push([a,items.length,(items.length/f.length*100).toFixed(1)+'%',v,(totV>0?(v/totV*100).toFixed(1)+'%':'0%')]);
+  });
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=[{wch:30},{wch:15},{wch:12},{wch:12},{wch:18},{wch:18},{wch:15},{wch:12},{wch:15}];
+  return ws;
+}
+
+function buildParetoSheet(f){
+  const headers=['#','Article','Libellé','Classe ABC','Valeur stock','% Cumulé','Qté stock','CMP','CMM','Couverture (mois)','Magasin','Unité','Type','Nb magasins','Dormant','Déprécié','Provision M €','Fournisseur','Contrat'];
+  const sorted=f.slice().sort((a,b)=>b.valeur-a.valeur);
+  const rows=sorted.map((r,i)=>[i+1,r.art,r.lib,r.abcCalc,r.valeur,(r.pctCum*100).toFixed(1)+'%',r.qte,r.cmp,r.cmm,r.couv>=999?'∞':Math.round(r.couv*10)/10,r.mag,r.unit,r.type,r.nbMags,r.dormance==='Dormant'?'OUI':'NON',r.deprecie?'OUI':'NON',r.provM||0,r.nomF,r.contrat]);
+  return styledSheet(headers,rows);
+}
+
+function buildReformeSheet(f){
+  const ref=f.filter(r=>r.motifRef).sort((a,b)=>b.valeur-a.valeur);
+  const headers=['#','Article','Libellé','Classe ABC','Valeur stock','Qté','CMP','Motif réforme','Priorité','Magasin','Unité','Type','CMM','Conso N','Conso N-1','Conso N-2','Déprécié','Montant Provision €','% Dépréciation','Prov. Stock Mort','Prov. Surstock','Réformable immédiat.','Fournisseur','Contrat'];
+  const rows=ref.map((r,i)=>[i+1,r.art,r.lib,r.abcCalc,r.valeur,r.qte,r.cmp,r.motifRef,r.prioriteRef,r.mag,r.unit,r.type,r.cmm,r.cN,r.cN1,r.cN2,r.deprecie?'OUI':'NON',r.provM||0,r.pctDep>0?Math.round(r.pctDep*10)/10:0,r.provSM||0,r.provSS||0,r.dormance==='Dormant'?'OUI':'NON',r.nomF,r.contrat]);
+  return styledSheet(headers,rows);
+}
+
+function buildMutuSheet(f){
+  let mutu=S.computed.mutuCand;
+  if(S.unit!=='ALL')mutu=mutu.filter(m=>{const items=S.computed.enriched.filter(r=>r.art===m.art&&r.unit===S.unit);return items.length>0;});
+  const headers=['#','Article','Libellé','Classe ABC','Valeur totale','Qté totale','CMP','CMM','Couverture (mois)','Magasins','Nb mag.','Qté centrale','Qté local','Économie est. (15%)','Fournisseur','Contrat'];
+  const rows=mutu.sort((a,b)=>b.eco-a.eco).map((m,i)=>[i+1,m.art,m.lib,m.abc,m.valTot,m.qteTot,m.cmp,m.cmm,m.couv>=999?'∞':Math.round(m.couv*10)/10,m.mags,m.nbMag,m.qteCentrale,m.qteLocal,m.eco,m.fourn,m.contrat]);
+  return styledSheet(headers,rows);
+}
+
+function buildParamSheet(f){
+  const param=f.filter(r=>!r.motifRef&&(r.abcCalc==='A'||r.abcCalc==='B')&&r.couv>24).sort((a,b)=>b.valExces-a.valExces);
+  const headers=['#','Article','Libellé','Classe ABC','Qté stock','Valeur stock','CMP','CMM','Couverture actuelle (mois)','Délai théorique (j)','Délai réel BC (j)','Délai retenu (j)','Cible couv. (mois)','Stock optimal','Sécu proposé','Seuil proposé','QEC proposée','Qté MAX','Excès qté','Valeur excès €','Déprécié','Provision M €','Magasin','Unité','Type','Fournisseur'];
+  const rows=param.map((r,i)=>[i+1,r.art,r.lib,r.abcCalc,r.qte,r.valeur,r.cmp,r.cmm,r.couv>=999?'∞':Math.round(r.couv*10)/10,r.delai||'—',r.delaiBC||'—',r.delaiRetenu,r.cibleCouv,Math.round(r.stockOpt),r.secuProp,r.seuilProp,r.qec||'—',(r.qMax===null||r.qMax===undefined||r.qMax>=999999)?'Défaut':r.qMax,Math.round(r.exces),r.valExces,r.deprecie?'OUI':'NON',r.provM||0,r.mag,r.unit,r.type,r.nomF]);
+  return styledSheet(headers,rows);
+}
+
+function buildDetailSheet(f){
+  const magF=document.getElementById('fMag')?.value||'';
+  let data=f;if(magF)data=data.filter(r=>r.mag===magF);
+  data=data.sort((a,b)=>b.valeur-a.valeur);
+  const headers=['Article','Libellé','Magasin','Unité','Type','Source','Qté stock','Valeur','CMP','CMM','Conso N','Conso N-1','Conso N-2','Couverture','ABC','Seuil actuel','Sécu actuel','Seuil proposé','Sécu proposé','Fournisseur','Contrat','Statut','Déprécié','Provision M'];
+  const rows=data.map(r=>[r.art,r.lib,r.mag,r.unit,r.type,r.source,r.qte,r.valeur,r.cmp,r.cmm,r.cN,r.cN1,r.cN2,r.couv>=999?'∞':Math.round(r.couv*10)/10,r.abcCalc,r.seuil,r.secu,r.seuilProp,r.secuProp,r.nomF,r.contrat,r.statut,r.deprecie?'OUI':'NON',r.provM||0]);
+  return styledSheet(headers,rows);
+}
+
+function buildMethoSheet(){
+  const rows=[
+    ['MÉTHODOLOGIE — OPTIMISATION DU STOCK GDI V3.2'],
+    [],
+    ['1. PÉRIMÈTRE'],
+    ['Magasins plateforme intégrés : VOIE (289,290), CT (210,212), TDE (216), ESO (287)'],
+    ['Magasins réparables EXCLUS : 99, HS99, R-BAR'],
+    ['Articles statut 90 (obsolète) EXCLUS. Statuts 40 et 70 CONSERVÉS.'],
+    [],
+    ['2. CLASSIFICATION ABC (PARETO)'],
+    ['Agrégation par article unique. A : 0-80% | B : 80-95% | C : 95-99% | D : 99-100%'],
+    [],
+    ['3. CANDIDATS À LA RÉFORME'],
+    ['DORMANT : Conso totale historique = 0 (cumul 6 années + CMM = 0)'],
+    ['FAIBLE ACTIVITÉ : Conso N et N-1 = 0, mais conso antérieure > 0'],
+    ['Priorité : HAUTE >= 1000€ | MOYENNE >= 100€ | BASSE < 100€'],
+    [],
+    ['4. MUTUALISATION'],
+    ['Articles dans 2+ magasins, hors réforme. Économie estimée : 15%.'],
+    [],
+    ['5. PARAMÉTRAGE'],
+    ['Classe A/B, couverture > 24 mois, hors réforme.'],
+    ['Cibles : A = 2m (mag) / 4m (PLF) | B = 3m (mag) / 6m (PLF)'],
+    ['Stock optimal = CMM_qty × cible | Sécu = CMM_qty × (délai/30)'],
+    ['Délai retenu = médiane BC si dispo, sinon théorique, sinon 30j'],
+    ['Qté MAX 999999.99 = valeur par défaut'],
+    [],
+    ['6. CONSOMMATION DE RÉFÉRENCE'],
+    ['Magasin : Moyenne 3 ans (conso N/N-1/N-2) en EUR'],
+    ['Plateforme : Via Mouvements PLF (sorties conso uniquement)'],
+    ['Couverture = Valeur / CMM (mois)'],
+    [],
+    ['7. DÉPRÉCIATION'],
+    ['Croisement fichier Dépréciation (onglet Export).'],
+    ['Colonnes Provision M, Stock Mort, Surstock dans RÉFORME et PARAMÉTRAGE.'],
+    [],
+    ['8. ORDRE DE MISE EN ŒUVRE'],
+    ['Étape 1 : Valider la liste de réforme'],
+    ['Étape 2 : Lancer les réformes'],
+    ['Étape 3 : Ajuster les paramètres de réapprovisionnement'],
+    ['Étape 4 : Transférer les articles mutualisables'],
+    ['Étape 5 : Suivi mensuel des indicateurs']
+  ];
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=[{wch:80}];
+  return ws;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 10 : GESTION DES FICHIERS ET INITIALISATION
+   ═══════════════════════════════════════════════════════════════ */
+async function handleFile(input,type){
+  const file=input.files[0];if(!file)return;
+  const loader=document.getElementById('loader');loader.classList.add('active');
+  try{
+    switch(type){
+      case 'stockMag':S.stockMag=await readStockMag(file);document.getElementById('dS').classList.add('loaded');document.getElementById('sS').textContent=S.stockMag.length+' lignes';break;
+      case 'stockPLF':S.stockPLF=await readStockPLF(file);document.getElementById('dP').classList.add('loaded');document.getElementById('sP').textContent=S.stockPLF.length+' lignes';break;
+      case 'mvtsMag':S.mvtsMag=await readMvtsMag(file);document.getElementById('dM').classList.add('loaded');document.getElementById('sM').textContent=S.mvtsMag.length+' lignes';break;
+      case 'mvtsPLF':S.mvtsPLF=await readMvtsPLF(file);document.getElementById('dMP').classList.add('loaded');document.getElementById('sMP').textContent=S.mvtsPLF.length+' lignes';break;
+      case 'bc':S.bc=await readBC(file);document.getElementById('dB').classList.add('loaded');document.getElementById('sB').textContent=S.bc.length+' lignes';break;
+      case 'depre':S.depre=await readDepre(file);document.getElementById('dD').classList.add('loaded');document.getElementById('sD').textContent=S.depre.length+' lignes';break;
+    }
+    if(S.stockMag||S.stockPLF){
+      computeAll();updateAll();
+      document.getElementById('btnExAll').disabled=false;
+    }
+  }catch(err){
+    console.error('Erreur lecture fichier:',err);alert('Erreur lors de la lecture du fichier: '+err.message);
+  }finally{loader.classList.remove('active');}
+}
 
 // Init
-function initApp() {
-  document.getElementById('footerDate').textContent = new Date().toLocaleDateString('fr-FR');
-  renderMethodologie();
-}
+document.getElementById('fDate').textContent=new Date().toLocaleDateString('fr-FR');
+Chart.register(ChartDataLabels);
+console.log('Application Optimisation Stock GDI V3.2 chargée.');
 
-initApp();
 </script>
 </body>
 </html>
