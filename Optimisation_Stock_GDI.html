@@ -195,6 +195,15 @@ function readXL(file){return new Promise((res,rej)=>{const r=new FileReader();r.
 async function readStockMag(file){
   const wb=await readXL(file);const ws=wb.Sheets[wb.SheetNames[0]];
   const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,raw:true});
+  // Recherche dynamique de la colonne 'Valeur Stock' / 'Valeur de stock' / 'Val. Stock'
+  const hdr=rows[0]||[];
+  let valStockCol=-1;
+  for(let c=0;c<hdr.length;c++){
+    const h=String(hdr[c]||'').toLowerCase().replace(/[\s.]+/g,' ').trim();
+    if(h.includes('valeur')&&(h.includes('stock')||h.includes('stk'))){valStockCol=c;break;}
+    if(h==='val stock'||h==='val. stock'||h==='valstock'){valStockCol=c;break;}
+  }
+  console.log('StockMag: colonne Valeur Stock detectee en index '+valStockCol+(valStockCol>=0?' ("'+hdr[valStockCol]+'")':' => fallback qte*cmp'));
   const data=[];let ex90=0,exRep=0;
   for(let i=1;i<rows.length;i++){
     const r=rows[i];if(!r||!r[1])continue;
@@ -203,11 +212,15 @@ async function readStockMag(file){
     if(st==='90'||st.includes('OBSOL')){ex90++;continue;}
     const cl=classifyMag(mag);
     if(cl.u==='EXCLU'){exRep++;continue;}
-    data.push({art:String(r[1]||'').trim(),lib:String(r[2]||'').trim(),statut:st,mag,qte:sN(r[7]),
+    const qte=sN(r[7]);const cmp=sN(r[29]);
+    // Utiliser la colonne Valeur Stock si disponible, sinon fallback qte*cmp
+    const valStock=valStockCol>=0?sN(r[valStockCol]):null;
+    data.push({art:String(r[1]||'').trim(),lib:String(r[2]||'').trim(),statut:st,mag,qte,
       datDS:r[17]||null,seuil:sN(r[18]),delai:sN(r[19]),qec:sN(r[20]),secu:sN(r[21]),qMax:sN(r[22]),
       abc:String(r[23]||'D').trim().toUpperCase(),tourn:sN(r[24]),
       fourn:String(r[25]||'').trim(),nomF:String(r[26]||'').trim(),
-      contrat:String(r[27]||'').trim(),datFC:r[28]||null,cmp:sN(r[29]),
+      contrat:String(r[27]||'').trim(),datFC:r[28]||null,cmp,
+      valeur:valStock!==null?valStock:(qte*cmp),
       cN:sN(r[30]),cN1:sN(r[31]),cN2:sN(r[32]),cN3:sN(r[33]),cN4:sN(r[34]),cN5:sN(r[35]),cN6:sN(r[36]),
       unit:cl.u,type:cl.t,source:'MAGASIN'});
   }
@@ -297,8 +310,8 @@ async function readDepre(file){
    ================================================================ */
 function computeAll(){
   const merged=[...(S.stockMag||[]),...(S.stockPLF||[])];
-  // Calcul valeur pour magasin
-  merged.forEach(r=>{if(r.source==='MAGASIN')r.valeur=r.qte*r.cmp;});
+  // Valeur deja calculee dans readStockMag (colonne Valeur Stock ou fallback qte*cmp)
+  // et dans readStockPLF (colonne Valeur Stock directe)
 
   // PRE-INDEXATION O(n) pour eviter O(n^2)
   const depIdx=Object.create(null);
