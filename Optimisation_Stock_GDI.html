@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Optimisation Stock GDI — V3.4</title>
+<title>Optimisation Stock GDI — V3.5</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
@@ -91,7 +91,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 <body>
 <div class="lo" id="loader"><div class="ls"></div><div class="lp" id="loaderText">Chargement...</div><div class="lpb"><div class="lpf" id="loaderBar" style="width:0%"></div></div></div>
 <div class="app">
-<header class="header"><div><h1>Optimisation Stock GDI</h1><span class="badge">V3.4</span></div>
+<header class="header"><div><h1>Optimisation Stock GDI</h1><span class="badge">V3.5</span></div>
 <div class="hdr-r"><button class="btn" id="btnTheme" onclick="toggleTheme()">Mode Clair</button><button class="btn btn-exp" id="btnExAll" onclick="exportExcelAll()" disabled>Export Excel Complet</button><button class="btn" onclick="window.print()">Export PDF</button></div></header>
 <section class="upl">
 <div class="upl-c" id="dS"><div class="ic">&#128230;</div><div class="lb">STOCK MAGASIN</div><div class="st" id="sS">Obligatoire</div><input type="file" accept=".xlsx,.xls,.csv" onchange="handleFile(this,'stockMag')"></div>
@@ -144,14 +144,14 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 <div class="tc" id="t-mut"><div class="st"><span>Mutualisation Inter-Magasins</span><button class="btn-te" onclick="exportTab('mut')">Exporter Mutualisation</button></div>
 <div class="sb"><input type="text" id="sMut" placeholder="Rechercher..." oninput="debounceFilt('mut')"></div>
 <div class="card"><div class="dtw" style="max-height:600px;overflow-y:auto"><table class="dt" id="tMut"></table></div><div class="pg" id="pgMut"></div></div></div>
-<div class="tc" id="t-prm"><div class="st"><span>Reparametrage Couverture (Classe A/B)</span><button class="btn-te" onclick="exportTab('prm')">Exporter Parametrage</button></div>
+<div class="tc" id="t-prm"><div class="st"><span>Reparametrage Differencie (PLF / Mag-PLF / Mag-Ext)</span><button class="btn-te" onclick="exportTab('prm')">Exporter Parametrage</button></div>
 <div class="sb"><input type="text" id="sPrm" placeholder="Rechercher..." oninput="debounceFilt('prm')"></div>
 <div class="card"><div class="dtw" style="max-height:600px;overflow-y:auto"><table class="dt" id="tPrm"></table></div><div class="pg" id="pgPrm"></div></div></div>
 <div class="tc" id="t-det"><div class="st"><span>Detail par Article x Magasin</span><button class="btn-te" onclick="exportTab('det')">Exporter Detail</button></div>
 <div class="sb"><input type="text" id="sDet" placeholder="Rechercher article, magasin..." oninput="debounceFilt('det')"><select id="fMag" onchange="filt('det')"><option value="">Tous magasins</option></select></div>
 <div class="card"><div class="dtw" style="max-height:600px;overflow-y:auto"><table class="dt" id="tDet"></table></div><div class="pg" id="pgDet"></div></div></div>
 <div class="tc" id="t-met"><div class="st"><span>Methodologie</span><button class="btn-te" onclick="exportTab('met')">Exporter Methodologie</button></div><div class="card meth" id="metC"></div></div>
-<footer class="footer">Application d'Optimisation de Stock GDI -- V3.3 -- Genere le <span id="fDate"></span><br>Donnees analysees cote client uniquement. Aucune donnee transmise a un serveur.</footer>
+<footer class="footer">Application d'Optimisation de Stock GDI -- V3.5 -- Genere le <span id="fDate"></span><br>Donnees analysees cote client uniquement. Aucune donnee transmise a un serveur.</footer>
 </div>
 <script>
 /* ================================================================
@@ -350,6 +350,15 @@ function computeAll(){
   const mvtMagByAM=Object.create(null);
   if(S.mvtsMag)S.mvtsMag.forEach(m=>{if(m.typeMvt&&m.typeMvt.toUpperCase()==='SORTIE'){const k=m.art+'|'+m.mag;if(!mvtMagByAM[k])mvtMagByAM[k]=[];mvtMagByAM[k].push(m);}});
 
+  // Pre-index merged par article pour lookup PLF dans parametrage
+  const enrichedByArt_tmp=new Map();
+  for(let i=0;i<merged.length;i++){
+    const r=merged[i];
+    let arr=enrichedByArt_tmp.get(r.art);
+    if(!arr){arr=[];enrichedByArt_tmp.set(r.art,arr);}
+    arr.push(r);
+  }
+
   // Enrichissement O(n)
   const enriched=new Array(merged.length);
   for(let i=0;i<merged.length;i++){
@@ -377,24 +386,59 @@ function computeAll(){
     const provSM=dep?dep.provSM:0;
     const provSS=dep?dep.provSS:0;
     const pctDep=r.valeur>0&&provM>0?(provM/r.valeur*100):0;
+    const abc=r.abc||'D';
+    const covTgt=COV_TGT[abc]||COV_TGT['D'];
+    const Z_SERVICE=2.05;
+    // --- PARAMETRAGE DIFFERENCIE ---
+    // Scenario : PLF (article plateforme), MAG-PLF (mag fourni par PLF), MAG-EXT (mag fourni externe)
+    let scenario='MAG-EXT';
+    let delaiRetenu=r.delai||30;
+    let delaiPropose=null;
+    let ecartDelai=null;
+    if(r.source==='PLATEFORME'){
+      scenario='PLF';
+      delaiRetenu=r.delai||15;
+    }else{
+      // Verifier si article existe aussi en PLF (fourni par plateforme)
+      const plfMags=['210','212','216','287','289','290'];
+      const artItems=enrichedByArt_tmp.get(r.art);
+      let hasPLF=false;
+      if(artItems){for(let j=0;j<artItems.length;j++){if(artItems[j].source==='PLATEFORME'||plfMags.includes(artItems[j].mag)){hasPLF=true;break;}}}
+      if(hasPLF){
+        scenario='MAG-PLF';
+        delaiRetenu=10; // delai interne PLF court
+      }else{
+        scenario='MAG-EXT';
+        delaiRetenu=r.delai||30;
+      }
+    }
+    // Delai reel BC (mediane)
     let delaiBC=null;
     const bcs=bcByArt[r.art];
     if(bcs){
       const delais=[];
       for(let j=0;j<bcs.length;j++){const d=dBet(bcs[j].datCmd,bcs[j].datRec);if(d&&d>0)delais.push(d);}
-      if(delais.length>0){delais.sort((a,b)=>a-b);delaiBC=delais[Math.floor(delais.length/2)];}
+      if(delais.length>=3){delais.sort((a,b)=>a-b);delaiBC=delais[Math.floor(delais.length/2)];}
     }
-    const delaiRetenu=delaiBC||r.delai||30;
-    const abc=r.abc||'D';
-    const covTgt=COV_TGT[abc]||COV_TGT['D'];
+    // Proposition mise a jour delai fournisseur
+    if(scenario==='MAG-EXT'&&delaiBC&&r.delai>0){
+      const ecartPct=Math.abs(delaiBC-r.delai)/r.delai;
+      if(ecartPct>0.2){delaiPropose=delaiBC;ecartDelai=Math.round(ecartPct*100);}
+      delaiRetenu=delaiBC; // utiliser le delai reel si dispo
+    }else if(scenario==='MAG-EXT'&&delaiBC){
+      delaiRetenu=delaiBC;
+    }
     const cibleCouv=r.type==='Plateforme'?covTgt.plf:covTgt.mag;
     const stockOpt=cmmQte*cibleCouv;
-    // Coefficient Z=2.05 pour taux de service 98%
-    const Z_SERVICE=2.05;
     const secuProp=Math.ceil(cmmQte*(delaiRetenu/30)*Z_SERVICE);
     const seuilProp=Math.ceil(stockOpt+secuProp);
     const exces=Math.max(0,r.qte-stockOpt);
     const valExces=exces*r.cmp;
+    // QEC Wilson : sqrt(2*D*S/H) avec D=conso annuelle, S=50EUR, H=25%*CMP
+    const demandeAn=cmmQte*12;
+    const coutPassation=50;
+    const coutPossession=r.cmp*0.25;
+    const qecProp=coutPossession>0?Math.ceil(Math.sqrt(2*demandeAn*coutPassation/coutPossession)):0;
     let motifRef=null,prioriteRef=null;
     if(dormance==='Dormant'){motifRef='Dormant (0 conso historique)';}
     else if(dormance==='Faible activite'){motifRef='Faible activite (0 conso 2025-2026)';}
@@ -409,7 +453,8 @@ function computeAll(){
       abc,fourn:r.fourn,nomF:r.nomF,contrat:r.contrat,tourn:r.tourn,
       cN:r.cN,cN1:r.cN1,cN2:r.cN2,cN3:r.cN3,cN4:r.cN4,cN5:r.cN5,cN6:r.cN6,
       cmm,cmmQte,couv,consoTot,dormance,deprecie,provM,provSM,provSS,pctDep,
-      delaiBC,delaiRetenu,cibleCouv,stockOpt,secuProp,seuilProp,exces,valExces,
+      delaiBC,delaiRetenu,delaiPropose,ecartDelai,scenario,
+      cibleCouv,stockOpt,secuProp,seuilProp,exces,valExces,qecProp,
       motifRef,prioriteRef};
   }
 
@@ -752,28 +797,32 @@ function renderParam(f){
     r.abcCalc==='A'||r.abcCalc==='B'||
     (r.abcCalc==='C'&&r.cmm>0&&(r.tourn>0||r.cmmQte>0))
   ));
+  const scenColors={'PLF':'#a78bfa','MAG-PLF':'#34d399','MAG-EXT':'#4f8df7'};
   const cols=[
-    {h:'#',cls:'n',fn:(r,i)=>i+1},{h:'Article',fn:r=>r.art},{h:'Libelle',fn:r=>(r.lib||'').substring(0,30)},
+    {h:'#',cls:'n',fn:(r,i)=>i+1},{h:'Article',fn:r=>r.art},{h:'Libelle',fn:r=>(r.lib||'').substring(0,28)},
+    {h:'Scenario',fn:r=>`<span style="color:${scenColors[r.scenario]||'#888'};font-weight:700">${r.scenario}</span>`},
     {h:'Classe',fn:r=>`<span style="color:${AC[r.abcCalc]};font-weight:700">${r.abcCalc}</span>`},
-    {h:'Qte stock',cls:'n',fn:r=>fmtN(r.qte)},{h:'Valeur',cls:'n',fn:r=>fmtE(r.valeur)},{h:'CMP',cls:'n',fn:r=>fmtE(r.cmp)},
-    {h:'CMM',cls:'n',fn:r=>fmtE(r.cmm)},{h:'Couv. actuelle',cls:'n',fn:r=>r.couv>=999?'\u221E':fmtN(r.couv,1)+' m'},
-    {h:'Delai theo. (j)',cls:'n',fn:r=>fmtN(r.delai)},
-    {h:'Delai reel BC (j)',cls:'n',fn:r=>r.delaiBC?fmtN(r.delaiBC,0):'\u2014'},
-    {h:'Delai retenu (j)',cls:'n',fn:r=>fmtN(r.delaiRetenu)},
+    {h:'Qte',cls:'n',fn:r=>fmtN(r.qte)},{h:'Valeur',cls:'n',fn:r=>fmtE(r.valeur)},{h:'CMP',cls:'n',fn:r=>fmtE(r.cmp)},
+    {h:'CMM',cls:'n',fn:r=>fmtE(r.cmm)},{h:'Couv. act.',cls:'n',fn:r=>r.couv>=999?'\u221E':fmtN(r.couv,1)+' m'},
+    {h:'Delai theo.',cls:'n',fn:r=>r.delai?fmtN(r.delai)+' j':'\u2014'},
+    {h:'Delai BC',cls:'n',fn:r=>r.delaiBC?fmtN(r.delaiBC)+' j':'\u2014'},
+    {h:'Delai retenu',cls:'n',fn:r=>fmtN(r.delaiRetenu)+' j'},
+    {h:'Delai propose',cls:'n',fn:r=>r.delaiPropose?'<span class="ho">'+fmtN(r.delaiPropose)+' j (\u0394'+r.ecartDelai+'%)</span>':'\u2014'},
     {h:'Cible couv.',cls:'n',fn:r=>r.cibleCouv+' m'},
-    {h:'Stock optimal',cls:'n',fn:r=>fmtN(r.stockOpt,0)},
-    {h:'Secu propose',cls:'n',fn:r=>fmtN(r.secuProp)},
-    {h:'Seuil propose',cls:'n',fn:r=>fmtN(r.seuilProp)},
+    {h:'Stock opt.',cls:'n',fn:r=>fmtN(r.stockOpt,0)},
+    {h:'Secu prop.',cls:'n',fn:r=>fmtN(r.secuProp)},
+    {h:'Seuil prop.',cls:'n',fn:r=>fmtN(r.seuilProp)},
+    {h:'QEC prop.',cls:'n',fn:r=>r.qecProp>0?fmtN(r.qecProp):'\u2014'},
     {h:'Qte MAX',cls:'n',fn:r=>{const v=r.qMax;return(v===null||v===undefined||v>=999999)?'<span class="ho">Defaut</span>':fmtN(v);}},
     {h:'Exces qte',cls:'n',fn:r=>fmtN(r.exces,0)},
     {h:'Val. exces',cls:'n hr',fn:r=>fmtE(r.valExces)},
     {h:'Deprecie',fn:r=>r.deprecie?'<span class="dep">OUI</span>':''},
     {h:'Provision',cls:'n',fn:r=>r.provM>0?fmtE(r.provM):''},
-    {h:'Magasin',fn:r=>r.mag},{h:'Unite',fn:r=>r.unit},{h:'Type',fn:r=>r.type},
+    {h:'Magasin',fn:r=>r.mag},{h:'Unite',fn:r=>r.unit},
     {h:'Fournisseur',fn:r=>(r.nomF||'').substring(0,20)}
   ];
   renderPaged(param,cols,'tPrm','pgPrm','prm',d=>{
-    let r=d;if(search)r=r.filter(x=>((x.art||'')+(x.lib||'')+(x.nomF||'')).toLowerCase().includes(search));
+    let r=d;if(search)r=r.filter(x=>((x.art||'')+(x.lib||'')+(x.nomF||'')+(x.scenario||'')).toLowerCase().includes(search));
     return r.sort((a,b)=>b.valExces-a.valExces);
   });
 }
@@ -823,13 +872,19 @@ FAIBLE ACTIVITE : Conso N et N-1 = 0, mais conso anterieure > 0<br>
 Priorite : HAUTE >= 1000 EUR | MOYENNE >= 100 EUR | BASSE < 100 EUR</p>
 <h3>5. MUTUALISATION</h3>
 <p>Articles presents dans 2+ magasins, hors candidats reforme. Economie estimee : 15% de la valeur totale.</p>
-<h3>6. PARAMETRAGE (98% dispo, avec delai reel BC)</h3>
-<p>Classe A + Classe B + Classe C haute rotation (couverture > 24 mois), hors reforme.<br>
-Cibles couverture : A = 2m (mag) / 4m (PLF) | B = 3m (mag) / 6m (PLF) | C = 4m (mag) / 6m (PLF)<br>
-<strong>Taux de service cible : 98%</strong> (coefficient de securite Z = 2.05)<br>
-Stock optimal = CMM_qty x cible | Secu = CMM_qty x (delai_retenu/30) x Z | Seuil = stock_opt + secu<br>
-Delai retenu = mediane des delais reels BC si disponible, sinon delai theorique, sinon 30j par defaut.<br>
-Qte MAX 999999.99 = valeur par defaut (affichee "Defaut").</p>
+<h3>6. PARAMETRAGE DIFFERENCIE (98% dispo)</h3>
+<p><strong>3 scenarios de parametrage :</strong></p>
+<ul>
+<li><strong>PLF</strong> : Articles stockes en plateforme (210/212/216/287/289/290). Couverture PLF (4-6 mois). Delai = delai PLF ou 15j par defaut.</li>
+<li><strong>MAG-PLF</strong> : Articles en magasin local fournis par la plateforme (article existe aussi en PLF). Delai = 10j (interne). Couverture magasin (2-4 mois).</li>
+<li><strong>MAG-EXT</strong> : Articles en magasin local fournis par fournisseurs externes. Delai = delai fournisseur du fichier Stock ou delai reel BC.</li>
+</ul>
+<p>Classe A/B + C haute rotation, couverture > 24 mois, hors reforme.<br>
+Cibles : A = 2m (mag) / 4m (PLF) | B = 3m (mag) / 6m (PLF) | C = 4m (mag) / 6m (PLF)<br>
+<strong>Taux de service cible : 98%</strong> (Z = 2.05)<br>
+Stock optimal = CMM_qty x cible | Secu = CMM_qty x (delai/30) x Z | Seuil = stock_opt + secu<br>
+<strong>QEC Wilson</strong> = sqrt(2 x D x S / H) avec D=conso annuelle, S=50EUR, H=25% x CMP<br>
+<strong>Proposition delai fournisseur</strong> : si ecart > 20% entre delai theorique et delai reel BC (min 3 BC), le delai reel est propose.</p>
 <h3>7. DEPRECIATION</h3>
 <p>Croisement avec le fichier Depreciation (onglet "Export"). Colonnes Provision M, Stock Mort, Surstock affichees dans REFORME et PARAMETRAGE.</p>
 <h3>8. CONSOMMATION DE REFERENCE</h3>
@@ -1069,8 +1124,8 @@ function buildParamSheet(f){
     r.abcCalc==='A'||r.abcCalc==='B'||
     (r.abcCalc==='C'&&r.cmm>0&&(r.tourn>0||r.cmmQte>0))
   )).sort((a,b)=>b.valExces-a.valExces);
-  const headers=['#','Article','Libelle','Classe ABC','Qte stock','Valeur stock','CMP','CMM','Couverture actuelle (mois)','Delai theorique (j)','Delai reel BC (j)','Delai retenu (j)','Cible couv. (mois)','Stock optimal','Secu propose','Seuil propose','QEC proposee','Qte MAX','Exces qte','Valeur exces','Deprecie','Provision M','Magasin','Unite','Type','Fournisseur'];
-  const rows=param.map((r,i)=>[i+1,r.art,r.lib,r.abcCalc,r.qte,r.valeur,r.cmp,r.cmm,r.couv>=999?'\u221E':Math.round(r.couv*10)/10,r.delai||'\u2014',r.delaiBC||'\u2014',r.delaiRetenu,r.cibleCouv,Math.round(r.stockOpt),r.secuProp,r.seuilProp,r.qec||'\u2014',(r.qMax===null||r.qMax===undefined||r.qMax>=999999)?'Defaut':r.qMax,Math.round(r.exces),r.valExces,r.deprecie?'OUI':'NON',r.provM||0,r.mag,r.unit,r.type,r.nomF]);
+  const headers=['#','Article','Libelle','Scenario','Classe ABC','Qte stock','Valeur stock','CMP','CMM','Couverture actuelle (mois)','Delai theorique (j)','Delai reel BC (j)','Delai retenu (j)','Delai propose (j)','Ecart delai (%)','Cible couv. (mois)','Stock optimal','Secu propose','Seuil propose','QEC proposee','Qte MAX','Exces qte','Valeur exces','Deprecie','Provision M','Magasin','Unite','Type','Fournisseur'];
+  const rows=param.map((r,i)=>[i+1,r.art,r.lib,r.scenario||'MAG-EXT',r.abcCalc,r.qte,r.valeur,r.cmp,r.cmm,r.couv>=999?'\u221E':Math.round(r.couv*10)/10,r.delai||'\u2014',r.delaiBC||'\u2014',r.delaiRetenu,r.delaiPropose||'\u2014',r.ecartDelai?r.ecartDelai+'%':'\u2014',r.cibleCouv,Math.round(r.stockOpt),r.secuProp,r.seuilProp,r.qecProp||'\u2014',(r.qMax===null||r.qMax===undefined||r.qMax>=999999)?'Defaut':r.qMax,Math.round(r.exces),r.valExces,r.deprecie?'OUI':'NON',r.provM||0,r.mag,r.unit,r.type,r.nomF]);
   return styledSheet(headers,rows);
 }
 
@@ -1085,7 +1140,7 @@ function buildDetailSheet(f){
 
 function buildMethoSheet(){
   const rows=[
-    ['METHODOLOGIE \u2014 OPTIMISATION DU STOCK GDI V3.4'],
+    ['METHODOLOGIE \u2014 OPTIMISATION DU STOCK GDI V3.5'],
     [],
     ['1. PERIMETRE'],
     ['Magasins plateforme integres : VOIE (289,290), CT (210,212), TDE (216), ESO (287)'],
@@ -1103,13 +1158,14 @@ function buildMethoSheet(){
     ['4. MUTUALISATION'],
     ['Articles dans 2+ magasins, hors reforme. Economie estimee : 15%.'],
     [],
-    ['5. PARAMETRAGE'],
-    ['Classe A/B + C haute rotation, couverture > 24 mois, hors reforme.'],
-    ['Cibles : A = 2m (mag) / 4m (PLF) | B = 3m (mag) / 6m (PLF) | C = 4m (mag) / 6m (PLF)'],
+    ['5. PARAMETRAGE DIFFERENCIE'],
+    ['3 scenarios : PLF (plateforme), MAG-PLF (mag fourni par PLF), MAG-EXT (mag fourni externe)'],
+    ['PLF : couverture 4-6m, delai PLF ou 15j par defaut'],
+    ['MAG-PLF : couverture 2-4m, delai interne 10j'],
+    ['MAG-EXT : couverture 2-4m, delai fournisseur ou delai reel BC'],
     ['Taux de service cible : 98% (coefficient Z = 2.05)'],
-    ['Stock optimal = CMM_qty x cible | Secu = CMM_qty x (delai/30) x Z'],
-    ['Delai retenu = mediane BC si dispo, sinon theorique, sinon 30j'],
-    ['Qte MAX 999999.99 = valeur par defaut'],
+    ['QEC Wilson = sqrt(2*D*S/H) avec D=conso annuelle, S=50EUR, H=25%*CMP'],
+    ['Proposition delai : si ecart > 20% entre theorique et reel BC (min 3 BC)'],
     [],
     ['6. CONSOMMATION DE REFERENCE'],
     ['Magasin : Moyenne 3 ans (conso N/N-1/N-2) en EUR'],
@@ -1200,7 +1256,7 @@ async function handleFile(input,type){
 // Init
 document.getElementById('fDate').textContent=new Date().toLocaleDateString('fr-FR');
 Chart.register(ChartDataLabels);
-console.log('Application Optimisation Stock GDI V3.4 chargee.');
+console.log('Application Optimisation Stock GDI V3.5 chargee.');
 
 </script>
 </body>
