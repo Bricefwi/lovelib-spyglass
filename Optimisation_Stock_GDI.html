@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Optimisation Stock GDI — V3.3</title>
+<title>Optimisation Stock GDI — V3.4</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
@@ -91,7 +91,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 <body>
 <div class="lo" id="loader"><div class="ls"></div><div class="lp" id="loaderText">Chargement...</div><div class="lpb"><div class="lpf" id="loaderBar" style="width:0%"></div></div></div>
 <div class="app">
-<header class="header"><div><h1>Optimisation Stock GDI</h1><span class="badge">V3.3</span></div>
+<header class="header"><div><h1>Optimisation Stock GDI</h1><span class="badge">V3.4</span></div>
 <div class="hdr-r"><button class="btn" id="btnTheme" onclick="toggleTheme()">Mode Clair</button><button class="btn btn-exp" id="btnExAll" onclick="exportExcelAll()" disabled>Export Excel Complet</button><button class="btn" onclick="window.print()">Export PDF</button></div></header>
 <section class="upl">
 <div class="upl-c" id="dS"><div class="ic">&#128230;</div><div class="lb">STOCK MAGASIN</div><div class="st" id="sS">Obligatoire</div><input type="file" accept=".xlsx,.xls,.csv" onchange="handleFile(this,'stockMag')"></div>
@@ -162,7 +162,8 @@ const EXCL_MAGS=new Set(['99','HS99','R-BAR']);
 function classifyMag(code){const s=String(code).replace(/\.0$/,'').trim();if(s==='NA'||s==='na')return{u:'TDE',t:'Magasin'};if(EXCL_MAGS.has(s))return{u:'EXCLU',t:'Reparable'};if(UNIT_MAP[s])return UNIT_MAP[s];if(/^HS/.test(s)&&/CT/.test(s))return{u:'CT',t:'Plateforme'};if(/^REBUT/.test(s))return{u:'CT',t:'Plateforme'};if(/^51CT$/.test(s))return{u:'CT',t:'Plateforme'};if(/^R-/.test(s))return{u:'EXCLU',t:'Reparable'};return{u:'AUTRE',t:'Inconnu'};}
 const OBJ={'VOIE':{mag:{s:22287196,o:19850000},plf:{s:3776467,o:3800000}},'CT':{mag:{s:4456334,o:3400000},plf:{s:5323509,o:4300000}},'TDE':{mag:{s:4203118,o:3300000},plf:{s:2140362,o:1800000}},'ESO':{mag:{s:479238,o:350000},plf:{s:1482195,o:1200000}},'STF/ISE':{mag:{s:0,o:0},plf:{s:23108432,o:19500000}},'TOTAL':{all:{s:67256851,o:57500000}}};
 const HIST={'VOIE':{mag:{'2024-12':20224212,'2025-12':22546979,'2026-01':22531647},plf:{'2024-12':3308558,'2025-12':3844830,'2026-01':3790698}},'CT':{mag:{'2024-12':4609943,'2025-12':4466392,'2026-01':4491751},plf:{'2024-12':4783333,'2025-12':5328239,'2026-01':5288609}},'TDE':{mag:{'2024-12':4312337,'2025-12':4222346,'2026-01':4206610},plf:{'2024-12':2151591,'2025-12':2176077,'2026-01':2163074}},'ESO':{mag:{'2024-12':417243,'2025-12':416769,'2026-01':458324},plf:{'2024-12':1397292,'2025-12':1495352,'2026-01':1463639}},'STF/ISE':{mag:{'2024-12':0,'2025-12':0,'2026-01':0},plf:{'2024-12':19102259,'2025-12':22976479,'2026-01':23390419}}};
-const COV_TGT={'A':{mag:2,plf:4},'B':{mag:3,plf:6},'C':{mag:6,plf:6},'D':{mag:12,plf:12}};
+// Cibles couverture par classe ABC (mois) - optimise pour 98% dispo
+const COV_TGT={'A':{mag:2,plf:4},'B':{mag:3,plf:6},'C':{mag:4,plf:6},'D':{mag:6,plf:9}};
 const UC={'VOIE':'#4f8df7','CT':'#34d399','TDE':'#fbbf24','ESO':'#f87171','STF/ISE':'#a78bfa'};
 const AC={'A':'#f87171','B':'#fbbf24','C':'#60a5fa','D':'#6b7280'};
 
@@ -191,6 +192,22 @@ function debounceFilt(key){clearTimeout(_debounceTimers[key]);_debounceTimers[ke
    SECTION 4 : LECTEURS DE FICHIERS (inchanges)
    ================================================================ */
 function readXL(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>{try{res(XLSX.read(e.target.result,{type:'array',cellDates:true,raw:true,defval:null}));}catch(err){rej(err);}};r.onerror=rej;r.readAsArrayBuffer(file);});}
+
+/* Dedoublonnage : supprime les lignes strictement identiques sur la cle fournie.
+   Conserve la PREMIERE occurrence, supprime les suivantes.
+   Retourne {data, nbDup} */
+function dedup(arr, keyFn){
+  const seen=new Set();
+  const out=[];
+  let nbDup=0;
+  for(let i=0;i<arr.length;i++){
+    const k=keyFn(arr[i]);
+    if(seen.has(k)){nbDup++;continue;}
+    seen.add(k);
+    out.push(arr[i]);
+  }
+  return {data:out, nbDup};
+}
 
 async function readStockMag(file){
   const wb=await readXL(file);const ws=wb.Sheets[wb.SheetNames[0]];
@@ -224,8 +241,10 @@ async function readStockMag(file){
       cN:sN(r[30]),cN1:sN(r[31]),cN2:sN(r[32]),cN3:sN(r[33]),cN4:sN(r[34]),cN5:sN(r[35]),cN6:sN(r[36]),
       unit:cl.u,type:cl.t,source:'MAGASIN'});
   }
-  console.log('StockMag: '+data.length+' lignes, '+ex90+' statut90 exclu, '+exRep+' reparables exclu');
-  return data;
+  // Dedoublonnage sur cle Article + Magasin
+  const dd=dedup(data, r=>r.art+'|'+r.mag);
+  console.log('StockMag: '+data.length+' lignes brutes, '+dd.nbDup+' doublons supprimes => '+dd.data.length+' lignes uniques, '+ex90+' statut90 exclu, '+exRep+' reparables exclu');
+  return dd.data;
 }
 
 async function readStockPLF(file){
@@ -249,8 +268,10 @@ async function readStockPLF(file){
       cN:null,cN1:null,cN2:null,cN3:null,cN4:null,cN5:null,cN6:null,
       unit:cl.u,type:cl.t,source:'PLATEFORME'});
   }
-  console.log('StockPLF: '+data.length+' lignes, '+exF+' fermes exclu');
-  return data;
+  // Dedoublonnage sur cle Article + Magasin
+  const dd=dedup(data, r=>r.art+'|'+r.mag);
+  console.log('StockPLF: '+data.length+' lignes brutes, '+dd.nbDup+' doublons supprimes => '+dd.data.length+' lignes uniques, '+exF+' fermes exclu');
+  return dd.data;
 }
 
 async function readMvtsMag(file){
@@ -303,7 +324,10 @@ async function readDepre(file){
     data.push({art:String(r[3]||'').trim(),mag:sM(r[4]),valS:sN(r[5]),
       provM:sN(r[9]),provSM:sN(r[11]),provSS:sN(r[12]),nbMois:sN(r[13])});
   }
-  return data;
+  // Dedoublonnage sur cle Article + Magasin
+  const dd=dedup(data, r=>r.art+'|'+r.mag);
+  console.log('Depre: '+data.length+' brutes, '+dd.nbDup+' doublons => '+dd.data.length+' uniques');
+  return dd.data;
 }
 /* ================================================================
    SECTION 5 : MOTEUR DE CALCUL PRINCIPAL (OPTIMISE O(n) avec indexation)
@@ -365,7 +389,9 @@ function computeAll(){
     const covTgt=COV_TGT[abc]||COV_TGT['D'];
     const cibleCouv=r.type==='Plateforme'?covTgt.plf:covTgt.mag;
     const stockOpt=cmmQte*cibleCouv;
-    const secuProp=Math.ceil(cmmQte*(delaiRetenu/30));
+    // Coefficient Z=2.05 pour taux de service 98%
+    const Z_SERVICE=2.05;
+    const secuProp=Math.ceil(cmmQte*(delaiRetenu/30)*Z_SERVICE);
     const seuilProp=Math.ceil(stockOpt+secuProp);
     const exces=Math.max(0,r.qte-stockOpt);
     const valExces=exces*r.cmp;
@@ -525,7 +551,7 @@ function renderKPIs(f){
   const ecart=stockTot-obj;
   const refItems=f.filter(r=>r.motifRef);
   const refVal=refItems.reduce((s,r)=>s+r.valeur,0)*0.5;
-  const paramItems=f.filter(r=>!r.motifRef&&(r.abcCalc==='A'||r.abcCalc==='B')&&r.couv>24);
+  const paramItems=f.filter(r=>!r.motifRef&&r.couv>24&&(r.abcCalc==='A'||r.abcCalc==='B'||(r.abcCalc==='C'&&r.cmm>0&&(r.tourn>0||r.cmmQte>0))));
   const paramVal=paramItems.reduce((s,r)=>s+r.valExces,0);
   // Mutualisation filtree par unite via index
   let mutuVal=0;
@@ -581,7 +607,7 @@ function renderLeviers(f){
   const el=document.getElementById('tLev');
   const dorm=f.filter(r=>r.dormance==='Dormant');
   const faib=f.filter(r=>r.dormance==='Faible activite');
-  const param=f.filter(r=>!r.motifRef&&(r.abcCalc==='A'||r.abcCalc==='B')&&r.couv>24);
+  const param=f.filter(r=>!r.motifRef&&r.couv>24&&(r.abcCalc==='A'||r.abcCalc==='B'||(r.abcCalc==='C'&&r.cmm>0&&(r.tourn>0||r.cmmQte>0))));
   const mc=S.computed.mutuCand;
   let mutuArt=0,mutuVB=0,mutuRed=0;
   if(S.unit==='ALL'){mutuArt=mc.length;mutuVB=mc.reduce((s,m)=>s+m.valTot,0);mutuRed=mc.reduce((s,m)=>s+m.eco,0);}
@@ -590,7 +616,7 @@ function renderLeviers(f){
   const leviers=[
     {n:'1',l:'Reforme dormants (0 conso historique)',art:dorm.length,vb:dorm.reduce((s,r)=>s+r.valeur,0),red:dorm.reduce((s,r)=>s+r.valeur,0)*0.5,p:'HAUTE'},
     {n:'2',l:'Reforme faible activite (0 conso 2025-2026)',art:faib.length,vb:faib.reduce((s,r)=>s+r.valeur,0),red:faib.reduce((s,r)=>s+r.valeur,0)*0.3,p:'HAUTE'},
-    {n:'3',l:'Re-parametrage classe A/B (exces couverture)',art:param.length,vb:param.reduce((s,r)=>s+r.valeur,0),red:param.reduce((s,r)=>s+r.valExces,0),p:'MOYENNE'},
+    {n:'3',l:'Re-parametrage A/B/C haute rotation (98% dispo)',art:param.length,vb:param.reduce((s,r)=>s+r.valeur,0),red:param.reduce((s,r)=>s+r.valExces,0),p:'MOYENNE'},
     {n:'4',l:'Mutualisation inter-magasins',art:mutuArt,vb:mutuVB,red:mutuRed,p:'MOYENNE'},
     {n:'5',l:'Articles deprecies (provision > 0)',art:depr.length,vb:depr.reduce((s,r)=>s+r.valeur,0),red:depr.reduce((s,r)=>s+r.provM,0),p:'HAUTE'}
   ];
@@ -721,7 +747,11 @@ function renderMutu(f){
 
 function renderParam(f){
   const search=(document.getElementById('sPrm')?.value||'').toLowerCase();
-  const param=f.filter(r=>!r.motifRef&&(r.abcCalc==='A'||r.abcCalc==='B')&&r.couv>24);
+  // Classe A/B couv>24 + Classe C haute rotation (CMM>0 et couv>24)
+  const param=f.filter(r=>!r.motifRef&&r.couv>24&&(
+    r.abcCalc==='A'||r.abcCalc==='B'||
+    (r.abcCalc==='C'&&r.cmm>0&&(r.tourn>0||r.cmmQte>0))
+  ));
   const cols=[
     {h:'#',cls:'n',fn:(r,i)=>i+1},{h:'Article',fn:r=>r.art},{h:'Libelle',fn:r=>(r.lib||'').substring(0,30)},
     {h:'Classe',fn:r=>`<span style="color:${AC[r.abcCalc]};font-weight:700">${r.abcCalc}</span>`},
@@ -793,10 +823,11 @@ FAIBLE ACTIVITE : Conso N et N-1 = 0, mais conso anterieure > 0<br>
 Priorite : HAUTE >= 1000 EUR | MOYENNE >= 100 EUR | BASSE < 100 EUR</p>
 <h3>5. MUTUALISATION</h3>
 <p>Articles presents dans 2+ magasins, hors candidats reforme. Economie estimee : 15% de la valeur totale.</p>
-<h3>6. PARAMETRAGE (avec delai reel BC)</h3>
-<p>Classe A + Classe B (couverture > 24 mois), hors reforme.<br>
-Cibles couverture : A = 2m (mag) / 4m (PLF) | B = 3m (mag) / 6m (PLF)<br>
-Stock optimal = CMM_qty x cible | Secu = CMM_qty x (delai_retenu/30) | Seuil = stock_opt + secu<br>
+<h3>6. PARAMETRAGE (98% dispo, avec delai reel BC)</h3>
+<p>Classe A + Classe B + Classe C haute rotation (couverture > 24 mois), hors reforme.<br>
+Cibles couverture : A = 2m (mag) / 4m (PLF) | B = 3m (mag) / 6m (PLF) | C = 4m (mag) / 6m (PLF)<br>
+<strong>Taux de service cible : 98%</strong> (coefficient de securite Z = 2.05)<br>
+Stock optimal = CMM_qty x cible | Secu = CMM_qty x (delai_retenu/30) x Z | Seuil = stock_opt + secu<br>
 Delai retenu = mediane des delais reels BC si disponible, sinon delai theorique, sinon 30j par defaut.<br>
 Qte MAX 999999.99 = valeur par defaut (affichee "Defaut").</p>
 <h3>7. DEPRECIATION</h3>
@@ -864,7 +895,7 @@ function renderCharts(f){
   // C7: Synthese 5 leviers
   const dorm=f.filter(r=>r.dormance==='Dormant');
   const faib=f.filter(r=>r.dormance==='Faible activite');
-  const param=f.filter(r=>!r.motifRef&&(r.abcCalc==='A'||r.abcCalc==='B')&&r.couv>24);
+  const param=f.filter(r=>!r.motifRef&&r.couv>24&&(r.abcCalc==='A'||r.abcCalc==='B'||(r.abcCalc==='C'&&r.cmm>0&&(r.tourn>0||r.cmmQte>0))));
   const mc=S.computed.mutuCand;
   let mutuRed=0;if(S.unit==='ALL')mutuRed=mc.reduce((s,m)=>s+m.eco,0);else mc.forEach(m=>{if(m.units.has(S.unit))mutuRed+=m.eco;});
   const depr=f.filter(r=>r.deprecie);
@@ -984,7 +1015,7 @@ function buildSyntheseSheet(f){
   rows.push(['#','Levier','Articles','Valeur brute','Reduction estimee','Priorite']);
   const dorm=f.filter(r=>r.dormance==='Dormant');
   const faib=f.filter(r=>r.dormance==='Faible activite');
-  const param=f.filter(r=>!r.motifRef&&(r.abcCalc==='A'||r.abcCalc==='B')&&r.couv>24);
+  const param=f.filter(r=>!r.motifRef&&r.couv>24&&(r.abcCalc==='A'||r.abcCalc==='B'||(r.abcCalc==='C'&&r.cmm>0&&(r.tourn>0||r.cmmQte>0))));
   const mc=S.computed.mutuCand;
   let mutuArt=0,mutuVB=0,mutuRed=0;
   if(S.unit==='ALL'){mutuArt=mc.length;mutuVB=mc.reduce((s,m)=>s+m.valTot,0);mutuRed=mc.reduce((s,m)=>s+m.eco,0);}
@@ -992,7 +1023,7 @@ function buildSyntheseSheet(f){
   const depr=f.filter(r=>r.deprecie);
   rows.push([1,'Reforme dormants',dorm.length,dorm.reduce((s,r)=>s+r.valeur,0),dorm.reduce((s,r)=>s+r.valeur,0)*0.5,'HAUTE']);
   rows.push([2,'Reforme faible activite',faib.length,faib.reduce((s,r)=>s+r.valeur,0),faib.reduce((s,r)=>s+r.valeur,0)*0.3,'HAUTE']);
-  rows.push([3,'Re-parametrage A/B',param.length,param.reduce((s,r)=>s+r.valeur,0),param.reduce((s,r)=>s+r.valExces,0),'MOYENNE']);
+  rows.push([3,'Re-parametrage A/B/C haute rotation (98% dispo)',param.length,param.reduce((s,r)=>s+r.valeur,0),param.reduce((s,r)=>s+r.valExces,0),'MOYENNE']);
   rows.push([4,'Mutualisation',mutuArt,mutuVB,mutuRed,'MOYENNE']);
   rows.push([5,'Depreciation',depr.length,depr.reduce((s,r)=>s+r.valeur,0),depr.reduce((s,r)=>s+r.provM,0),'HAUTE']);
   let totRed=dorm.reduce((s,r)=>s+r.valeur,0)*0.5+faib.reduce((s,r)=>s+r.valeur,0)*0.3+param.reduce((s,r)=>s+r.valExces,0)+mutuRed+depr.reduce((s,r)=>s+r.provM,0);
@@ -1034,7 +1065,10 @@ function buildMutuSheet(f){
 }
 
 function buildParamSheet(f){
-  const param=f.filter(r=>!r.motifRef&&(r.abcCalc==='A'||r.abcCalc==='B')&&r.couv>24).sort((a,b)=>b.valExces-a.valExces);
+  const param=f.filter(r=>!r.motifRef&&r.couv>24&&(
+    r.abcCalc==='A'||r.abcCalc==='B'||
+    (r.abcCalc==='C'&&r.cmm>0&&(r.tourn>0||r.cmmQte>0))
+  )).sort((a,b)=>b.valExces-a.valExces);
   const headers=['#','Article','Libelle','Classe ABC','Qte stock','Valeur stock','CMP','CMM','Couverture actuelle (mois)','Delai theorique (j)','Delai reel BC (j)','Delai retenu (j)','Cible couv. (mois)','Stock optimal','Secu propose','Seuil propose','QEC proposee','Qte MAX','Exces qte','Valeur exces','Deprecie','Provision M','Magasin','Unite','Type','Fournisseur'];
   const rows=param.map((r,i)=>[i+1,r.art,r.lib,r.abcCalc,r.qte,r.valeur,r.cmp,r.cmm,r.couv>=999?'\u221E':Math.round(r.couv*10)/10,r.delai||'\u2014',r.delaiBC||'\u2014',r.delaiRetenu,r.cibleCouv,Math.round(r.stockOpt),r.secuProp,r.seuilProp,r.qec||'\u2014',(r.qMax===null||r.qMax===undefined||r.qMax>=999999)?'Defaut':r.qMax,Math.round(r.exces),r.valExces,r.deprecie?'OUI':'NON',r.provM||0,r.mag,r.unit,r.type,r.nomF]);
   return styledSheet(headers,rows);
@@ -1051,7 +1085,7 @@ function buildDetailSheet(f){
 
 function buildMethoSheet(){
   const rows=[
-    ['METHODOLOGIE \u2014 OPTIMISATION DU STOCK GDI V3.3'],
+    ['METHODOLOGIE \u2014 OPTIMISATION DU STOCK GDI V3.4'],
     [],
     ['1. PERIMETRE'],
     ['Magasins plateforme integres : VOIE (289,290), CT (210,212), TDE (216), ESO (287)'],
@@ -1070,9 +1104,10 @@ function buildMethoSheet(){
     ['Articles dans 2+ magasins, hors reforme. Economie estimee : 15%.'],
     [],
     ['5. PARAMETRAGE'],
-    ['Classe A/B, couverture > 24 mois, hors reforme.'],
-    ['Cibles : A = 2m (mag) / 4m (PLF) | B = 3m (mag) / 6m (PLF)'],
-    ['Stock optimal = CMM_qty x cible | Secu = CMM_qty x (delai/30)'],
+    ['Classe A/B + C haute rotation, couverture > 24 mois, hors reforme.'],
+    ['Cibles : A = 2m (mag) / 4m (PLF) | B = 3m (mag) / 6m (PLF) | C = 4m (mag) / 6m (PLF)'],
+    ['Taux de service cible : 98% (coefficient Z = 2.05)'],
+    ['Stock optimal = CMM_qty x cible | Secu = CMM_qty x (delai/30) x Z'],
     ['Delai retenu = mediane BC si dispo, sinon theorique, sinon 30j'],
     ['Qte MAX 999999.99 = valeur par defaut'],
     [],
@@ -1109,13 +1144,13 @@ async function handleFile(input,type){
         showLoader('Lecture Stock Magasin...',10);
         S.stockMag=await readStockMag(file);
         document.getElementById('dS').classList.add('loaded');
-        document.getElementById('sS').textContent=S.stockMag.length+' lignes';
+        document.getElementById('sS').textContent=S.stockMag.length+' lignes (dedup)';
         break;
       case 'stockPLF':
         showLoader('Lecture Stock Plateforme...',10);
         S.stockPLF=await readStockPLF(file);
         document.getElementById('dP').classList.add('loaded');
-        document.getElementById('sP').textContent=S.stockPLF.length+' lignes';
+        document.getElementById('sP').textContent=S.stockPLF.length+' lignes (dedup)';
         break;
       case 'mvtsMag':
         showLoader('Lecture Mouvements Magasin...',10);
@@ -1165,7 +1200,7 @@ async function handleFile(input,type){
 // Init
 document.getElementById('fDate').textContent=new Date().toLocaleDateString('fr-FR');
 Chart.register(ChartDataLabels);
-console.log('Application Optimisation Stock GDI V3.3 chargee.');
+console.log('Application Optimisation Stock GDI V3.4 chargee.');
 
 </script>
 </body>
