@@ -306,7 +306,7 @@ const Pricing = () => {
                           ? "bg-green-600 hover:bg-green-700"
                           : plan.highlight
                           ? "bg-primary hover:bg-primary/90"
-                          : "bg-gray-900 hover:bg-gray-800"
+                          : "bg-secondary hover:bg-secondary/90"
                       }`}
                       size="lg"
                     >

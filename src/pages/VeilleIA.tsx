@@ -121,14 +121,14 @@ export default function VeilleIA() {
       'Produits': 'bg-green-100 text-green-800',
       'Recherche': 'bg-purple-100 text-purple-800',
       'Business': 'bg-yellow-100 text-yellow-800',
-      'Régulation': 'bg-primary/10 text-red-800',
+      'Régulation': 'bg-primary/10 text-destructive',
     };
     return colors[category] || 'bg-muted text-foreground';
   };
 
   const getImportanceColor = (importance: string) => {
     const colors: Record<string, string> = {
-      'high': 'bg-primary/10 text-red-800',
+      'high': 'bg-primary/10 text-destructive',
       'medium': 'bg-yellow-100 text-yellow-800',
       'low': 'bg-blue-100 text-blue-800',
     };

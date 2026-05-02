@@ -74,9 +74,9 @@ export default function AuditReport() {
     return (
       <div className="h-screen flex items-center justify-center p-8 bg-muted">
         <div className="max-w-3xl w-full bg-primary/5 border-2 border-red-600 rounded-lg p-8">
-          <h1 className="text-2xl font-bold text-red-900 mb-4">🔴 Erreur de Génération du Rapport</h1>
+          <h1 className="text-2xl font-bold text-destructive mb-4">🔴 Erreur de Génération du Rapport</h1>
           <div className="bg-white p-6 rounded border border-red-300 font-mono text-sm overflow-auto max-h-96">
-            <pre className="whitespace-pre-wrap text-red-800">{error}</pre>
+            <pre className="whitespace-pre-wrap text-destructive">{error}</pre>
           </div>
           <div className="mt-6">
             <Button onClick={() => navigate(-1)} variant="outline" className="gap-2">
