@@ -243,7 +243,7 @@ const AdminUsers = () => {
   const getTrustColor = (score: number) => {
     if (score >= 80) return 'text-green-600';
     if (score >= 50) return 'text-yellow-600';
-    return 'text-red-600';
+    return 'text-primary';
   };
 
   if (loading) {

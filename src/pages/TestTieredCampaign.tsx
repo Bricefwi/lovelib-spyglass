@@ -328,14 +328,14 @@ export default function TestTieredCampaign() {
                   </div>
 
                   {result && (
-                    <div className={`p-3 rounded-lg ${result.success ? 'bg-green-50 dark:bg-green-950/20' : 'bg-red-50 dark:bg-red-950/20'}`}>
+                    <div className={`p-3 rounded-lg ${result.success ? 'bg-green-50 dark:bg-green-950/20' : 'bg-primary/5 dark:bg-red-950/20'}`}>
                       <div className="flex items-center gap-2">
                         {result.success ? (
                           <CheckCircle2 className="h-4 w-4 text-green-600" />
                         ) : (
-                          <AlertCircle className="h-4 w-4 text-red-600" />
+                          <AlertCircle className="h-4 w-4 text-primary" />
                         )}
-                        <span className={`text-sm font-medium ${result.success ? 'text-green-700' : 'text-red-700'}`}>
+                        <span className={`text-sm font-medium ${result.success ? 'text-green-700' : 'text-destructive'}`}>
                           {result.success ? 'Email envoyé ✓' : result.error}
                         </span>
                       </div>
@@ -385,8 +385,8 @@ export default function TestTieredCampaign() {
                   <div className="text-3xl font-bold text-green-600">{results.summary?.success || 0}</div>
                   <div className="text-sm text-muted-foreground">Succès</div>
                 </div>
-                <div className="p-4 bg-red-50 dark:bg-red-950/20 rounded-lg">
-                  <div className="text-3xl font-bold text-red-600">{results.summary?.failed || 0}</div>
+                <div className="p-4 bg-primary/5 dark:bg-red-950/20 rounded-lg">
+                  <div className="text-3xl font-bold text-primary">{results.summary?.failed || 0}</div>
                   <div className="text-sm text-muted-foreground">Échecs</div>
                 </div>
               </div>

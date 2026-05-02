@@ -89,11 +89,11 @@ export default function AuditMethodologie() {
           <h1 className="text-4xl font-extrabold mb-4" style={{ color: IMOTION_BRAND.colors.primary }}>
             Méthodologie d'Audit IMOTION
           </h1>
-          <p className="text-xl text-gray-700 max-w-3xl mx-auto mb-6">
+          <p className="text-xl text-foreground max-w-3xl mx-auto mb-6">
             Propulsée par <strong>MANUS IA 2.0</strong>, notre méthodologie combine l'expertise humaine 
             et l'intelligence artificielle pour délivrer des audits marketing & commerciaux d'une précision chirurgicale.
           </p>
-          <div className="inline-flex items-center gap-2 px-6 py-3 bg-gray-100 rounded-full text-sm font-semibold text-gray-700">
+          <div className="inline-flex items-center gap-2 px-6 py-3 bg-muted rounded-full text-sm font-semibold text-foreground">
             <Brain className="w-5 h-5" style={{ color: IMOTION_BRAND.colors.primary }} />
             <span>17 Agents IA Spécialisés</span>
             <span className="mx-2">•</span>
@@ -113,7 +113,7 @@ export default function AuditMethodologie() {
           <h2 className="text-2xl font-bold mb-3" style={{ color: IMOTION_BRAND.colors.primary }}>
             🎯 Objectif
           </h2>
-          <p className="text-gray-700 text-lg">
+          <p className="text-foreground text-lg">
             Établir une photographie exploitable sous <strong>2 semaines</strong>, avec recommandations 
             actionnables à <strong>90 jours</strong> et un plan stratégique sur <strong>12-24 mois</strong>.
           </p>
@@ -143,16 +143,16 @@ export default function AuditMethodologie() {
                       <h3 className="text-xl font-bold" style={{ color: IMOTION_BRAND.colors.text.primary }}>
                         {index + 1}. {step.title}
                       </h3>
-                      <span className="text-sm font-semibold px-3 py-1 rounded-full bg-gray-100 text-gray-700">
+                      <span className="text-sm font-semibold px-3 py-1 rounded-full bg-muted text-foreground">
                         {step.duration}
                       </span>
                     </div>
-                    <p className="text-gray-700 mb-3">{step.description}</p>
+                    <p className="text-foreground mb-3">{step.description}</p>
                     <div className="mb-3">
                       <span className="text-sm font-semibold" style={{ color: IMOTION_BRAND.colors.primary }}>
                         Livrable :
                       </span>
-                      <span className="text-sm text-gray-600 ml-2">{step.deliverable}</span>
+                      <span className="text-sm text-muted-foreground ml-2">{step.deliverable}</span>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {step.agents.map((agent, agentIndex) => (
@@ -193,7 +193,7 @@ export default function AuditMethodologie() {
                 <h3 className="text-lg font-bold mb-1" style={{ color: IMOTION_BRAND.colors.primary }}>
                   {kpi.name}
                 </h3>
-                <p className="text-sm text-gray-600">{kpi.description}</p>
+                <p className="text-sm text-muted-foreground">{kpi.description}</p>
               </div>
             ))}
           </div>
@@ -207,31 +207,31 @@ export default function AuditMethodologie() {
           <div className="space-y-3">
             <div className="flex items-start gap-3">
               <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: IMOTION_BRAND.colors.status.success }} />
-              <p className="text-gray-700">
+              <p className="text-foreground">
                 <strong>Phase 1 - Market Study :</strong> Seuil de confiance minimum 85% (retry x3 → fallback sources)
               </p>
             </div>
             <div className="flex items-start gap-3">
               <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: IMOTION_BRAND.colors.status.success }} />
-              <p className="text-gray-700">
+              <p className="text-foreground">
                 <strong>Phase 2 - Audits :</strong> Seuil 80% avec questions complémentaires si nécessaire
               </p>
             </div>
             <div className="flex items-start gap-3">
               <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: IMOTION_BRAND.colors.status.success }} />
-              <p className="text-gray-700">
+              <p className="text-foreground">
                 <strong>Phase 3 - Analyses :</strong> Seuil 85% avec validation expert virtuel
               </p>
             </div>
             <div className="flex items-start gap-3">
               <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: IMOTION_BRAND.colors.status.success }} />
-              <p className="text-gray-700">
+              <p className="text-foreground">
                 <strong>Phase 4 - Synthèse :</strong> Seuil 95% (blocage → révision complète)
               </p>
             </div>
             <div className="flex items-start gap-3">
               <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: IMOTION_BRAND.colors.status.success }} />
-              <p className="text-gray-700">
+              <p className="text-foreground">
                 <strong>Validation croisée :</strong> Minimum 2 sources indépendantes pour chaque affirmation
               </p>
             </div>

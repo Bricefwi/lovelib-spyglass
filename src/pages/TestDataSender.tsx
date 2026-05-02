@@ -142,20 +142,20 @@ export default function TestDataSender() {
                     <div 
                       key={detail.reportId}
                       className={`flex items-start gap-2 p-3 rounded-lg ${
-                        detail.success ? 'bg-green-50' : 'bg-red-50'
+                        detail.success ? 'bg-green-50' : 'bg-primary/5'
                       }`}
                     >
                       {detail.success ? (
                         <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5" />
                       ) : (
-                        <AlertCircle className="h-4 w-4 text-red-600 mt-0.5" />
+                        <AlertCircle className="h-4 w-4 text-primary mt-0.5" />
                       )}
                       <div className="text-sm">
                         <p className="font-medium">{detail.title}</p>
                         {detail.success ? (
                           <p className="text-green-700">Email envoyé avec succès</p>
                         ) : (
-                          <p className="text-red-700">{detail.error}</p>
+                          <p className="text-destructive">{detail.error}</p>
                         )}
                       </div>
                     </div>

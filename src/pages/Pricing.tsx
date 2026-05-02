@@ -214,10 +214,10 @@ const Pricing = () => {
         <div className="container mx-auto px-6">
           {/* Header Section */}
           <div className="text-center max-w-3xl mx-auto mb-16">
-            <h1 className="text-5xl font-bold text-gray-900 mb-6">
+            <h1 className="text-5xl font-bold text-foreground mb-6">
               Choisissez votre plan
             </h1>
-            <p className="text-xl text-gray-600">
+            <p className="text-xl text-muted-foreground">
               Des rapports stratégiques générés par IA multi-agents.
               De la découverte gratuite à l'expertise premium.
             </p>
@@ -233,7 +233,7 @@ const Pricing = () => {
                   className={`relative bg-white rounded-2xl shadow-lg border-2 transition-all duration-300 hover:shadow-xl ${
                     plan.highlight
                       ? "border-primary scale-105"
-                      : "border-gray-200 hover:border-primary/50"
+                      : "border-border hover:border-primary/50"
                   }`}
                 >
                   {/* Badge */}
@@ -253,13 +253,13 @@ const Pricing = () => {
                     {/* Icon & Name */}
                     <div className="flex items-center gap-3 mb-4">
                       <div className={`p-3 rounded-lg ${
-                        plan.highlight ? "bg-primary/10" : "bg-gray-100"
+                        plan.highlight ? "bg-primary/10" : "bg-muted"
                       }`}>
                         <Icon className={`w-6 h-6 ${
-                          plan.highlight ? "text-primary" : "text-gray-700"
+                          plan.highlight ? "text-primary" : "text-foreground"
                         }`} />
                       </div>
-                      <h3 className="text-2xl font-bold text-gray-900">
+                      <h3 className="text-2xl font-bold text-foreground">
                         {plan.name}
                       </h3>
                     </div>
@@ -267,34 +267,34 @@ const Pricing = () => {
                     {/* Price */}
                     <div className="mb-4">
                       <div className="flex items-baseline gap-1">
-                        <span className="text-4xl font-bold text-gray-900">
+                        <span className="text-4xl font-bold text-foreground">
                           {plan.price}€
                         </span>
-                        <span className="text-gray-600">{plan.period}</span>
+                        <span className="text-muted-foreground">{plan.period}</span>
                       </div>
-                      <p className="text-sm text-gray-500 mt-1">
+                      <p className="text-sm text-muted-foreground mt-1">
                         {plan.auditsPerYear} {plan.auditsPerYear === 1 ? "audit" : "audits"} {plan.auditsPerYear === 1 ? "" : "par an"}
                       </p>
                     </div>
 
                     {/* AI Info */}
-                    <div className="mb-4 p-3 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg border border-gray-200">
-                      <p className="text-xs font-semibold text-gray-700 mb-2">
+                    <div className="mb-4 p-3 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg border border-border">
+                      <p className="text-xs font-semibold text-foreground mb-2">
                         🤖 {plan.aiAgents} agents IA
                       </p>
                       <div className="space-y-1">
                         {(plan as any).aiModelsDetail?.map((model: string, idx: number) => (
-                          <p key={idx} className="text-xs text-gray-600">
+                          <p key={idx} className="text-xs text-muted-foreground">
                             {model}
                           </p>
                         )) || (
-                          <p className="text-xs text-gray-600">{plan.aiModel}</p>
+                          <p className="text-xs text-muted-foreground">{plan.aiModel}</p>
                         )}
                       </div>
                     </div>
 
                     {/* Description */}
-                    <p className="text-gray-600 text-sm mb-6">
+                    <p className="text-muted-foreground text-sm mb-6">
                       {plan.description}
                     </p>
 
@@ -306,7 +306,7 @@ const Pricing = () => {
                           ? "bg-green-600 hover:bg-green-700"
                           : plan.highlight
                           ? "bg-primary hover:bg-primary/90"
-                          : "bg-gray-900 hover:bg-gray-800"
+                          : "bg-secondary hover:bg-secondary/90"
                       }`}
                       size="lg"
                     >
@@ -315,25 +315,25 @@ const Pricing = () => {
 
                     {/* Features */}
                     <div className="space-y-3">
-                      <p className="text-sm font-semibold text-gray-900 mb-3">
+                      <p className="text-sm font-semibold text-foreground mb-3">
                         Inclus :
                       </p>
                       {plan.features.included.map((feature, idx) => (
                         <div key={idx} className="flex items-start gap-2">
                           <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                          <span className="text-sm text-gray-600">{feature}</span>
+                          <span className="text-sm text-muted-foreground">{feature}</span>
                         </div>
                       ))}
 
                       {plan.features.excluded.length > 0 && (
                         <>
-                          <p className="text-sm font-semibold text-gray-900 mt-6 mb-3">
+                          <p className="text-sm font-semibold text-foreground mt-6 mb-3">
                             Non inclus :
                           </p>
                           {plan.features.excluded.map((feature, idx) => (
                             <div key={idx} className="flex items-start gap-2">
-                              <X className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
-                              <span className="text-sm text-gray-400">{feature}</span>
+                              <X className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                              <span className="text-sm text-muted-foreground">{feature}</span>
                             </div>
                           ))}
                         </>
@@ -347,36 +347,36 @@ const Pricing = () => {
 
           {/* FAQ Section */}
           <div className="mt-24 max-w-3xl mx-auto">
-            <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">
+            <h2 className="text-3xl font-bold text-foreground mb-8 text-center">
               Questions fréquentes
             </h2>
 
             <div className="space-y-6">
               <div className="bg-white p-6 rounded-lg shadow-sm">
-                <h3 className="font-semibold text-gray-900 mb-2">
+                <h3 className="font-semibold text-foreground mb-2">
                   Comment fonctionnent les crédits d'audits ?
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-muted-foreground">
                   Chaque plan inclut un nombre d'audits annuels. Les crédits se rechargent mensuellement 
                   (ex: Pro = 5 audits/mois). Non utilisés, ils ne se cumulent pas au-delà de 12 mois.
                 </p>
               </div>
 
               <div className="bg-white p-6 rounded-lg shadow-sm">
-                <h3 className="font-semibold text-gray-900 mb-2">
+                <h3 className="font-semibold text-foreground mb-2">
                   Puis-je changer de plan en cours d'année ?
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-muted-foreground">
                   Oui, vous pouvez upgrader ou downgrader à tout moment. La différence de prix sera 
                   calculée au prorata pour la période restante.
                 </p>
               </div>
 
               <div className="bg-white p-6 rounded-lg shadow-sm">
-                <h3 className="font-semibold text-gray-900 mb-2">
+                <h3 className="font-semibold text-foreground mb-2">
                   Qu'est-ce que le white-label branding ?
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-muted-foreground">
                   Les plans Agency et Enterprise vous permettent de personnaliser les rapports avec 
                   votre logo, vos couleurs et votre nom d'entreprise. Parfait pour les agences qui 
                   revendent nos audits.
@@ -384,10 +384,10 @@ const Pricing = () => {
               </div>
 
               <div className="bg-white p-6 rounded-lg shadow-sm">
-                <h3 className="font-semibold text-gray-900 mb-2">
+                <h3 className="font-semibold text-foreground mb-2">
                   Quels modèles d'IA utilisez-vous ?
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-muted-foreground">
                   Nous utilisons les meilleurs modèles IA du marché, routés intelligemment par tâche : 
                   <strong> Perplexity Sonar</strong> pour la recherche web, <strong>Gemini 3 Pro</strong> pour l'analyse, 
                   <strong> Claude Opus 4.5</strong> et <strong>GPT-5</strong> pour la stratégie et la rédaction. 
@@ -397,10 +397,10 @@ const Pricing = () => {
               </div>
 
               <div className="bg-white p-6 rounded-lg shadow-sm">
-                <h3 className="font-semibold text-gray-900 mb-2">
+                <h3 className="font-semibold text-foreground mb-2">
                   Combien d'agents IA travaillent sur mon audit ?
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-muted-foreground">
                   Freemium : 7 agents (diagnostic express) • Pro : 12 agents (analyse approfondie) • 
                   Agency : 15 agents (étude stratégique) • Enterprise : 17 agents (expertise premium). 
                   Chaque agent est spécialisé dans un domaine (SEO, UX, marketing, etc.).
@@ -411,10 +411,10 @@ const Pricing = () => {
 
           {/* CTA Section */}
           <div className="mt-20 text-center bg-primary/5 rounded-2xl p-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl font-bold text-foreground mb-4">
               Besoin d'un plan personnalisé ?
             </h2>
-            <p className="text-xl text-gray-600 mb-8">
+            <p className="text-xl text-muted-foreground mb-8">
               Pour les grandes entreprises avec des besoins spécifiques, contactez notre équipe 
               pour un devis sur mesure.
             </p>

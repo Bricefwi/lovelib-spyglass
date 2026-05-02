@@ -71,7 +71,7 @@ export default function AuditGratuit() {
             Audit Digital Gratuit
           </h1>
           
-          <p className="text-xl text-gray-700 max-w-3xl mx-auto mb-8">
+          <p className="text-xl text-foreground max-w-3xl mx-auto mb-8">
             Découvrez le potentiel inexploité de votre site web en <strong>10 minutes</strong>. 
             Notre système d'IA analyse automatiquement votre présence digitale et identifie vos opportunités de croissance.
           </p>
@@ -86,7 +86,7 @@ export default function AuditGratuit() {
             <ArrowRight className="ml-2 w-5 h-5" />
           </Button>
 
-          <p className="text-sm text-gray-500 mt-4">
+          <p className="text-sm text-muted-foreground mt-4">
             Résultats envoyés par email • Aucun engagement
           </p>
         </div>
@@ -108,7 +108,7 @@ export default function AuditGratuit() {
               <h3 className="text-lg font-bold mb-2" style={{ color: IMOTION_BRAND.colors.text.primary }}>
                 {benefit.title}
               </h3>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-muted-foreground">
                 {benefit.description}
               </p>
             </div>
@@ -126,7 +126,7 @@ export default function AuditGratuit() {
               {whatYouGet.map((item, index) => (
                 <div key={index} className="flex items-start gap-3">
                   <CheckCircle2 className="w-6 h-6 flex-shrink-0 mt-0.5" style={{ color: IMOTION_BRAND.colors.status.success }} />
-                  <p className="text-gray-700 text-lg">{item}</p>
+                  <p className="text-foreground text-lg">{item}</p>
                 </div>
               ))}
             </div>
@@ -149,7 +149,7 @@ export default function AuditGratuit() {
                 <p className="text-4xl font-extrabold" style={{ color: IMOTION_BRAND.colors.primary }}>
                   0€
                 </p>
-                <p className="text-sm text-gray-500 mt-2">
+                <p className="text-sm text-muted-foreground mt-2">
                   Analyse rapide (10 min) • 5 agents IA • Rapport préliminaire
                 </p>
               </div>
@@ -157,19 +157,19 @@ export default function AuditGratuit() {
               <ul className="space-y-3 mb-6">
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: IMOTION_BRAND.colors.status.success }} />
-                  <span className="text-sm text-gray-700">Analyse technique de base</span>
+                  <span className="text-sm text-foreground">Analyse technique de base</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: IMOTION_BRAND.colors.status.success }} />
-                  <span className="text-sm text-gray-700">Opportunités quick wins</span>
+                  <span className="text-sm text-foreground">Opportunités quick wins</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: IMOTION_BRAND.colors.status.success }} />
-                  <span className="text-sm text-gray-700">4 scénarios d'évolution</span>
+                  <span className="text-sm text-foreground">4 scénarios d'évolution</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: IMOTION_BRAND.colors.status.success }} />
-                  <span className="text-sm text-gray-700">Estimation ROI préliminaire</span>
+                  <span className="text-sm text-foreground">Estimation ROI préliminaire</span>
                 </li>
               </ul>
               
@@ -206,7 +206,7 @@ export default function AuditGratuit() {
                 <p className="text-4xl font-extrabold" style={{ color: IMOTION_BRAND.colors.primary }}>
                   Sur Devis
                 </p>
-                <p className="text-sm text-gray-600 mt-2">
+                <p className="text-sm text-muted-foreground mt-2">
                   Analyse complète (2 semaines) • 17 agents IA • Rapport ultra-détaillé
                 </p>
               </div>
@@ -214,27 +214,27 @@ export default function AuditGratuit() {
               <ul className="space-y-3 mb-6">
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: IMOTION_BRAND.colors.primary }} />
-                  <span className="text-sm text-gray-700"><strong>17 agents IA orchestrés</strong> (MANUS IA 2.0)</span>
+                  <span className="text-sm text-foreground"><strong>17 agents IA orchestrés</strong> (MANUS IA 2.0)</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: IMOTION_BRAND.colors.primary }} />
-                  <span className="text-sm text-gray-700">Analyse approfondie (CRM, Analytics, Ads)</span>
+                  <span className="text-sm text-foreground">Analyse approfondie (CRM, Analytics, Ads)</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: IMOTION_BRAND.colors.primary }} />
-                  <span className="text-sm text-gray-700">Plan stratégique 12-24 mois</span>
+                  <span className="text-sm text-foreground">Plan stratégique 12-24 mois</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: IMOTION_BRAND.colors.primary }} />
-                  <span className="text-sm text-gray-700">Roadmap trimestrielle détaillée</span>
+                  <span className="text-sm text-foreground">Roadmap trimestrielle détaillée</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: IMOTION_BRAND.colors.primary }} />
-                  <span className="text-sm text-gray-700">Séance Q&A + itération 30 jours</span>
+                  <span className="text-sm text-foreground">Séance Q&A + itération 30 jours</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: IMOTION_BRAND.colors.primary }} />
-                  <span className="text-sm text-gray-700">Garantie ZÉRO hallucination (95%+ confiance)</span>
+                  <span className="text-sm text-foreground">Garantie ZÉRO hallucination (95%+ confiance)</span>
                 </li>
               </ul>
               
@@ -254,7 +254,7 @@ export default function AuditGratuit() {
           <h2 className="text-3xl font-bold mb-4" style={{ color: IMOTION_BRAND.colors.text.primary }}>
             Prêt à découvrir votre potentiel ?
           </h2>
-          <p className="text-lg text-gray-600 mb-8">
+          <p className="text-lg text-muted-foreground mb-8">
             Lancez votre audit gratuit maintenant et recevez vos résultats par email en 10 minutes.
           </p>
           <Button 

@@ -37,12 +37,12 @@ export default function MethodologieROI() {
       
       <main className="container mx-auto px-4 py-12">
         <h1 className="text-3xl font-bold mb-6">Méthodologie ROI</h1>
-        <p className="text-gray-700 mb-6">
+        <p className="text-foreground mb-6">
           Le ROI est calculé initiative par initiative, puis agrégé. Nous exposons les hypothèses, 
           la formule et les bornes (optimiste, médiane, prudente).
         </p>
         
-        <pre className="bg-gray-50 p-4 rounded border text-sm overflow-x-auto">
+        <pre className="bg-muted p-4 rounded border text-sm overflow-x-auto">
           {`ROI = ((Revenus générés − Coûts) / Coûts) × 100
 Où Revenus générés = Nouveaux contrats + Upsells + Récurrence conservée`}
         </pre>
@@ -55,7 +55,7 @@ Où Revenus générés = Nouveaux contrats + Upsells + Récurrence conservée`}
           yKeys={chartSpec.yKeys}
         />
         
-        <div className="mt-6 p-4 border rounded-lg text-sm text-gray-700 bg-secondary/10">
+        <div className="mt-6 p-4 border rounded-lg text-sm text-foreground bg-secondary/10">
           <b>Conformité</b> : toute projection cite sa source (CRM/Analytics/Benchmarks) et la période. 
           Un <i>confidence_score</i> &gt; 0,85 est requis pour valider une estimation.
         </div>

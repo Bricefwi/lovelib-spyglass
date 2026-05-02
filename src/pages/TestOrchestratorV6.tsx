@@ -185,7 +185,7 @@ export default function TestOrchestratorV6() {
       case 'success':
         return <CheckCircle2 className="h-4 w-4 text-green-500" />;
       case 'error':
-        return <AlertCircle className="h-4 w-4 text-red-500" />;
+        return <AlertCircle className="h-4 w-4 text-primary" />;
       default:
         return null;
     }
@@ -285,8 +285,8 @@ export default function TestOrchestratorV6() {
                   )}
 
                   {result && result.status === 'error' && (
-                    <div className="p-2 rounded-lg bg-red-50 dark:bg-red-950/20 text-xs">
-                      <p className="text-red-700 dark:text-red-400 truncate">{result.error}</p>
+                    <div className="p-2 rounded-lg bg-primary/5 dark:bg-red-950/20 text-xs">
+                      <p className="text-destructive dark:text-red-400 truncate">{result.error}</p>
                     </div>
                   )}
 

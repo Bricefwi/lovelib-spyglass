@@ -22,7 +22,7 @@ export default function CalculsKPIs() {
       <main className="container mx-auto px-4 py-12">
         <h1 className="text-3xl font-bold mb-6">Calculs & KPIs</h1>
         
-        <div className="space-y-6 text-gray-800">
+        <div className="space-y-6 text-foreground">
           <div>
             <b>CAC (par canal)</b> = Dépenses_canal / Conversions_attribuées (période). 
             <i> Exemple :</i> 8 200€ / 96 = 85€.

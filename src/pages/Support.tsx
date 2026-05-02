@@ -21,7 +21,7 @@ export default function Support() {
       
       <main className="container mx-auto px-4 py-12">
         <h1 className="text-3xl font-bold mb-6">Support technique</h1>
-        <p className="text-gray-700 mb-4">
+        <p className="text-foreground mb-4">
           Pour toute question : <a href="mailto:support@imotion.tech" className="text-primary underline">support@imotion.tech</a>. 
           Temps de réponse cible : &lt; 24h ouvrées.
         </p>
