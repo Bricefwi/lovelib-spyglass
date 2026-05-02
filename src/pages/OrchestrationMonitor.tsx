@@ -238,7 +238,7 @@ export default function OrchestrationMonitor() {
                                 <span className={
                                   log.status === 'running' ? 'text-blue-500' : 
                                   log.status === 'completed' ? 'text-green-500' : 
-                                  log.status === 'error' ? 'text-red-500' : ''
+                                  log.status === 'error' ? 'text-primary' : ''
                                 }>
                                   {log.message}
                                 </span>

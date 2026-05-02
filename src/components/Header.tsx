@@ -107,7 +107,7 @@ export const Header = () => {
 
           {/* Mobile menu button */}
           <button
-            className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="md:hidden p-2 hover:bg-muted rounded-lg transition-colors"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Toggle menu"
           >
@@ -130,7 +130,7 @@ export const Header = () => {
                     navigate(item.href);
                     setMobileMenuOpen(false);
                   }}
-                  className="text-sm font-medium text-foreground hover:text-primary hover:bg-gray-50 transition-colors text-left py-2 px-3 rounded-md"
+                  className="text-sm font-medium text-foreground hover:text-primary hover:bg-muted transition-colors text-left py-2 px-3 rounded-md"
                 >
                   {item.name}
                 </button>

@@ -15,9 +15,9 @@ export default function MentionsLegales() {
       <main className="container mx-auto px-4 py-12 max-w-4xl">
         <h1 className="text-4xl font-bold mb-8" style={{ color: IMOTION_BRAND.colors.primary }}>Mentions Légales</h1>
         
-        <div className="space-y-8 text-gray-700">
+        <div className="space-y-8 text-foreground">
           <section>
-            <h2 className="text-2xl font-semibold mb-4 text-gray-900">1. Éditeur du Site</h2>
+            <h2 className="text-2xl font-semibold mb-4 text-foreground">1. Éditeur du Site</h2>
             <p>
               Le site internet <strong>IMOTION</strong> (ci-après le "Site") est édité par la société <strong>IMOTION</strong> (ou votre raison sociale exacte), 
               [Forme Juridique : SAS / SARL] au capital de [Montant] €, immatriculée au Registre du Commerce et des Sociétés de [Ville] 
@@ -32,7 +32,7 @@ export default function MentionsLegales() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-4 text-gray-900">2. Hébergement</h2>
+            <h2 className="text-2xl font-semibold mb-4 text-foreground">2. Hébergement</h2>
             <p>
               Le Site et l'application sont hébergés sur les infrastructures cloud de :
             </p>
@@ -44,7 +44,7 @@ export default function MentionsLegales() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-4 text-gray-900">3. Propriété Intellectuelle</h2>
+            <h2 className="text-2xl font-semibold mb-4 text-foreground">3. Propriété Intellectuelle</h2>
             <p>
               L'ensemble de ce site relève de la législation française et internationale sur le droit d'auteur et la propriété intellectuelle. 
               Tous les droits de reproduction sont réservés, y compris pour les documents téléchargeables et les représentations iconographiques et photographiques.
@@ -56,7 +56,7 @@ export default function MentionsLegales() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-4 text-gray-900">4. Limitation de responsabilité</h2>
+            <h2 className="text-2xl font-semibold mb-4 text-foreground">4. Limitation de responsabilité</h2>
             <p>
               Les informations contenues sur ce site sont aussi précises que possible et le site est périodiquement remis à jour, mais peut toutefois contenir des inexactitudes, des omissions ou des lacunes.
               IMOTION ne pourra être tenu responsable des omissions, des inexactitudes et des carences dans la mise à jour, qu'elles soient de son fait ou du fait des tiers partenaires qui lui fournissent ces informations.

@@ -125,7 +125,7 @@ export default function VerifyEmail() {
               <CheckCircle2 className="h-16 w-16 text-green-500" />
             )}
             {status === 'error' && (
-              <XCircle className="h-16 w-16 text-red-500" />
+              <XCircle className="h-16 w-16 text-primary" />
             )}
             
             <p className="text-center text-muted-foreground">

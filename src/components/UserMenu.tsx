@@ -70,12 +70,12 @@ export const UserMenu = ({ session }: UserMenuProps) => {
   };
 
   const getPlanDisplay = (tier?: string) => {
-    if (!tier) return { name: "Aucun plan", icon: User, color: "bg-gray-500" };
+    if (!tier) return { name: "Aucun plan", icon: User, color: "bg-muted0" };
 
     const plans = {
       starter: { name: "Starter", icon: Zap, color: "bg-blue-500" },
       agency: { name: "Agency", icon: Building2, color: "bg-purple-500" },
-      enterprise: { name: "Enterprise", icon: Rocket, color: "bg-orange-500" },
+      enterprise: { name: "Enterprise", icon: Rocket, color: "bg-secondary/50" },
       one_shot: { name: "One-Shot", icon: Sparkles, color: "bg-green-500" },
     };
 
@@ -90,7 +90,7 @@ export const UserMenu = ({ session }: UserMenuProps) => {
       <DropdownMenuTrigger className="focus:outline-none">
         <div className="flex items-center gap-2 cursor-pointer group">
           {/* Avatar */}
-          <Avatar className="w-9 h-9 border-2 border-gray-200 group-hover:border-primary transition-colors">
+          <Avatar className="w-9 h-9 border-2 border-border group-hover:border-primary transition-colors">
             <AvatarFallback className="bg-gradient-to-br from-primary to-blue-600 text-white text-sm font-semibold">
               {getInitials(session.user.email || "")}
             </AvatarFallback>
@@ -113,10 +113,10 @@ export const UserMenu = ({ session }: UserMenuProps) => {
         {/* User Info Section */}
         <DropdownMenuLabel className="pb-2">
           <div className="flex flex-col gap-2">
-            <p className="text-sm font-medium text-gray-900">
+            <p className="text-sm font-medium text-foreground">
               Mon compte
             </p>
-            <p className="text-xs text-gray-500 truncate">
+            <p className="text-xs text-muted-foreground truncate">
               {session.user.email}
             </p>
 
@@ -168,7 +168,7 @@ export const UserMenu = ({ session }: UserMenuProps) => {
         {/* Sign Out */}
         <DropdownMenuItem
           onClick={handleSignOut}
-          className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
+          className="cursor-pointer text-primary focus:text-primary focus:bg-primary/5"
         >
           <LogOut className="w-4 h-4 mr-2" />
           <span>Déconnexion</span>
