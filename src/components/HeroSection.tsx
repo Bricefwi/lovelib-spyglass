@@ -171,7 +171,7 @@ export const HeroSection = () => {
               <span className="h-3 w-3 rounded-full bg-[hsl(var(--amber-400))]" />
               <span className="h-3 w-3 rounded-full bg-[hsl(var(--success))]" />
               <span className="ml-3 font-mono text-xs text-[hsl(var(--ink-300))]">
-                marc-ia — consultant
+                alex-ia — stratège marketing
               </span>
             </div>
             <div className="space-y-2 p-5 font-mono text-sm">
@@ -194,15 +194,15 @@ export const HeroSection = () => {
                     className="h-2 w-8 rounded-full"
                     style={{ backgroundImage: "var(--gradient-flame)" }}
                   />
-                  DISCOVERY
+                  AUDIT
                 </span>
                 <span className="inline-flex items-center gap-2 text-[hsl(var(--ink-400))]">
                   <span className="h-2 w-2 rounded-full bg-[hsl(var(--ink-500))]" />
-                  LIVRAISON
+                  STRATÉGIE
                 </span>
               </div>
               <div className="!mt-3 text-[hsl(var(--coral-400))]">
-                ✦ Cahier des charges généré
+                ✦ Plan stratégique généré
                 <span className="ml-1 inline-block h-4 w-2 animate-blink bg-[hsl(var(--coral-500))]" />
               </div>
             </div>
