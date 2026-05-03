@@ -21,7 +21,7 @@ export const HeroSection = () => {
   }, []);
 
   return (
-    <section className="relative overflow-hidden bg-[hsl(var(--ink-900))] pt-28 pb-32 text-[hsl(var(--ink-50))]">
+    <section className="relative overflow-hidden bg-[hsl(var(--night-900))] pt-28 pb-32 text-[hsl(var(--ink-50))]">
       {/* Ambient glows */}
       <div
         className="pointer-events-none absolute inset-0 opacity-70"
