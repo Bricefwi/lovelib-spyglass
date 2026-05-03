@@ -82,19 +82,19 @@ export const HeroSection = () => {
               fontSize: "clamp(1.75rem, 4.2vw, 3.25rem)",
             }}
           >
-            Transformez vos idées en{" "}
+            Boostez votre{" "}
             <span
               className="bg-clip-text text-transparent"
               style={{ backgroundImage: "var(--gradient-flame)" }}
             >
-              projets digitaux concrets
+              croissance marketing & commerciale
             </span>
           </h1>
 
           <p className="mb-7 max-w-xl text-[15px] leading-relaxed text-[hsl(var(--ink-300))] animate-fade-in-up delay-200 sm:mb-8 sm:text-base md:text-lg">
-            Notre IA vous guide pour définir précisément votre besoin et
-            génère automatiquement votre cahier des charges —{" "}
-            <span className="font-semibold text-white">100% gratuit.</span>
+            IMOTION audite votre marketing et votre force de vente, puis génère
+            un <span className="font-semibold text-white">plan stratégique actionnable</span> propulsé
+            par 17 agents IA spécialisés — livré sous 2 semaines.
           </p>
 
           <div className="mb-7 flex flex-col gap-3 animate-fade-in-up delay-300 sm:mb-8 sm:flex-row">
@@ -105,21 +105,21 @@ export const HeroSection = () => {
               onClick={() => navigate(session ? "/client/new-project" : "/auth")}
             >
               <Sparkles className="mr-2 h-5 w-5 transition-transform group-hover:rotate-12" />
-              Créer mon CDC gratuitement
+              Lancer mon audit gratuit
               <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
             </Button>
             <Button
               size="lg"
               variant="outline"
               className="press h-14 w-full rounded-xl border-[hsl(var(--ink-600))] bg-[hsl(var(--ink-800)/0.6)] px-7 text-base font-semibold text-white backdrop-blur transition-colors hover:border-[hsl(var(--coral-500))] hover:bg-[hsl(var(--ink-700))] hover:text-white sm:w-auto"
-              onClick={() => navigate("/how-it-works")}
+              onClick={() => navigate("/audit-methodologie")}
             >
-              Voir la démo
+              Voir la méthodologie
             </Button>
           </div>
 
           <ul className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-[hsl(var(--ink-300))] animate-fade-in-up delay-500 sm:gap-x-6">
-            {["100% gratuit", "Sans engagement", "En 45 min"].map((t) => (
+            {["Audit gratuit", "Livré en 2 semaines", "17 agents IA"].map((t) => (
               <li key={t} className="inline-flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-[hsl(var(--success))]" />
                 {t}
