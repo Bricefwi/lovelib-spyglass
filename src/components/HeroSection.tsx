@@ -42,11 +42,11 @@ export const HeroSection = () => {
 
       <div className="container relative mx-auto grid grid-cols-1 items-center gap-12 px-5 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
         {/* LEFT — Wordmark + headline */}
-        <div className="animate-fade-in-up">
+        <div className="min-w-0 animate-fade-in-up">
           {/* Giant wordmark */}
-          <div className="mb-6 flex items-end gap-3 sm:mb-8 sm:gap-4">
-            <span className="relative flex items-end leading-none">
-              <svg viewBox="0 0 24 64" className="h-[4.5rem] w-auto sm:h-[6rem] md:h-[8rem] lg:h-[9rem]" aria-hidden="true">
+          <div className="mb-6 flex flex-wrap items-end gap-x-3 gap-y-2 sm:mb-8 sm:gap-x-4">
+            <span className="relative flex min-w-0 max-w-full items-end leading-none">
+              <svg viewBox="0 0 24 64" className="h-[4.5rem] w-auto shrink-0 sm:h-[6rem] md:h-[8rem] lg:h-[9rem]" aria-hidden="true">
                 <defs>
                   <linearGradient id="hero-flame" x1="0" y1="64" x2="0" y2="0">
                     <stop offset="0%" stopColor="hsl(var(--coral-600))" />
@@ -58,17 +58,17 @@ export const HeroSection = () => {
                 <path d="M12 4 L22 18 L14 18 L14 22 L10 22 L10 18 L2 18 Z" fill="url(#hero-flame)" />
               </svg>
               <span
-                className="font-bold tracking-[-0.06em] text-white"
+                className="block min-w-0 truncate font-bold tracking-[-0.06em] text-white"
                 style={{
                   fontFamily: "'General Sans', Inter, system-ui, sans-serif",
-                  fontSize: "clamp(3rem, 12vw, 9rem)",
+                  fontSize: "clamp(2.75rem, 11vw, 8.5rem)",
                   lineHeight: 0.85,
                 }}
               >
                 motion
               </span>
             </span>
-            <span className="mb-3 hidden border-l border-[hsl(var(--ink-700))] pl-3 text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-[hsl(var(--ink-300))] sm:inline-block sm:text-[0.7rem]">
+            <span className="mb-3 hidden shrink-0 border-l border-[hsl(var(--ink-700))] pl-3 text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-[hsl(var(--ink-300))] sm:inline-block sm:text-[0.7rem]">
               Creator
               <br />
               Studio
