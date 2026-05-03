@@ -46,7 +46,7 @@ export const HeroSection = () => {
           {/* Giant wordmark */}
           <div className="mb-6 flex items-end gap-3 sm:mb-8 sm:gap-4">
             <span className="relative flex items-end leading-none">
-              <svg viewBox="0 0 24 64" className="h-[5.5rem] w-auto sm:h-[7rem] md:h-[10rem] lg:h-[12rem] text-7xl" aria-hidden="true">
+              <svg viewBox="0 0 24 64" className="h-[5.5rem] w-auto sm:h-[7rem] md:h-[10rem] lg:h-[12rem]" aria-hidden="true">
                 <defs>
                   <linearGradient id="hero-flame" x1="0" y1="64" x2="0" y2="0">
                     <stop offset="0%" stopColor="hsl(var(--coral-600))" />
@@ -58,7 +58,7 @@ export const HeroSection = () => {
                 <path d="M12 4 L22 18 L14 18 L14 22 L10 22 L10 18 L2 18 Z" fill="url(#hero-flame)" />
               </svg>
               <span
-                className="font-bold tracking-[-0.06em] text-white text-7xl"
+                className="font-bold tracking-[-0.06em] text-white"
                 style={{
                   fontFamily: "'General Sans', Inter, system-ui, sans-serif",
                   fontSize: "clamp(3.75rem, 14vw, 12rem)",
