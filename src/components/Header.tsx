@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
-import logoImotion from "@/assets/logo-imotion.png";
+import { ImotionLogo } from "@/components/brand/ImotionLogo";
 import { useUserRole } from "@/hooks/useUserRole";
 import { UserMenu } from "@/components/UserMenu";
 
@@ -68,12 +68,11 @@ export const Header = () => {
       <div className="container mx-auto px-6">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate("/")}>
-            <img
-              src={logoImotion}
-              alt="IMOTION Logo"
-              className="h-24 w-auto"
-            />
+          <div
+            className="flex items-center gap-3 cursor-pointer text-3xl"
+            onClick={() => navigate("/")}
+          >
+            <ImotionLogo tone="dark" showTagline />
           </div>
 
           {/* Desktop Navigation */}
