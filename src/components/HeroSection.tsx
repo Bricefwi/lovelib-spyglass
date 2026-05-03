@@ -6,10 +6,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
 
 const terminalLines = [
-  "Analyse du besoin client",
-  "Objectifs principaux identifiés",
-  "Architecture technique recommandée",
-  "Budget estimatif : 12 500 €",
+  "Audit funnel marketing & commercial",
+  "Analyse CAC / LTV / cohortes",
+  "10 initiatives priorisées (RICE)",
+  "Plan stratégique 90j · ROI projeté",
 ];
 
 export const HeroSection = () => {
