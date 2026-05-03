@@ -154,13 +154,13 @@ export const HeroSection = () => {
               </div>
               <div className="mt-6 inline-flex items-center gap-3 rounded-xl border border-[hsl(var(--ink-100))] px-4 py-3">
                 <div className="text-[10px] font-semibold uppercase tracking-widest text-[hsl(var(--ink-400))]">
-                  Budget
+                  ROI projeté
                 </div>
-                <div className="text-lg font-bold text-[hsl(var(--ink-900))]">14 200 €</div>
+                <div className="text-lg font-bold text-[hsl(var(--ink-900))]">+38 %</div>
               </div>
             </div>
             <div className="absolute -top-3 right-6 inline-flex items-center gap-2 rounded-full bg-[hsl(var(--success))] px-3 py-1 text-xs font-semibold text-white shadow-lg">
-              <CheckCircle2 className="h-3.5 w-3.5" /> CDC prêt en 45 min
+              <CheckCircle2 className="h-3.5 w-3.5" /> Audit livré en 2 semaines
             </div>
           </div>
 
