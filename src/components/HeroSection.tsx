@@ -47,38 +47,40 @@ export const HeroSection = () => {
         {/* LEFT — Wordmark + headline */}
         <div className="min-w-0 animate-fade-in-up">
           {/* Giant wordmark */}
-          <div className="mb-6 flex flex-wrap items-end gap-x-3 gap-y-2 sm:mb-8 sm:gap-x-4">
-            <span
-              role="img"
-              aria-label="IMOTION"
-              className="relative flex min-w-0 max-w-full items-end leading-none"
+          <div
+            role="img"
+            aria-label="IMOTION Creator Studio"
+            className="mb-6 flex items-end gap-3 sm:mb-8 sm:gap-4"
+          >
+            <svg
+              viewBox="0 0 24 64"
+              aria-hidden="true"
+              focusable="false"
+              className="h-[4.5rem] w-auto shrink-0 sm:h-24 md:h-32 lg:h-36"
             >
-              <svg viewBox="0 0 24 64" className="h-[4.5rem] w-auto shrink-0 sm:h-[6rem] md:h-[8rem] lg:h-[9rem]" aria-hidden="true" focusable="false">
-                <defs>
-                  <linearGradient id="hero-flame" x1="0" y1="64" x2="0" y2="0">
-                    <stop offset="0%" stopColor="hsl(var(--coral-600))" />
-                    <stop offset="55%" stopColor="hsl(var(--coral-500))" />
-                    <stop offset="100%" stopColor="hsl(var(--amber-400))" />
-                  </linearGradient>
-                </defs>
-                <rect x="9" y="18" width="6" height="40" rx="2" fill="url(#hero-flame)" />
-                <path d="M12 4 L22 18 L14 18 L14 22 L10 22 L10 18 L2 18 Z" fill="url(#hero-flame)" />
-              </svg>
-              <span
-                aria-hidden="true"
-                className="block min-w-0 truncate font-bold tracking-[-0.06em] text-white"
-                style={{
-                  fontFamily: "'General Sans', Inter, system-ui, sans-serif",
-                  fontSize: "clamp(2.75rem, 11vw, 8.5rem)",
-                  lineHeight: 0.85,
-                }}
-              >
-                motion
-              </span>
+              <defs>
+                <linearGradient id="hero-flame" x1="0" y1="64" x2="0" y2="0">
+                  <stop offset="0%" stopColor="hsl(var(--coral-600))" />
+                  <stop offset="55%" stopColor="hsl(var(--coral-500))" />
+                  <stop offset="100%" stopColor="hsl(var(--amber-400))" />
+                </linearGradient>
+              </defs>
+              <rect x="9" y="18" width="6" height="40" rx="2" fill="url(#hero-flame)" />
+              <path d="M12 4 L22 18 L14 18 L14 22 L10 22 L10 18 L2 18 Z" fill="url(#hero-flame)" />
+            </svg>
+            <span
+              aria-hidden="true"
+              className="min-w-0 font-bold leading-none tracking-[-0.06em] text-white"
+              style={{
+                fontFamily: "'General Sans', Inter, system-ui, sans-serif",
+                fontSize: "clamp(2.75rem, 11vw, 8.5rem)",
+              }}
+            >
+              motion
             </span>
             <span
               aria-hidden="true"
-              className="mb-3 hidden shrink-0 border-l border-[hsl(var(--ink-600))] pl-3 text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-[hsl(var(--ink-200))] sm:inline-block sm:text-[0.7rem]"
+              className="mb-3 hidden shrink-0 border-l border-[hsl(var(--ink-600))] pl-3 text-[0.7rem] font-semibold uppercase leading-tight tracking-[0.28em] text-[hsl(var(--ink-200))] sm:inline-block"
             >
               Creator
               <br />
