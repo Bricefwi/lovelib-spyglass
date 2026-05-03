@@ -41,6 +41,7 @@ import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/Dashboard";
 import { HowItWorks } from "./pages/HowItWorks";
 import Pricing from "./pages/Pricing";
+import BrandGuidelines from "./pages/BrandGuidelines";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -80,6 +81,7 @@ const App = () => {
             <Route path="/legal/mentions" element={<MentionsLegales />} />
             <Route path="/legal/rgpd" element={<RGPD />} />
             <Route path="/legal/cgu" element={<CGU />} />
+            <Route path="/brand" element={<BrandGuidelines />} />
             <Route path="/admin/dashboard" element={
               <ProtectedRoute requireAuth requireAdmin>
                 <AdminDashboard />
