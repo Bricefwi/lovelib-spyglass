@@ -8,9 +8,9 @@ import { PreAuditForm } from "@/components/PreAuditForm";
 import { Footer } from "@/components/Footer";
 
 const SITE_URL = "https://lovelib-spyglass.lovable.app";
-const TITLE = "IMOTION Creator Studio — Votre cahier des charges IA en 45 min";
+const TITLE = "IMOTION — Audit marketing & stratégie de croissance par IA";
 const DESCRIPTION =
-  "IMOTION Creator Studio : l'IA qui transforme vos idées en projets digitaux concrets. Cahier des charges professionnel généré en 45 minutes — 100% gratuit, sans engagement.";
+  "IMOTION audite votre marketing et votre force de vente, puis génère un plan stratégique actionnable. 17 agents IA spécialisés, livré en 2 semaines.";
 const OG_IMAGE = `${SITE_URL}/og-image.jpg`;
 
 const jsonLd = {
