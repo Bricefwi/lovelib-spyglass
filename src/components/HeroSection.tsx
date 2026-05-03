@@ -21,7 +21,7 @@ export const HeroSection = () => {
   }, []);
 
   return (
-    <section className="relative overflow-hidden bg-[hsl(var(--night-900))] pt-28 pb-32 text-[hsl(var(--ink-50))]">
+    <section className="relative overflow-hidden bg-[hsl(var(--night-900))] pb-24 pt-24 text-[hsl(var(--ink-50))] sm:pb-32 sm:pt-28">
       {/* Ambient glows */}
       <div
         className="pointer-events-none absolute inset-0 opacity-70"
@@ -40,14 +40,13 @@ export const HeroSection = () => {
         }}
       />
 
-      <div className="container relative mx-auto grid grid-cols-1 items-center gap-16 px-6 lg:grid-cols-[1.05fr_0.95fr]">
+      <div className="container relative mx-auto grid grid-cols-1 items-center gap-12 px-5 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
         {/* LEFT — Wordmark + headline */}
-        <div>
+        <div className="animate-fade-in-up">
           {/* Giant wordmark */}
-          <div className="mb-8 flex items-end gap-4">
+          <div className="mb-6 flex items-end gap-3 sm:mb-8 sm:gap-4">
             <span className="relative flex items-end leading-none">
-              {/* Flame arrow on the i */}
-              <svg viewBox="0 0 24 64" className="h-[7rem] w-auto md:h-[10rem] lg:h-[12rem]" aria-hidden="true">
+              <svg viewBox="0 0 24 64" className="h-[5.5rem] w-auto sm:h-[7rem] md:h-[10rem] lg:h-[12rem]" aria-hidden="true">
                 <defs>
                   <linearGradient id="hero-flame" x1="0" y1="64" x2="0" y2="0">
                     <stop offset="0%" stopColor="hsl(var(--coral-600))" />
@@ -62,16 +61,14 @@ export const HeroSection = () => {
                 className="font-bold tracking-[-0.06em] text-white"
                 style={{
                   fontFamily: "'General Sans', Inter, system-ui, sans-serif",
-                  fontSize: "clamp(5rem, 14vw, 12rem)",
+                  fontSize: "clamp(3.75rem, 14vw, 12rem)",
                   lineHeight: 0.85,
                 }}
               >
                 motion
               </span>
             </span>
-            <span
-              className="mb-4 hidden border-l border-[hsl(var(--ink-700))] pl-3 text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-[hsl(var(--ink-300))] md:inline-block"
-            >
+            <span className="mb-3 hidden border-l border-[hsl(var(--ink-700))] pl-3 text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-[hsl(var(--ink-300))] sm:inline-block sm:text-[0.7rem]">
               Creator
               <br />
               Studio
@@ -79,10 +76,10 @@ export const HeroSection = () => {
           </div>
 
           <h1
-            className="mb-6 max-w-2xl font-bold leading-[1.05] tracking-tight text-white"
+            className="mb-5 max-w-2xl font-bold leading-[1.08] tracking-tight text-white animate-fade-in-up delay-100 sm:mb-6"
             style={{
               fontFamily: "'General Sans', Inter, system-ui, sans-serif",
-              fontSize: "clamp(2rem, 4.2vw, 3.25rem)",
+              fontSize: "clamp(1.75rem, 4.2vw, 3.25rem)",
             }}
           >
             Transformez vos idées en{" "}
@@ -94,34 +91,34 @@ export const HeroSection = () => {
             </span>
           </h1>
 
-          <p className="mb-8 max-w-xl text-base text-[hsl(var(--ink-300))] md:text-lg">
+          <p className="mb-7 max-w-xl text-[15px] leading-relaxed text-[hsl(var(--ink-300))] animate-fade-in-up delay-200 sm:mb-8 sm:text-base md:text-lg">
             Notre IA vous guide pour définir précisément votre besoin et
             génère automatiquement votre cahier des charges —{" "}
             <span className="font-semibold text-white">100% gratuit.</span>
           </p>
 
-          <div className="mb-8 flex flex-col gap-3 sm:flex-row">
+          <div className="mb-7 flex flex-col gap-3 animate-fade-in-up delay-300 sm:mb-8 sm:flex-row">
             <Button
               size="lg"
-              className="group h-14 rounded-xl px-7 text-base font-semibold text-white shadow-coral hover:shadow-glow-strong"
+              className="group cta-glow press shine h-14 w-full rounded-xl px-7 text-base font-semibold text-white shadow-coral hover:shadow-glow-strong sm:w-auto"
               style={{ backgroundImage: "var(--gradient-flame)" }}
               onClick={() => navigate(session ? "/client/new-project" : "/auth")}
             >
-              <Sparkles className="mr-2 h-5 w-5" />
+              <Sparkles className="mr-2 h-5 w-5 transition-transform group-hover:rotate-12" />
               Créer mon CDC gratuitement
               <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
             </Button>
             <Button
               size="lg"
               variant="outline"
-              className="h-14 rounded-xl border-[hsl(var(--ink-600))] bg-[hsl(var(--ink-800)/0.6)] px-7 text-base font-semibold text-white backdrop-blur hover:bg-[hsl(var(--ink-700))] hover:text-white"
+              className="press h-14 w-full rounded-xl border-[hsl(var(--ink-600))] bg-[hsl(var(--ink-800)/0.6)] px-7 text-base font-semibold text-white backdrop-blur transition-colors hover:border-[hsl(var(--coral-500))] hover:bg-[hsl(var(--ink-700))] hover:text-white sm:w-auto"
               onClick={() => navigate("/how-it-works")}
             >
               Voir la démo
             </Button>
           </div>
 
-          <ul className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-[hsl(var(--ink-300))]">
+          <ul className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-[hsl(var(--ink-300))] animate-fade-in-up delay-500 sm:gap-x-6">
             {["100% gratuit", "Sans engagement", "En 45 min"].map((t) => (
               <li key={t} className="inline-flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-[hsl(var(--success))]" />
@@ -131,10 +128,10 @@ export const HeroSection = () => {
           </ul>
         </div>
 
-        {/* RIGHT — Mockup stack */}
-        <div className="relative hidden lg:block">
+        {/* RIGHT — Mockup stack (hidden on small screens) */}
+        <div className="relative hidden h-[460px] lg:block">
           {/* Browser mockup back */}
-          <div className="absolute right-0 top-8 w-[110%] rounded-2xl bg-white shadow-2xl ring-1 ring-black/10">
+          <div className="absolute right-0 top-8 w-[110%] rounded-2xl bg-white shadow-2xl ring-1 ring-black/10 animate-scale-in animate-float-soft">
             <div className="flex items-center gap-2 border-b border-[hsl(var(--ink-100))] px-4 py-3">
               <span className="h-3 w-3 rounded-full bg-[hsl(var(--coral-500))]" />
               <span className="h-3 w-3 rounded-full bg-[hsl(var(--amber-400))]" />
@@ -159,9 +156,7 @@ export const HeroSection = () => {
                 <div className="text-[10px] font-semibold uppercase tracking-widest text-[hsl(var(--ink-400))]">
                   Budget
                 </div>
-                <div className="text-lg font-bold text-[hsl(var(--ink-900))]">
-                  14 200 €
-                </div>
+                <div className="text-lg font-bold text-[hsl(var(--ink-900))]">14 200 €</div>
               </div>
             </div>
             <div className="absolute -top-3 right-6 inline-flex items-center gap-2 rounded-full bg-[hsl(var(--success))] px-3 py-1 text-xs font-semibold text-white shadow-lg">
@@ -170,7 +165,7 @@ export const HeroSection = () => {
           </div>
 
           {/* Terminal front */}
-          <div className="relative ml-[-2rem] mt-32 w-[90%] rounded-2xl bg-[hsl(var(--ink-900))] shadow-2xl ring-1 ring-white/10">
+          <div className="absolute left-0 top-48 w-[88%] rounded-2xl bg-[hsl(var(--ink-900))] shadow-2xl ring-1 ring-white/10 animate-scale-in delay-200">
             <div className="flex items-center gap-2 border-b border-white/5 px-4 py-3">
               <span className="h-3 w-3 rounded-full bg-[hsl(var(--coral-500))]" />
               <span className="h-3 w-3 rounded-full bg-[hsl(var(--amber-400))]" />
@@ -181,11 +176,15 @@ export const HeroSection = () => {
             </div>
             <div className="space-y-2 p-5 font-mono text-sm">
               {terminalLines.map((l, i) => (
-                <div key={l} className="flex items-start gap-2 text-[hsl(var(--ink-100))]">
+                <div
+                  key={l}
+                  className="flex items-start gap-2 text-[hsl(var(--ink-100))] animate-fade-in"
+                  style={{ animationDelay: `${400 + i * 250}ms` }}
+                >
                   <span className="text-[hsl(var(--success))]">✓</span>
                   <span>{l}</span>
                   {i === terminalLines.length - 1 && (
-                    <span className="ml-1 inline-block h-4 w-2 animate-pulse bg-[hsl(var(--coral-500))]" />
+                    <span className="ml-1 inline-block h-4 w-2 animate-blink bg-[hsl(var(--coral-500))]" />
                   )}
                 </div>
               ))}
@@ -204,7 +203,7 @@ export const HeroSection = () => {
               </div>
               <div className="!mt-3 text-[hsl(var(--coral-400))]">
                 ✦ Cahier des charges généré
-                <span className="ml-1 inline-block h-4 w-2 animate-pulse bg-[hsl(var(--coral-500))]" />
+                <span className="ml-1 inline-block h-4 w-2 animate-blink bg-[hsl(var(--coral-500))]" />
               </div>
             </div>
           </div>
