@@ -21,7 +21,10 @@ export const HeroSection = () => {
   }, []);
 
   return (
-    <section className="relative overflow-hidden bg-[hsl(var(--night-900))] pb-24 pt-24 text-[hsl(var(--ink-50))] sm:pb-32 sm:pt-28">
+    <section
+      aria-labelledby="hero-title"
+      className="relative overflow-hidden bg-[hsl(var(--night-900))] pb-24 pt-24 text-[hsl(var(--ink-50))] sm:pb-32 sm:pt-28"
+    >
       {/* Ambient glows */}
       <div
         className="pointer-events-none absolute inset-0 opacity-70"
@@ -45,8 +48,12 @@ export const HeroSection = () => {
         <div className="min-w-0 animate-fade-in-up">
           {/* Giant wordmark */}
           <div className="mb-6 flex flex-wrap items-end gap-x-3 gap-y-2 sm:mb-8 sm:gap-x-4">
-            <span className="relative flex min-w-0 max-w-full items-end leading-none">
-              <svg viewBox="0 0 24 64" className="h-[4.5rem] w-auto shrink-0 sm:h-[6rem] md:h-[8rem] lg:h-[9rem]" aria-hidden="true">
+            <span
+              role="img"
+              aria-label="IMOTION"
+              className="relative flex min-w-0 max-w-full items-end leading-none"
+            >
+              <svg viewBox="0 0 24 64" className="h-[4.5rem] w-auto shrink-0 sm:h-[6rem] md:h-[8rem] lg:h-[9rem]" aria-hidden="true" focusable="false">
                 <defs>
                   <linearGradient id="hero-flame" x1="0" y1="64" x2="0" y2="0">
                     <stop offset="0%" stopColor="hsl(var(--coral-600))" />
@@ -58,6 +65,7 @@ export const HeroSection = () => {
                 <path d="M12 4 L22 18 L14 18 L14 22 L10 22 L10 18 L2 18 Z" fill="url(#hero-flame)" />
               </svg>
               <span
+                aria-hidden="true"
                 className="block min-w-0 truncate font-bold tracking-[-0.06em] text-white"
                 style={{
                   fontFamily: "'General Sans', Inter, system-ui, sans-serif",
@@ -68,7 +76,10 @@ export const HeroSection = () => {
                 motion
               </span>
             </span>
-            <span className="mb-3 hidden shrink-0 border-l border-[hsl(var(--ink-700))] pl-3 text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-[hsl(var(--ink-300))] sm:inline-block sm:text-[0.7rem]">
+            <span
+              aria-hidden="true"
+              className="mb-3 hidden shrink-0 border-l border-[hsl(var(--ink-600))] pl-3 text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-[hsl(var(--ink-200))] sm:inline-block sm:text-[0.7rem]"
+            >
               Creator
               <br />
               Studio
@@ -76,6 +87,7 @@ export const HeroSection = () => {
           </div>
 
           <h1
+            id="hero-title"
             className="mb-5 max-w-2xl font-bold leading-[1.08] tracking-tight text-white animate-fade-in-up delay-100 sm:mb-6"
             style={{
               fontFamily: "'General Sans', Inter, system-ui, sans-serif",
@@ -91,7 +103,7 @@ export const HeroSection = () => {
             </span>
           </h1>
 
-          <p className="mb-7 max-w-xl text-[15px] leading-relaxed text-[hsl(var(--ink-300))] animate-fade-in-up delay-200 sm:mb-8 sm:text-base md:text-lg">
+          <p className="mb-7 max-w-xl text-[15px] leading-relaxed text-[hsl(var(--ink-200))] animate-fade-in-up delay-200 sm:mb-8 sm:text-base md:text-lg">
             IMOTION audite votre marketing et votre force de vente, puis génère
             un <span className="font-semibold text-white">plan stratégique actionnable</span> propulsé
             par 17 agents IA spécialisés — livré sous 2 semaines.
@@ -128,8 +140,8 @@ export const HeroSection = () => {
           </ul>
         </div>
 
-        {/* RIGHT — Mockup stack (hidden on small screens) */}
-        <div className="relative hidden h-[460px] lg:block">
+        {/* RIGHT — Mockup stack (hidden on small screens, decorative) */}
+        <div aria-hidden="true" className="relative hidden h-[460px] lg:block">
           {/* Browser mockup back */}
           <div className="absolute right-0 top-8 w-[110%] rounded-2xl bg-white shadow-2xl ring-1 ring-black/10 animate-scale-in animate-float-soft">
             <div className="flex items-center gap-2 border-b border-[hsl(var(--ink-100))] px-4 py-3">
