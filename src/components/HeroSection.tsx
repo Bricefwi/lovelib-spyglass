@@ -46,7 +46,7 @@ export const HeroSection = () => {
           {/* Giant wordmark */}
           <div className="mb-6 flex items-end gap-3 sm:mb-8 sm:gap-4">
             <span className="relative flex items-end leading-none">
-              <svg viewBox="0 0 24 64" className="h-[5.5rem] w-auto sm:h-[7rem] md:h-[10rem] lg:h-[12rem]" aria-hidden="true">
+              <svg viewBox="0 0 24 64" className="h-[4.5rem] w-auto sm:h-[6rem] md:h-[8rem] lg:h-[9rem]" aria-hidden="true">
                 <defs>
                   <linearGradient id="hero-flame" x1="0" y1="64" x2="0" y2="0">
                     <stop offset="0%" stopColor="hsl(var(--coral-600))" />
@@ -61,7 +61,7 @@ export const HeroSection = () => {
                 className="font-bold tracking-[-0.06em] text-white"
                 style={{
                   fontFamily: "'General Sans', Inter, system-ui, sans-serif",
-                  fontSize: "clamp(3.75rem, 14vw, 12rem)",
+                  fontSize: "clamp(3rem, 12vw, 9rem)",
                   lineHeight: 0.85,
                 }}
               >
