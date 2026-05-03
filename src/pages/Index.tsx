@@ -2,6 +2,7 @@ import { Helmet } from "react-helmet";
 import { Header } from "@/components/Header";
 import { HeroSection } from "@/components/HeroSection";
 import { FeaturesSection } from "@/components/FeaturesSection";
+import { ServicesSection } from "@/components/ServicesSection";
 import { StepsSection } from "@/components/StepsSection";
 import { BlogSection } from "@/components/BlogSection";
 import { PreAuditForm } from "@/components/PreAuditForm";
@@ -74,6 +75,7 @@ const Index = () => {
       <Header />
       <HeroSection />
       <FeaturesSection />
+      <ServicesSection />
       <StepsSection />
       <BlogSection />
       <PreAuditForm />
