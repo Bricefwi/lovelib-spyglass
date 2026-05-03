@@ -6,10 +6,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
 
 const terminalLines = [
-  "Analyse du besoin client",
-  "Objectifs principaux identifiés",
-  "Architecture technique recommandée",
-  "Budget estimatif : 12 500 €",
+  "Audit funnel marketing & commercial",
+  "Analyse CAC / LTV / cohortes",
+  "10 initiatives priorisées (RICE)",
+  "Plan stratégique 90j · ROI projeté",
 ];
 
 export const HeroSection = () => {
@@ -82,19 +82,19 @@ export const HeroSection = () => {
               fontSize: "clamp(1.75rem, 4.2vw, 3.25rem)",
             }}
           >
-            Transformez vos idées en{" "}
+            Boostez votre{" "}
             <span
               className="bg-clip-text text-transparent"
               style={{ backgroundImage: "var(--gradient-flame)" }}
             >
-              projets digitaux concrets
+              croissance marketing & commerciale
             </span>
           </h1>
 
           <p className="mb-7 max-w-xl text-[15px] leading-relaxed text-[hsl(var(--ink-300))] animate-fade-in-up delay-200 sm:mb-8 sm:text-base md:text-lg">
-            Notre IA vous guide pour définir précisément votre besoin et
-            génère automatiquement votre cahier des charges —{" "}
-            <span className="font-semibold text-white">100% gratuit.</span>
+            IMOTION audite votre marketing et votre force de vente, puis génère
+            un <span className="font-semibold text-white">plan stratégique actionnable</span> propulsé
+            par 17 agents IA spécialisés — livré sous 2 semaines.
           </p>
 
           <div className="mb-7 flex flex-col gap-3 animate-fade-in-up delay-300 sm:mb-8 sm:flex-row">
@@ -105,21 +105,21 @@ export const HeroSection = () => {
               onClick={() => navigate(session ? "/client/new-project" : "/auth")}
             >
               <Sparkles className="mr-2 h-5 w-5 transition-transform group-hover:rotate-12" />
-              Créer mon CDC gratuitement
+              Lancer mon audit gratuit
               <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
             </Button>
             <Button
               size="lg"
               variant="outline"
               className="press h-14 w-full rounded-xl border-[hsl(var(--ink-600))] bg-[hsl(var(--ink-800)/0.6)] px-7 text-base font-semibold text-white backdrop-blur transition-colors hover:border-[hsl(var(--coral-500))] hover:bg-[hsl(var(--ink-700))] hover:text-white sm:w-auto"
-              onClick={() => navigate("/how-it-works")}
+              onClick={() => navigate("/audit-methodologie")}
             >
-              Voir la démo
+              Voir la méthodologie
             </Button>
           </div>
 
           <ul className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-[hsl(var(--ink-300))] animate-fade-in-up delay-500 sm:gap-x-6">
-            {["100% gratuit", "Sans engagement", "En 45 min"].map((t) => (
+            {["Audit gratuit", "Livré en 2 semaines", "17 agents IA"].map((t) => (
               <li key={t} className="inline-flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-[hsl(var(--success))]" />
                 {t}
@@ -154,13 +154,13 @@ export const HeroSection = () => {
               </div>
               <div className="mt-6 inline-flex items-center gap-3 rounded-xl border border-[hsl(var(--ink-100))] px-4 py-3">
                 <div className="text-[10px] font-semibold uppercase tracking-widest text-[hsl(var(--ink-400))]">
-                  Budget
+                  ROI projeté
                 </div>
-                <div className="text-lg font-bold text-[hsl(var(--ink-900))]">14 200 €</div>
+                <div className="text-lg font-bold text-[hsl(var(--ink-900))]">+38 %</div>
               </div>
             </div>
             <div className="absolute -top-3 right-6 inline-flex items-center gap-2 rounded-full bg-[hsl(var(--success))] px-3 py-1 text-xs font-semibold text-white shadow-lg">
-              <CheckCircle2 className="h-3.5 w-3.5" /> CDC prêt en 45 min
+              <CheckCircle2 className="h-3.5 w-3.5" /> Audit livré en 2 semaines
             </div>
           </div>
 
@@ -171,7 +171,7 @@ export const HeroSection = () => {
               <span className="h-3 w-3 rounded-full bg-[hsl(var(--amber-400))]" />
               <span className="h-3 w-3 rounded-full bg-[hsl(var(--success))]" />
               <span className="ml-3 font-mono text-xs text-[hsl(var(--ink-300))]">
-                marc-ia — consultant
+                alex-ia — stratège marketing
               </span>
             </div>
             <div className="space-y-2 p-5 font-mono text-sm">
@@ -194,15 +194,15 @@ export const HeroSection = () => {
                     className="h-2 w-8 rounded-full"
                     style={{ backgroundImage: "var(--gradient-flame)" }}
                   />
-                  DISCOVERY
+                  AUDIT
                 </span>
                 <span className="inline-flex items-center gap-2 text-[hsl(var(--ink-400))]">
                   <span className="h-2 w-2 rounded-full bg-[hsl(var(--ink-500))]" />
-                  LIVRAISON
+                  STRATÉGIE
                 </span>
               </div>
               <div className="!mt-3 text-[hsl(var(--coral-400))]">
-                ✦ Cahier des charges généré
+                ✦ Plan stratégique généré
                 <span className="ml-1 inline-block h-4 w-2 animate-blink bg-[hsl(var(--coral-500))]" />
               </div>
             </div>

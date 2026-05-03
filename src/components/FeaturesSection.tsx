@@ -1,43 +1,37 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Globe, BarChart3, Target, FileText, Zap, Shield } from "lucide-react";
+import { Search, TrendingUp, Target, FileText, Users, ShieldCheck } from "lucide-react";
 
 const features = [
   {
-    icon: Globe,
-    title: "Pré-audit automatique",
-    description: "Collecte et analyse automatique depuis l'URL de votre site web. Validation des données en temps réel.",
-    color: "text-primary"
+    icon: Search,
+    title: "Audit marketing & commercial",
+    description: "Analyse complète de votre funnel TOFU→BOFU, CAC/LTV, cohortes, win/loss et couverture pipeline.",
   },
   {
-    icon: BarChart3,
-    title: "Scénarios multi-branches",
-    description: "Ambitieux, raisonnable, conservateur ou mix. Chaque scénario avec probabilité de succès et ROI estimé.",
-    color: "text-accent"
+    icon: TrendingUp,
+    title: "Stratégie de croissance",
+    description: "10 à 15 initiatives priorisées (RICE), budget alloué, KPIs cibles et roadmap trimestrielle 12-24 mois.",
   },
   {
     icon: Target,
-    title: "Plan d'action opérationnel",
-    description: "Initiatives chiffrées, timeline 90j, KPIs cibles, allocation budget et analyse risques/mitigations.",
-    color: "text-primary"
+    title: "Plan d'action 90 jours",
+    description: "Quick wins actionnables, scénarios ambitieux/raisonnable/conservateur avec ROI projeté et risques mitigés.",
   },
   {
     icon: FileText,
-    title: "Rapports PDF/HTML",
-    description: "Exports professionnels par phase avec branding IMOTION. Stockage S3 et indexation SEO optionnelle.",
-    color: "text-accent"
+    title: "Rapports niveau McKinsey",
+    description: "Livrables PDF/HTML format SCQR, 50 à 300 pages, dashboards interactifs et synthèse exécutive.",
   },
   {
-    icon: Zap,
-    title: "Intégration BI",
-    description: "Webhooks Power BI et Metabase. Payloads structurés pour dashboards temps réel.",
-    color: "text-primary"
+    icon: Users,
+    title: "17 agents IA spécialisés",
+    description: "Market researcher, competitor analyst, SEO, conversion, UX, pricing… orchestrés par MANUS IA 2.0.",
   },
   {
-    icon: Shield,
-    title: "Sécurité & conformité",
-    description: "RLS Supabase, RGPD, audit trail complet. Cache Redis et rate-limiting intégrés.",
-    color: "text-accent"
-  }
+    icon: ShieldCheck,
+    title: "Garantie ZÉRO hallucination",
+    description: "Validation croisée multi-sources, seuils de confiance 85-95%, données réelles uniquement (Tavily + scraping).",
+  },
 ];
 
 export const FeaturesSection = () => {
@@ -46,11 +40,12 @@ export const FeaturesSection = () => {
       <div className="container mx-auto">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold mb-4">
-            <span className="text-foreground">Services </span>
-            <span className="text-primary">Premium</span>
+            <span className="text-foreground">Un audit </span>
+            <span className="text-primary">marketing & commercial</span>
+            <span className="text-foreground"> de référence</span>
           </h2>
           <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-            De la réparation hardware à la transformation digitale complète
+            De la photographie de votre performance à la stratégie de croissance actionnable — propulsé par l'IA.
           </p>
         </div>
 

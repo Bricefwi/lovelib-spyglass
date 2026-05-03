@@ -1,41 +1,41 @@
-import { MessageSquare, FileText, Rocket, ArrowRight, Shield, Zap, Users, Lock, Star } from "lucide-react";
+import { Search, BarChart3, Rocket, ArrowRight, Shield, Zap, Users, Lock, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
 const trustItems = [
   { icon: Shield, title: "Données sécurisées", desc: "Hébergement EU", tone: "coral" },
-  { icon: Zap, title: "IA de dernière génération", desc: "GPT & Claude", tone: "amber" },
+  { icon: Zap, title: "17 agents IA", desc: "MANUS IA 2.0", tone: "amber" },
   { icon: Users, title: "+150 entreprises", desc: "nous font confiance", tone: "night" },
   { icon: Lock, title: "RGPD conforme", desc: "100% transparent", tone: "success" },
 ];
 
 const stats = [
-  { value: "7", suffix: "phases", label: "Phases de découverte", icon: MessageSquare, tone: "coral" },
-  { value: "45", suffix: "min", label: "Pour un CDC complet", icon: Zap, tone: "amber" },
-  { value: "100", suffix: "%", label: "Cadrage structuré", icon: Star, tone: "night" },
+  { value: "17", suffix: "agents", label: "Agents IA spécialisés", icon: Users, tone: "coral" },
+  { value: "2", suffix: "sem.", label: "Audit complet livré", icon: Zap, tone: "amber" },
+  { value: "95", suffix: "%", label: "Fiabilité des analyses", icon: Star, tone: "night" },
 ];
 
 const steps = [
   {
     n: "01",
-    icon: MessageSquare,
+    icon: Search,
     tone: "coral",
-    title: "Décrivez votre projet",
-    desc: "Répondez aux questions de Marc, notre consultant IA. En 7 phases structurées, il cerne votre vision, vos objectifs et vos contraintes.",
+    title: "Audit marketing & commercial",
+    desc: "Nos agents IA analysent votre funnel, vos canaux d'acquisition, vos KPIs (CAC, LTV, win rate) et votre positionnement concurrentiel.",
   },
   {
     n: "02",
-    icon: FileText,
+    icon: BarChart3,
     tone: "amber",
-    title: "Recevez votre CDC",
-    desc: "Un cahier des charges professionnel est généré automatiquement : spécifications, architecture technique et recommandations.",
+    title: "Stratégie & priorisation",
+    desc: "10 à 15 initiatives chiffrées et priorisées (RICE), scénarios de croissance comparés, budget alloué et KPIs cibles définis.",
   },
   {
     n: "03",
     icon: Rocket,
     tone: "night",
-    title: "Devis & Lancement",
-    desc: "Obtenez une proposition chiffrée détaillée avec planning, options comparées et contrat. Lancez votre projet en confiance.",
+    title: "Plan d'action & ROI",
+    desc: "Roadmap 90 jours actionnable, plan stratégique 12-24 mois, dashboards interactifs et accompagnement à l'exécution.",
   },
 ];
 
