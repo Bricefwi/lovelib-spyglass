@@ -182,7 +182,8 @@ export const Header = () => {
                   </Button>
                   <Button
                     size="sm"
-                    className="bg-primary text-primary-foreground hover:bg-primary/90 w-full"
+                    className="press w-full font-semibold text-white shadow-coral"
+                    style={{ backgroundImage: "var(--gradient-flame)" }}
                     onClick={() => {
                       handleStartProject();
                       setMobileMenuOpen(false);
