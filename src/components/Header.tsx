@@ -64,7 +64,12 @@ export const Header = () => {
   ];
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-border">
+    <header
+      className="fixed top-0 left-0 right-0 z-50 border-b border-[hsl(var(--ink-100))] bg-white/85 backdrop-blur-md"
+      style={{ fontFamily: "'General Sans', Inter, sans-serif" }}
+    >
+      {/* Signature flame hairline */}
+      <div className="h-[2px] w-full" style={{ backgroundImage: "var(--gradient-flame)" }} />
       <div className="container mx-auto px-6">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
@@ -76,16 +81,27 @@ export const Header = () => {
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-8">
-            {navigation.map((item) => (
-              <button
-                key={item.name}
-                onClick={() => navigate(item.href)}
-                className="text-sm font-medium text-foreground hover:text-primary transition-colors"
-              >
-                {item.name}
-              </button>
-            ))}
+          <nav className="hidden md:flex items-center gap-7">
+            {navigation.map((item) => {
+              const active = location.pathname === item.href;
+              return (
+                <button
+                  key={item.name}
+                  onClick={() => navigate(item.href)}
+                  className={`group relative text-sm font-semibold tracking-tight transition-colors ${
+                    active ? "text-[hsl(var(--coral-600))]" : "text-[hsl(var(--ink-700))] hover:text-[hsl(var(--ink-900))]"
+                  }`}
+                >
+                  {item.name}
+                  <span
+                    className={`absolute -bottom-1.5 left-0 h-[2px] rounded-full transition-all ${
+                      active ? "w-full" : "w-0 group-hover:w-full"
+                    }`}
+                    style={{ backgroundImage: "var(--gradient-flame)" }}
+                  />
+                </button>
+              );
+            })}
           </nav>
 
           {/* CTA Buttons */}
@@ -94,10 +110,20 @@ export const Header = () => {
               <UserMenu session={session} />
             ) : (
               <>
-                <Button variant="ghost" size="sm" onClick={() => navigate("/auth")}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-[hsl(var(--ink-700))] hover:bg-[hsl(var(--ink-50))] hover:text-[hsl(var(--ink-900))]"
+                  onClick={() => navigate("/auth")}
+                >
                   Se connecter
                 </Button>
-                <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={handleStartProject}>
+                <Button
+                  size="sm"
+                  className="h-10 rounded-xl px-5 font-semibold text-white shadow-coral hover:shadow-glow"
+                  style={{ backgroundImage: "var(--gradient-flame)" }}
+                  onClick={handleStartProject}
+                >
                   Démarrer
                 </Button>
               </>

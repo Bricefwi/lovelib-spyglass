@@ -35,13 +35,23 @@ export const Footer = () => {
   const navigate = useNavigate();
   return (
     <footer
-      className="bg-[hsl(var(--ink-900))] text-[hsl(var(--ink-50))] relative overflow-hidden"
+      className="relative overflow-hidden bg-[hsl(var(--ink-900))] text-[hsl(var(--ink-50))]"
       id="contact"
+      style={{ fontFamily: "'General Sans', Inter, sans-serif" }}
     >
-      {/* Top coral accent line */}
-      <div className="h-1 w-full gradient-flame" />
+      {/* Top flame accent line */}
+      <div className="h-[3px] w-full" style={{ backgroundImage: "var(--gradient-flame)" }} />
 
-      <div className="container mx-auto px-6 py-16">
+      {/* Ambient flame glow */}
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-64 opacity-60"
+        style={{
+          background:
+            "radial-gradient(50% 100% at 80% 0%, hsl(var(--amber-500)/0.18) 0%, transparent 70%), radial-gradient(40% 100% at 15% 0%, hsl(var(--coral-600)/0.15) 0%, transparent 70%)",
+        }}
+      />
+
+      <div className="container relative mx-auto px-6 py-16">
         <div className="grid grid-cols-1 gap-10 md:grid-cols-12">
           {/* Brand column */}
           <div className="md:col-span-4">
@@ -51,12 +61,16 @@ export const Footer = () => {
             <p className="mt-5 max-w-xs text-sm leading-relaxed text-[hsl(var(--ink-300))]">
               L'IA qui transforme vos idées en cahiers des charges professionnels — gratuitement, en 45 minutes.
             </p>
+            <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-[hsl(var(--ink-700))] bg-[hsl(var(--ink-800)/0.6)] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-[hsl(var(--ink-200))] backdrop-blur">
+              <span className="h-2 w-2 rounded-full" style={{ backgroundImage: "var(--gradient-flame)" }} />
+              Creator Studio · v2
+            </div>
           </div>
 
           {/* Link columns */}
           {columns.map((col) => (
             <div key={col.title} className="md:col-span-2">
-              <h4 className="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-[hsl(var(--ink-300))]">
+              <h4 className="mb-4 text-[11px] font-semibold uppercase tracking-[0.22em] text-[hsl(var(--ink-400))]">
                 {col.title}
               </h4>
               <ul className="space-y-3">
@@ -64,8 +78,12 @@ export const Footer = () => {
                   <li key={l.href}>
                     <a
                       href={l.href}
-                      className="text-sm text-[hsl(var(--ink-100))] transition-colors hover:text-[hsl(var(--coral-400))]"
+                      className="group inline-flex items-center gap-1.5 text-sm font-medium text-[hsl(var(--ink-100))] transition-colors hover:text-[hsl(var(--coral-400))]"
                     >
+                      <span
+                        className="h-px w-0 transition-all group-hover:w-3"
+                        style={{ backgroundImage: "var(--gradient-flame)" }}
+                      />
                       {l.label}
                     </a>
                   </li>
@@ -76,14 +94,14 @@ export const Footer = () => {
 
           {/* Contact column */}
           <div className="md:col-span-2">
-            <h4 className="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-[hsl(var(--ink-300))]">
+            <h4 className="mb-4 text-[11px] font-semibold uppercase tracking-[0.22em] text-[hsl(var(--ink-400))]">
               Contact
             </h4>
             <ul className="space-y-3">
               <li>
                 <a
                   href="mailto:contact@imotion-conseil.fr"
-                  className="text-sm text-[hsl(var(--ink-100))] transition-colors hover:text-[hsl(var(--coral-400))]"
+                  className="text-sm font-medium text-[hsl(var(--ink-100))] transition-colors hover:text-[hsl(var(--coral-400))]"
                 >
                   contact@imotion-conseil.fr
                 </a>
@@ -91,7 +109,7 @@ export const Footer = () => {
               <li>
                 <a
                   href="/legal/cgu"
-                  className="text-sm text-[hsl(var(--ink-100))] transition-colors hover:text-[hsl(var(--coral-400))]"
+                  className="text-sm font-medium text-[hsl(var(--ink-100))] transition-colors hover:text-[hsl(var(--coral-400))]"
                 >
                   CGU
                 </a>
@@ -104,8 +122,8 @@ export const Footer = () => {
           <p className="text-xs text-[hsl(var(--ink-400))]">
             © 2026 IMOTION — AI No-Code Solutions
           </p>
-          <p className="text-xs text-[hsl(var(--ink-400))]">
-            contact@imotion-conseil.fr
+          <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-[hsl(var(--ink-500))]">
+            Designed in France · Powered by AI
           </p>
         </div>
       </div>
