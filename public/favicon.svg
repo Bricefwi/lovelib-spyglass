@@ -1,1 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 32"><defs><linearGradient id="f" x1="0" y1="32" x2="0" y2="0"><stop offset="0%" stop-color="#D8442A"/><stop offset="60%" stop-color="#EE5A36"/><stop offset="100%" stop-color="#FFA418"/></linearGradient></defs><rect x="9" y="11" width="6" height="20" rx="2" fill="url(#f)"/><path d="M12 1 L22 11 L14 11 L14 14 L10 14 L10 11 L2 11 Z" fill="url(#f)"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0A1230"/>
+      <stop offset="100%" stop-color="#1A1410"/>
+    </linearGradient>
+    <linearGradient id="flame" x1="32" y1="58" x2="32" y2="6" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#D8442A"/>
+      <stop offset="55%" stop-color="#EE5A36"/>
+      <stop offset="100%" stop-color="#FFA418"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#bg)"/>
+  <rect x="29" y="24" width="6" height="32" rx="2" fill="url(#flame)"/>
+  <path d="M32 6 L48 24 L36 24 L36 28 L28 28 L28 24 L16 24 Z" fill="url(#flame)"/>
+</svg>
